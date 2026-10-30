@@ -1,0 +1,37 @@
+/* Keep links readable inside the different page headers that use this component. */
+:host {
+  display: flex;
+  align-items: center;
+}
+
+.account-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.account-navigation a,
+.account-navigation button {
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+}
+
+.account-navigation button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.account-navigation .account-button {
+  padding: 10px 15px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+}
+
+@media (max-width: 760px) {
+  .account-navigation { gap: 12px; }
+}

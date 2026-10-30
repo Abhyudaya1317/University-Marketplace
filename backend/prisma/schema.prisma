@@ -1,0 +1,287 @@
+// Describe the account, password-reset, and browser-session records.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Keep the database provider here and the private connection URL in prisma.config.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+// Email addresses identify accounts; passwordHash is null for Google-only sign-ins.
+model User {
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  fullName         String?           @db.VarChar(100)
+  avatarUrl        String?           @db.VarChar(500)
+  passwordHash     String?
+  createdAt        DateTime          @default(now())
+  freeListingsUsed Int               @default(0)
+  sessions         LoginSession[]
+  listings         Listing[]
+  questions        ProductQuestion[]
+  answers          ProductAnswer[]
+  reviews          ListingReview[]
+  purchases        Order[]           @relation("OrderBuyer")
+  sales            Order[]           @relation("OrderSeller")
+  savedSellers      SellerFavorite[] @relation("SellerFavoriteFan")
+  savedBy           SellerFavorite[] @relation("SellerFavoriteSeller")
+  savedListings     ListingFavorite[]
+  buyerConversations Conversation[]    @relation("ConversationBuyer")
+  sellerConversations Conversation[]   @relation("ConversationSeller")
+  sentMessages      Message[]
+}
+
+// Store only a keyed hash of a short-lived password-reset code.
+model PasswordResetCode {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Store a hash of each browser session token so logout can revoke it server-side.
+model LoginSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// Let a signed-in student save another seller once and find them again from the dashboard.
+model SellerFavorite {
+  id        Int      @id @default(autoincrement())
+  fanId     Int
+  sellerId  Int
+  createdAt DateTime @default(now())
+  fan       User     @relation("SellerFavoriteFan", fields: [fanId], references: [id], onDelete: Cascade)
+  seller    User     @relation("SellerFavoriteSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([fanId, sellerId])
+  @@index([sellerId, createdAt])
+}
+
+// A shared product groups different sellers' offers for the same campus item.
+model Product {
+  id             Int               @id @default(autoincrement())
+  name           String
+  normalizedName String
+  category       ProductCategory
+  createdAt      DateTime          @default(now())
+  listings       Listing[]
+  questions      ProductQuestion[]
+
+  // Treat matching normalized names within a category as the same product.
+  @@unique([normalizedName, category])
+}
+
+// Let an account save one seller's offer independently of other offers for the same product.
+model ListingFavorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  listingId Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([listingId, createdAt])
+}
+
+// A listing is one seller's price and contact offer for a shared product.
+model Listing {
+  id             Int             @id @default(autoincrement())
+  productId      Int
+  sellerId       Int
+  title          String
+  description    String
+  price          Decimal         @db.Decimal(10, 2)
+  phoneNumber    String
+  photoUrl       String?
+  location       String          @default("LPU campus") @db.VarChar(120)
+  clothingGender ClothingGender?
+  proteinGrams   Decimal?        @db.Decimal(6, 2)
+  condition      ProductCondition @default(GOOD)
+  status         ListingStatus   @default(ACTIVE)
+  archivedAt     DateTime?
+  quantityAvailable Int          @default(1)
+  createdAt      DateTime        @default(now())
+  product        Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  seller         User            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  reviews        ListingReview[]
+  questions      ProductQuestion[]
+  orders         Order[]
+  savedBy        ListingFavorite[]
+  conversations  Conversation[]
+
+  // These indexes support finding product offers sorted by price and seller listings.
+  @@index([productId, status, price])
+  @@index([sellerId, createdAt])
+}
+
+// Keep one private buyer-seller conversation per buyer and listing.
+model Conversation {
+  id        Int       @id @default(autoincrement())
+  listingId Int
+  buyerId   Int
+  sellerId  Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer     User      @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller    User      @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId, updatedAt])
+  @@index([sellerId, updatedAt])
+}
+
+// Store each text message with the authenticated sender and its conversation.
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  body           String       @db.VarChar(2000)
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+}
+
+// Keep a COD order record with the agreed price and the two participants.
+model Order {
+  id             Int         @id @default(autoincrement())
+  listingId      Int
+  buyerId        Int
+  sellerId       Int
+  buyerPhone     String      @db.VarChar(30)
+  price          Decimal     @db.Decimal(10, 2)
+  quantity       Int
+  buyerMessage   String?     @db.VarChar(500)
+  paymentMethod  PaymentMethod @default(CASH_ON_DELIVERY)
+  status         OrderStatus @default(PENDING)
+  meetingAt      DateTime?
+  meetingLocation String?    @db.VarChar(120)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  listing        Listing     @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  buyer          User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller         User        @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([listingId, status])
+}
+
+// Attach questions to one seller offer so unrelated listings never share discussion.
+model ProductQuestion {
+  id        Int             @id @default(autoincrement())
+  productId Int
+  listingId Int?
+  askerId   Int
+  question  String          @db.VarChar(500)
+  createdAt DateTime        @default(now())
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  listing   Listing?        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  asker     User            @relation(fields: [askerId], references: [id], onDelete: Cascade)
+  answers   ProductAnswer[]
+
+  @@index([productId, createdAt])
+  @@index([listingId, createdAt])
+  @@index([askerId, createdAt])
+}
+
+// Allow each seller in the product group to answer a question once and update that reply later.
+model ProductAnswer {
+  id         Int             @id @default(autoincrement())
+  questionId Int
+  sellerId   Int
+  answer     String          @db.VarChar(1000)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  question   ProductQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  seller     User            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, sellerId])
+  @@index([sellerId, createdAt])
+}
+
+// Attach one community rating to an offer per reviewer; transaction verification is not available yet.
+model ListingReview {
+  id         Int      @id @default(autoincrement())
+  listingId  Int
+  reviewerId Int
+  rating     Int
+  comment    String   @db.VarChar(1000)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, reviewerId])
+  @@index([listingId, createdAt])
+}
+
+// Keep categories as a controlled list so spelling stays consistent in filters.
+enum ProductCategory {
+  CLOTHING
+  ACCESSORIES
+  SHOES
+  FOOD
+  ELECTRONICS
+  BEAUTY
+  ARTWORK
+  SPORTS_EQUIPMENT
+  MUSICAL_INSTRUMENTS
+  ROOM_DECOR
+  KITCHEN_ITEMS
+  DAILY_USE
+  OTHER
+}
+
+// Only active offers appear in public product and price comparisons.
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  HIDDEN
+  ARCHIVED
+}
+
+// Keep the product condition consistent between new listings and listing edits.
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+}
+
+// There is one payment choice until an online payment system is approved.
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+}
+
+// Track buyer and seller confirmations without implying online payment capture.
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  SELLER_CONFIRMED
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
+// Keep clothing options consistent between seller forms and Explore filters.
+enum ClothingGender {
+  MEN
+  WOMEN
+  UNISEX
+  OTHER
+}

@@ -1,0 +1,70 @@
+<!-- The header introduces the CampusX name and its LPU-only audience. -->
+<div class="page-shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="CampusX home">
+      <span class="brand-mark" aria-hidden="true">cx</span>
+      <span>campus<span class="brand-accent">x</span></span>
+    </a>
+    <div class="topbar-actions">
+      <div class="campus-tag"><span class="campus-dot"></span> Made for LPU</div>
+      <app-account-navigation />
+    </div>
+  </header>
+
+  <main>
+    <!-- The hero explains the campus marketplace and shows its coming-soon state. -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> YOUR CAMPUS, YOUR MARKET</div>
+        <h1 id="hero-title">Good things<br />find <span>new people.</span></h1>
+        <p class="intro">CampusX is a marketplace made for the LPU community. A simpler way to pass things on, find what you need, and keep it all close to campus.</p>
+        <div class="launch-note"><span class="sparkle">✳</span><span><strong>Find it on campus.</strong><br />Compare offers from LPU students.</span></div>
+        <a class="sign-in-link explore-link" href="/explore">Explore products</a>
+      </div>
+
+      <!-- Decorative artwork hints at campus goods without adding marketplace features. -->
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="sun"></div>
+        <div class="floating-card card-book"><span class="card-emoji">📚</span><span class="card-lines"><i></i><i></i></span></div>
+        <div class="floating-card card-tote"><span class="card-emoji">👜</span><span class="card-lines"><i></i><i></i></span></div>
+        <div class="floating-card card-headphones"><span class="card-emoji">🎧</span><span class="card-lines"><i></i><i></i></span></div>
+        <div class="hero-sticker">LPU<br />ONLY</div>
+        <span class="art-spark spark-a">✦</span><span class="art-spark spark-b">✳</span>
+      </div>
+    </section>
+
+    <!-- These cards explain the basic marketplace experience. -->
+    <section class="values" aria-label="CampusX principles">
+      <article class="value-card">
+        <span class="value-number">01</span>
+        <div><h2>Close to home</h2><p>Made for the people who share your campus.</p></div>
+        <span class="value-icon icon-orange" aria-hidden="true">⌂</span>
+      </article>
+      <article class="value-card">
+        <span class="value-number">02</span>
+        <div><h2>Keep it simple</h2><p>Useful campus finds, without the clutter.</p></div>
+        <span class="value-icon icon-green" aria-hidden="true">↗</span>
+      </article>
+      <article class="value-card">
+        <span class="value-number">03</span>
+        <div><h2>Made together</h2><p>A better campus marketplace starts with us.</p></div>
+        <span class="value-icon icon-purple" aria-hidden="true">♡</span>
+      </article>
+    </section>
+  </main>
+
+  <!-- Show live backend reachability without exposing server or database details. -->
+  <footer class="footer">
+    <span>© 2026 CampusX <span class="footer-separator">·</span> Built for the LPU community</span>
+    <span class="connection" [class.is-online]="backendState() === 'online'" [class.is-offline]="backendState() === 'offline'">
+      <span class="connection-dot"></span>
+      @switch (backendState()) {
+        @case ('checking') { Connecting to CampusX }
+        @case ('online') { CampusX is online }
+        @case ('offline') { CampusX is offline }
+      }
+    </span>
+  </footer>
+</div>

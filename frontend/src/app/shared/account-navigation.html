@@ -1,0 +1,16 @@
+<!-- Offer guest actions or signed-in account links based on the current session. -->
+<nav class="account-navigation" aria-label="Main navigation">
+  <a routerLink="/explore">Explore</a>
+  <a routerLink="/sell">Sell an item</a>
+  @if (signedIn()) {
+    <a routerLink="/dashboard">Profile</a>
+    <a routerLink="/dashboard" fragment="my-listings">Items I’m selling</a>
+    <a routerLink="/orders">My orders</a>
+    <a routerLink="/messages">Messages</a>
+    <button type="button" (click)="signOut()" [disabled]="signingOut()">
+      {{ signingOut() ? 'Signing out…' : 'Sign out' }}
+    </button>
+  } @else {
+    <a class="account-button" routerLink="/auth">Sign in / Join</a>
+  }
+</nav>

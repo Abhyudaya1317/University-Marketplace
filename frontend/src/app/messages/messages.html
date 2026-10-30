@@ -1,0 +1,128 @@
+<div class="messages-page">
+  <header class="messages-header">
+    <a class="brand" routerLink="/" aria-label="CampusX home"
+      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    >
+    <app-account-navigation />
+  </header>
+
+  <main class="messages-content">
+    <a class="back-link" routerLink="/explore">← Back to Explore</a>
+    @if (conversationId()) {
+      <a class="inbox-link" routerLink="/messages">← All messages</a>
+      @if (loading()) {
+        <p class="page-state" role="status">Loading conversation…</p>
+      } @else if (error()) {
+        <section class="state-card" role="alert">
+          <h1>Conversation unavailable</h1>
+          <p>{{ error() }}</p>
+          <a routerLink="/messages">Return to messages</a>
+        </section>
+      } @else if (conversation(); as thread) {
+        <section class="thread-card" aria-label="Private conversation">
+          <header class="thread-heading">
+            <div>
+              <p class="eyebrow">PRIVATE CHAT</p>
+              <h1>{{ thread.otherUser.fullName }}</h1>
+              <a [routerLink]="['/products', thread.listing.id]"
+                >{{ thread.listing.title }} · ₹{{ thread.listing.price }}</a
+              >
+            </div>
+            @if (thread.listing.photoUrl) {
+              <img [src]="thread.listing.photoUrl" [alt]="thread.listing.title" />
+            }
+          </header>
+          <div class="message-list" aria-live="polite">
+            @for (message of thread.messages; track message.id) {
+              <article class="message-bubble" [class.own-message]="isOwnMessage(message.senderId)">
+                <strong>{{ isOwnMessage(message.senderId) ? 'You' : message.senderName }}</strong>
+                <p>{{ message.body }}</p>
+                <time [attr.datetime]="message.createdAt">{{
+                  message.createdAt | date: 'short'
+                }}</time>
+              </article>
+            } @empty {
+              <p class="empty-note">No messages yet. Say hello to start the conversation.</p>
+            }
+          </div>
+          <button
+            class="refresh-button"
+            type="button"
+            (click)="loadConversation()"
+            [disabled]="loading()"
+          >
+            {{ loading() ? 'Refreshing…' : 'Refresh messages' }}
+          </button>
+          <form class="message-form" (ngSubmit)="sendMessage()">
+            <label for="message-draft">Your message</label>
+            <textarea
+              id="message-draft"
+              name="message"
+              required
+              maxlength="2000"
+              rows="3"
+              [ngModel]="draft()"
+              (ngModelChange)="draft.set($event)"
+              placeholder="Write a message about this listing"
+            ></textarea>
+            <div class="form-footer">
+              <small>{{ draft().trim().length }} / 2,000 characters</small
+              ><button type="submit" [disabled]="sending() || !draft().trim()">
+                {{ sending() ? 'Sending…' : 'Send message' }}
+              </button>
+            </div>
+          </form>
+          @if (error()) {
+            <p class="error-note" role="alert">{{ error() }}</p>
+          }
+          @if (notice()) {
+            <p class="success-note" role="status">{{ notice() }}</p>
+          }
+        </section>
+      }
+    } @else {
+      <section class="page-heading">
+        <p class="eyebrow">CAMPUSX INBOX</p>
+        <h1>Messages</h1>
+        <p>Private conversations about campus listings.</p>
+      </section>
+      @if (loading()) {
+        <p class="page-state" role="status">Loading your inbox…</p>
+      } @else if (error()) {
+        <section class="state-card" role="alert">
+          <h2>Inbox unavailable</h2>
+          <p>{{ error() }}</p>
+          <a routerLink="/auth">Sign in</a>
+        </section>
+      } @else if (conversations().length === 0) {
+        <section class="state-card">
+          <h2>No conversations yet</h2>
+          <p>Open a listing and choose Message Seller to start a private chat.</p>
+          <a routerLink="/explore">Explore listings</a>
+        </section>
+      } @else {
+        <section class="inbox-list" aria-label="Your conversations">
+          @for (item of conversations(); track item.id) {
+            <a class="inbox-row" [routerLink]="['/messages', item.id]">
+              @if (item.listing.photoUrl) {
+                <img [src]="item.listing.photoUrl" [alt]="item.listing.title" />
+              } @else {
+                <span class="listing-placeholder" aria-hidden="true">✳</span>
+              }
+              <span class="inbox-copy"
+                ><strong>{{ item.otherUser.fullName }}</strong
+                ><span>{{ item.listing.title }} · ₹{{ item.listing.price }}</span
+                ><small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span
+              >
+              @if (item.lastMessage) {
+                <time [attr.datetime]="item.lastMessage.createdAt">{{
+                  item.lastMessage.createdAt | date: 'short'
+                }}</time>
+              }
+            </a>
+          }
+        </section>
+      }
+    }
+  </main>
+</div>

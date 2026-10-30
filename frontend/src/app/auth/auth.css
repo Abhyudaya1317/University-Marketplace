@@ -1,0 +1,29 @@
+/* Center the account card and use the same warm colors as the welcome page. */
+:host { display: block; min-height: 100vh; background: #faf9f5; color: #282923; }
+.auth-shell { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 35px 20px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #22231f; font-size: 21px; font-weight: 750; letter-spacing: -1.1px; text-decoration: none; }
+.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: #22231f; color: #faf8f2; font-size: 17px; letter-spacing: -1.4px; }
+.brand-accent { color: #e47148; }
+.auth-card { width: min(100%, 430px); margin: auto; padding: 38px; border: 1px solid #eae7df; border-radius: 20px; background: #fffefa; box-shadow: 0 18px 55px #3a34230d; }
+.eyebrow { margin: 0 0 12px; color: #b46b4c; font-size: 10px; font-weight: 750; letter-spacing: 1.7px; }
+h1 { margin: 0; font-size: 30px; letter-spacing: -1.2px; }
+.description { margin: 10px 0 25px; color: #77756e; font-size: 14px; line-height: 1.6; }
+form { display: grid; gap: 10px; }
+label { margin-top: 7px; color: #55554e; font-size: 12px; font-weight: 650; }
+input { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1px solid #dfddd5; border-radius: 10px; outline: none; background: #fff; color: #262721; font: inherit; font-size: 14px; }
+input:focus { border-color: #d97955; box-shadow: 0 0 0 3px #d9795520; }
+.primary-button, .google-button { display: flex; width: 100%; min-height: 46px; align-items: center; justify-content: center; gap: 10px; margin-top: 13px; border: 0; border-radius: 10px; background: #272923; color: #fffdf8; cursor: pointer; font: inherit; font-size: 14px; font-weight: 650; text-decoration: none; }
+.primary-button:disabled { cursor: wait; opacity: .65; }
+.google-button { box-sizing: border-box; margin-top: 0; border: 1px solid #dedbd3; background: #fffefa; color: #383932; }
+.google-button span { color: #4285f4; font-weight: 800; }
+.text-button { padding: 0; border: 0; background: transparent; color: #b85f3d; cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; }
+.forgot-button { display: block; margin: 14px 0 0 auto; }
+.back-button { display: block; margin: 16px auto 0; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; color: #99968e; font-size: 11px; }
+.divider::before, .divider::after { height: 1px; flex: 1; background: #e9e7e1; content: ''; }
+.switch-mode { margin: 22px 0 0; color: #77756e; text-align: center; font-size: 12px; }
+.feedback { margin: 14px 0 0; font-size: 12px; line-height: 1.5; }
+.success { color: #34754b; }
+.failure { color: #ae443b; }
+.community-note { margin: 24px 0 0; padding-top: 16px; border-top: 1px solid #eeece6; color: #89867d; font-size: 10px; line-height: 1.6; text-align: center; }
+@media (max-width: 480px) { .auth-shell { padding: 24px 16px; } .auth-card { padding: 28px 22px; } }

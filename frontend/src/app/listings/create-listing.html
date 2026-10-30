@@ -1,0 +1,140 @@
+<!-- Give sellers a focused listing form without changing the temporary home design. -->
+<main class="sell-page">
+  <header class="sell-header">
+    <a class="brand" href="/" aria-label="CampusX home">
+      <span class="brand-mark" aria-hidden="true">cx</span>
+      <span>campus<span class="brand-accent">x</span></span>
+    </a>
+    <a class="back-link" href="/">Back to home</a>
+  </header>
+
+  <section class="sell-card" aria-labelledby="sell-title">
+    @if (checkingSession()) {
+      <!-- Wait for the backend session check before deciding which screen to show. -->
+      <p class="state-message" role="status">Checking your sign-in…</p>
+    } @else if (!user()) {
+      <!-- Keep listing creation available only to accounts with a valid server session. -->
+      <p class="eyebrow">SELL ON CAMPUSX</p>
+      <h1 id="sell-title">Sign in to list an item</h1>
+      <p class="description">Use your personal email to sign in or create a CampusX account first.</p>
+      <a class="primary-button" href="/auth">Sign in or join</a>
+    } @else if (loadingListing()) {
+      <p class="state-message" role="status">Loading your listing…</p>
+    } @else {
+      <!-- Ask for the details buyers need to compare a seller's product offer. -->
+      <p class="eyebrow">SELL ON CAMPUSX</p>
+      <h1 id="sell-title">{{ isEditing() ? 'Edit your listing.' : 'List something useful.' }}</h1>
+      <p class="description">Signed in as {{ user()?.email }}. @if (isEditing()) { Update the offer details below. } @else { Listings are free right now. }</p>
+
+      <form (ngSubmit)="submitListing()">
+        <div class="form-field">
+          <label for="product-name">Product name</label>
+          <input id="product-name" name="name" type="text" required minlength="2" maxlength="100"
+            [(ngModel)]="name" placeholder="e.g. Scientific calculator">
+          <small>Include the model or variant so buyers can compare the same item.</small>
+        </div>
+
+        <div class="form-field">
+          <label for="category">Category</label>
+          <select id="category" name="category" required [ngModel]="category" (ngModelChange)="onCategoryChange($event)">
+            @for (option of categories; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="condition">Condition</label>
+          <select id="condition" name="condition" required [(ngModel)]="condition">
+            <option value="NEW">New</option><option value="LIKE_NEW">Like new</option>
+            <option value="GOOD">Good</option><option value="FAIR">Fair</option>
+          </select>
+        </div>
+
+        @if (category === 'CLOTHING') {
+          <div class="form-field">
+            <label for="clothing-gender">Gender</label>
+            <select id="clothing-gender" name="clothingGender" required [(ngModel)]="clothingGender">
+              <option value="" disabled>Select an option</option>
+              <option value="MEN">Men</option>
+              <option value="WOMEN">Women</option>
+              <option value="UNISEX">Unisex</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+        }
+
+        @if (category === 'FOOD') {
+          <div class="form-field">
+            <label for="protein-grams">Protein per serving (grams)</label>
+            <input id="protein-grams" name="proteinGrams" type="number" required min="0" max="5000" step="0.01"
+              [(ngModel)]="proteinGrams" placeholder="e.g. 12">
+          </div>
+        }
+
+        <div class="form-field">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" required minlength="5" maxlength="1500" rows="4"
+            [(ngModel)]="description" placeholder="Describe its condition and useful details."></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="price">Price</label>
+          <div class="price-input"><span aria-hidden="true">₹</span>
+            <input id="price" name="price" type="number" required min="0.01" max="99999999.99" step="0.01"
+              [(ngModel)]="price" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="quantity-available">Quantity available</label>
+          <input id="quantity-available" name="quantityAvailable" type="number" required min="0" max="9999" step="1"
+            [(ngModel)]="quantityAvailable" placeholder="e.g. 3">
+          <small>Enter 0 to show the offer as out of stock. Buyers can request up to this quantity.</small>
+        </div>
+
+        <div class="form-field">
+          <label for="phone">Phone number</label>
+          <input id="phone" name="phoneNumber" type="tel" required minlength="7" maxlength="24"
+            autocomplete="tel" [(ngModel)]="phoneNumber" placeholder="Your contact number">
+        </div>
+
+        <div class="form-field">
+          <label for="location">Campus pickup location</label>
+          <input id="location" name="location" type="text" required minlength="2" maxlength="120"
+            [(ngModel)]="location" placeholder="e.g. Block 14, library entrance">
+          <small>Share a general meeting point on campus. Avoid putting a room number or private address.</small>
+        </div>
+
+        <div class="form-field">
+          <label for="product-photo">Product photo (optional)</label>
+          <input #photoInput id="product-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp"
+            (change)="selectPhoto($event)">
+          <small>JPG, PNG, or WebP · maximum 5 MB.</small>
+          @if (photoError()) { <small class="failure" role="alert">{{ photoError() }}</small> }
+          @if (photoPreview(); as preview) {
+            <img class="photo-preview" [src]="preview" alt="Preview of the selected product photo">
+          } @else if (currentPhotoUrl() && !removeCurrentPhoto()) {
+            <img class="photo-preview" [src]="currentPhotoUrl()" alt="Current product photo">
+          }
+          @if (isEditing() && currentPhotoUrl()) {
+            <label class="remove-photo-option"><input name="removeCurrentPhoto" type="checkbox" [ngModel]="removeCurrentPhoto()" (ngModelChange)="removeCurrentPhoto.set($event)"> Remove current photo</label>
+          }
+        </div>
+
+        <button class="primary-button" type="submit" [disabled]="busy()">
+          @if (busy()) { Saving… } @else if (isEditing()) { Save listing changes } @else { Publish listing }
+        </button>
+      </form>
+
+      @if (success()) {
+        <p class="feedback success" role="status">{{ success() }}</p>
+        @if (createdListingId(); as listingId) {
+          <a class="primary-button" [routerLink]="['/products', listingId]">View your listing</a>
+        }
+      }
+      @if (error()) { <p class="feedback failure" role="alert">{{ error() }}</p> }
+      <p class="privacy-note">Your phone number is saved with the listing but isn’t shown on public product pages. The campus pickup location and product photo are public.</p>
+    }
+  </section>
+</main>

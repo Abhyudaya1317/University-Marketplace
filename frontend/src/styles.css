@@ -1,0 +1,15 @@
+/* Establish the base typography and shared box sizing for the page. */
+:root {
+  color-scheme: light;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #faf9f5;
+  color: #242520;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Make element dimensions predictable and remove browser page margins. */
+* { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; }
+button, input { font: inherit; }

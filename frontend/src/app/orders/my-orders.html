@@ -1,0 +1,136 @@
+<!-- Give buyers and sellers one place to track each cash-on-delivery request. -->
+<div class="orders-page">
+  <header class="orders-header">
+    <a class="brand" routerLink="/" aria-label="CampusX home"
+      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    >
+    <app-account-navigation />
+  </header>
+
+  <main class="orders-content">
+    <a class="back-link" routerLink="/explore">← Back to Explore</a>
+    <p class="eyebrow">YOUR CAMPUSX</p>
+    <h1>My orders</h1>
+    <p class="intro">
+      Coordinate the exchange with the other person and pay cash in person when you both agree.
+    </p>
+
+    @if (loading()) {
+      <p class="state-message" role="status">Loading your orders…</p>
+    } @else if (!signedIn()) {
+      <section class="state-card">
+        <h2>Sign in to continue</h2>
+        <p>{{ error() }}</p>
+        <a class="primary-link" routerLink="/auth">Sign in / Join</a>
+      </section>
+    } @else if (error() && orders().length === 0) {
+      <section class="state-card" role="alert">
+        <h2>Orders unavailable</h2>
+        <p>{{ error() }}</p>
+      </section>
+    } @else if (orders().length === 0) {
+      <section class="state-card">
+        <h2>No orders yet</h2>
+        <p>When you request an item or receive a buyer's request, it will appear here.</p>
+        <a class="primary-link" routerLink="/explore">Explore products</a>
+      </section>
+    } @else {
+      @if (error()) {
+        <p class="error-message" role="alert">{{ error() }}</p>
+      }
+      <section class="order-list" aria-label="Your purchases and sales">
+        @for (order of orders(); track order.id) {
+          <article class="order-card">
+            <div class="order-heading">
+              <div>
+                <p class="eyebrow">
+                  {{ order.role === 'BUYER' ? 'YOU ARE BUYING' : 'YOU ARE SELLING' }}
+                </p>
+                <h2>{{ order.listing.title }}</h2>
+              </div>
+              <span class="status-pill" [class.status-complete]="order.status === 'COMPLETED'">{{
+                statusLabel(order.status)
+              }}</span>
+            </div>
+
+            <div class="order-details">
+              @if (order.listing.photoUrl) {
+                <img
+                  [src]="order.listing.photoUrl"
+                  [alt]="order.listing.title + ' product photo'"
+                  loading="lazy"
+                />
+              }
+              <div class="order-copy">
+                <p>{{ order.listing.description }}</p>
+                <p>
+                  <strong>{{ order.role === 'BUYER' ? 'Seller:' : 'Buyer:' }}</strong>
+                  {{ order.role === 'BUYER' ? order.sellerName : order.buyerName }}
+                </p>
+                <p><strong>Quantity:</strong> {{ order.quantity }}</p>
+                <p>
+                  <strong>Payment:</strong> Cash on delivery · ₹{{ order.price }} each · ₹{{
+                    orderTotal(order.price, order.quantity)
+                  }}
+                  total
+                </p>
+                @if (order.meetingAt && order.meetingLocation) {
+                  <p>
+                    <strong>Agreed meetup:</strong> {{ order.meetingAt | date: 'medium' }} ·
+                    {{ order.meetingLocation }}
+                  </p>
+                }
+                @if (order.buyerMessage) {
+                  <p><strong>Buyer note:</strong> {{ order.buyerMessage }}</p>
+                }
+                @if (order.role === 'BUYER' && order.sellerPhone) {
+                  <p><strong>Seller contact:</strong> {{ order.sellerPhone }}</p>
+                }
+                @if (order.role === 'SELLER' && order.buyerPhone) {
+                  <p><strong>Buyer contact:</strong> {{ order.buyerPhone }}</p>
+                }
+                <small>Requested {{ order.createdAt | date: 'medium' }}</small>
+              </div>
+            </div>
+
+            <div class="order-actions">
+              @if (order.role === 'SELLER' && order.status === 'PENDING') {
+                <a class="profile-action" [routerLink]="['/sellers', order.sellerId]"
+                  >Review request on your seller profile</a
+                >
+              }
+              @if (order.role === 'BUYER' && order.status === 'PENDING') {
+                <button
+                  class="secondary-action"
+                  type="button"
+                  (click)="updateOrder(order, 'cancel')"
+                  [disabled]="updatingOrderId() === order.id"
+                >
+                  Cancel request
+                </button>
+              }
+              @if (order.role === 'SELLER' && order.status === 'ACCEPTED') {
+                <button
+                  type="button"
+                  (click)="updateOrder(order, 'confirmHandoff')"
+                  [disabled]="updatingOrderId() === order.id"
+                >
+                  Confirm item handed over and cash received
+                </button>
+              }
+              @if (order.role === 'BUYER' && order.status === 'SELLER_CONFIRMED') {
+                <button
+                  type="button"
+                  (click)="updateOrder(order, 'confirmReceipt')"
+                  [disabled]="updatingOrderId() === order.id"
+                >
+                  Confirm item received and cash paid
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </section>
+    }
+  </main>
+</div>

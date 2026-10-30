@@ -1,0 +1,171 @@
+<div class="market-page">
+  <header class="market-header">
+    <a class="brand" routerLink="/" aria-label="CampusX home"
+      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    >
+    <app-account-navigation />
+  </header>
+
+  <main class="market-content">
+    <section class="page-intro">
+      <p class="eyebrow">THE LPU MARKETPLACE</p>
+      <h1>Explore campus finds</h1>
+      <p>Browse individual listings from campus sellers, with each offer shown at its own price.</p>
+    </section>
+
+    <form class="filters" (ngSubmit)="searchProducts()">
+      <div class="search-field">
+        <label for="product-search">Search products</label>
+        <div class="search-control">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="product-search"
+            name="search"
+            type="search"
+            [ngModel]="searchText()"
+            (ngModelChange)="onSearchTextChange($event)"
+            (focus)="openSuggestions()"
+            (blur)="closeSuggestionsSoon()"
+            placeholder="Search CampusX"
+            maxlength="100"
+            autocomplete="off"
+            aria-autocomplete="list"
+          />
+          @if (searchText()) {
+            <button
+              class="clear-search"
+              type="button"
+              aria-label="Clear search"
+              (click)="clearSearch()"
+            >
+              ×
+            </button>
+          }
+          @if (showSuggestions() && searchText().trim()) {
+            <div class="suggestions" role="listbox" aria-label="Product suggestions">
+              @for (suggestion of suggestions(); track suggestion.name) {
+                <button
+                  class="suggestion"
+                  type="button"
+                  role="option"
+                  (click)="selectSuggestion(suggestion.name)"
+                >
+                  <span class="suggestion-icon" aria-hidden="true">✳</span>
+                  <span class="suggestion-copy"
+                    ><strong>{{ suggestion.name }}</strong
+                    ><small>in {{ categoryLabel(suggestion.category) }}</small></span
+                  >
+                </button>
+              } @empty {
+                @if (!loading()) {
+                  <p class="no-suggestions">No matching product names</p>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <label class="category-field"
+        ><span>Category</span>
+        <select
+          name="category"
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="onCategoryChange($event)"
+        >
+          <option value="">All categories</option>
+          @for (category of categories; track category.value) {
+            <option [value]="category.value">{{ category.label }}</option>
+          }
+        </select>
+      </label>
+      @if (showClothingFilters) {
+        <label class="detail-filter-field"
+          ><span>Gender</span>
+          <select
+            aria-label="Filter clothing by gender"
+            [ngModel]="selectedGender()"
+            (ngModelChange)="selectedGender.set($event); loadDetailFilter()"
+          >
+            <option value="">All clothing</option>
+            <option value="MEN">Men</option>
+            <option value="WOMEN">Women</option>
+            <option value="UNISEX">Unisex</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </label>
+      }
+      @if (showFoodFilters) {
+        <label class="detail-filter-field"
+          ><span>Protein per serving</span>
+          <select
+            aria-label="Filter food by minimum protein"
+            [ngModel]="minimumProtein()"
+            (ngModelChange)="minimumProtein.set($event); loadDetailFilter()"
+          >
+            <option value="">Any amount</option>
+            <option value="5">At least 5 g</option>
+            <option value="10">At least 10 g</option>
+            <option value="20">At least 20 g</option>
+            <option value="30">At least 30 g</option>
+          </select>
+        </label>
+      }
+      <button class="search-button" type="submit">Search</button>
+    </form>
+
+    @if (loading()) {
+      <p class="state-message" role="status">Loading listings…</p>
+    } @else if (error()) {
+      <section class="state-card" role="alert">
+        <h2>Could not load listings</h2>
+        <p>{{ error() }}</p>
+        <button class="secondary-button" type="button" (click)="searchProducts()">Try again</button>
+      </section>
+    } @else if (visibleListings().length === 0) {
+      <section class="state-card">
+        <h2>No products found</h2>
+        <p>Try a different search or category, or list the first item in this category.</p>
+        <a class="secondary-button" routerLink="/sell">List an item</a>
+      </section>
+    } @else {
+      <div class="results-toolbar">
+        @if (searchSubmitted() && searchText().trim()) {
+          <p class="results-caption">
+            {{ visibleListings().length }} listings matching
+            <strong>{{ searchText().trim() }}</strong>
+          </p>
+        } @else {
+          <span></span>
+        }
+        <button class="randomize-button" type="button" (click)="randomizeResults()">
+          ↻ Randomize
+        </button>
+      </div>
+      <section class="product-grid" aria-label="Marketplace listings">
+        @for (listing of visibleListings(); track listing.id) {
+          <a class="product-card" [routerLink]="['/products', listing.id]">
+            @if (hasPhoto(listing)) {
+              <img
+                class="catalog-photo"
+                [src]="listing.photoUrl"
+                [alt]="listing.title + ' product photo'"
+                loading="lazy"
+                (error)="markPhotoUnavailable(listing.id)"
+              />
+            } @else {
+              <span class="product-icon" aria-label="No product photo available">✳</span>
+            }
+            <span class="category-label">{{ categoryLabel(listing.category) }}</span>
+            <h2>{{ listing.title }}</h2>
+            <span class="listing-condition">{{ conditionLabel(listing.condition) }}</span>
+            <strong class="price">₹{{ listing.price }}</strong>
+            <span class="stock-label">{{ stockLabel(listing.quantityAvailable) }}</span>
+            <span class="seller-count"
+              >{{ listing.sellerName }} · View details <span aria-hidden="true">→</span></span
+            >
+          </a>
+        }
+      </section>
+    }
+  </main>
+</div>

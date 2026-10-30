@@ -1,0 +1,166 @@
+<!-- Keep reviews and product questions below the seller offer comparison. -->
+<section class="engagement" aria-label="Product reviews and questions">
+  <section class="engagement-section" aria-labelledby="reviews-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">COMMUNITY FEEDBACK</p>
+        <h2 id="reviews-title">Seller reviews</h2>
+      </div>
+      <span class="section-count">{{ listingReviews().length }} reviews</span>
+    </div>
+    <p class="section-note">Community feedback is not purchase-verified yet.</p>
+
+    @if (currentUserId() && reviewableOffer()) {
+      <form class="engagement-form review-form" (ngSubmit)="submitReview()">
+        <p class="offer-review-context">Reviewing this seller · ₹{{ reviewableOffer()?.price }}</p>
+        <label for="review-rating">Rating</label>
+        <select
+          id="review-rating"
+          name="reviewRating"
+          [ngModel]="selectedRating()"
+          (ngModelChange)="setRating($event)"
+        >
+          <option value="5">★★★★★ · Excellent</option>
+          <option value="4">★★★★ · Good</option>
+          <option value="3">★★★ · Okay</option>
+          <option value="2">★★ · Poor</option>
+          <option value="1">★ · Very poor</option>
+        </select>
+        <label for="review-comment">Your review</label>
+        <textarea
+          id="review-comment"
+          name="reviewComment"
+          required
+          minlength="3"
+          maxlength="1000"
+          rows="3"
+          [ngModel]="reviewComment()"
+          (ngModelChange)="reviewComment.set($event)"
+          placeholder="Share your experience with this seller."
+        ></textarea>
+        <button class="engagement-button" type="submit" [disabled]="savingReview()">
+          {{ savingReview() ? 'Saving…' : 'Post review' }}
+        </button>
+      </form>
+    } @else if (!currentUserId()) {
+      <p class="signin-note"><a routerLink="/auth">Sign in</a> to leave a seller review.</p>
+    } @else {
+      <p class="signin-note">You cannot review your own offers.</p>
+    }
+
+    @if (listingReviews().length > 0) {
+      <div class="review-list">
+        @for (review of listingReviews(); track review.id) {
+          <article class="review-card">
+            <div class="review-topline">
+              <strong>{{ review.reviewerName }}</strong
+              ><span class="stars" [attr.aria-label]="review.rating + ' out of 5 stars'"
+                >{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</span
+              >
+            </div>
+            <p>{{ review.comment }}</p>
+            <small
+              >Seller: {{ review.sellerName }} · {{ review.createdAt | date: 'mediumDate' }}</small
+            >
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-note">No seller reviews yet.</p>
+    }
+  </section>
+
+  <section class="engagement-section" aria-labelledby="questions-title">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">ASK THE CAMPUS</p>
+        <h2 id="questions-title">Questions & answers</h2>
+      </div>
+      <span class="section-count">{{ questions().length }} questions</span>
+    </div>
+
+    @if (currentUserId()) {
+      <form class="engagement-form question-form" (ngSubmit)="submitQuestion()">
+        <label for="product-question">Ask this seller about this offer</label>
+        <textarea
+          id="product-question"
+          name="productQuestion"
+          required
+          minlength="10"
+          maxlength="500"
+          rows="3"
+          [ngModel]="questionDraft()"
+          (ngModelChange)="questionDraft.set($event)"
+          placeholder="Ask about condition, size, or included items."
+        ></textarea>
+        <button class="engagement-button" type="submit" [disabled]="savingQuestion()">
+          {{ savingQuestion() ? 'Posting…' : 'Post question' }}
+        </button>
+      </form>
+    } @else {
+      <p class="signin-note"><a routerLink="/auth">Sign in</a> to ask a question.</p>
+    }
+
+    @if (loading()) {
+      <p class="empty-note" role="status">Loading discussion…</p>
+    } @else if (questions().length > 0) {
+      <div class="question-list">
+        @for (question of questions(); track question.id) {
+          <article class="question-card">
+            <div class="question-copy">
+              <span class="question-mark" aria-hidden="true">Q</span>
+              <div>
+                <p>{{ question.question }}</p>
+                <small
+                  >{{ question.askerName }} · {{ question.createdAt | date: 'mediumDate' }}</small
+                >
+              </div>
+            </div>
+            @for (answer of question.answers; track answer.id) {
+              <div class="answer-copy">
+                <span class="answer-mark" aria-hidden="true">A</span>
+                <div>
+                  <p>{{ answer.answer }}</p>
+                  <small
+                    >{{ answer.sellerName }} · {{ answer.createdAt | date: 'mediumDate' }}</small
+                  >
+                </div>
+              </div>
+            }
+            @if (canCurrentUserAnswer()) {
+              <form class="answer-form" (ngSubmit)="submitAnswer(question.id)">
+                <label [for]="'answer-' + question.id">Your seller response</label>
+                <textarea
+                  [id]="'answer-' + question.id"
+                  [name]="'answer-' + question.id"
+                  required
+                  minlength="2"
+                  maxlength="1000"
+                  rows="2"
+                  [ngModel]="answerDraft(question.id, question.answers)"
+                  (ngModelChange)="setAnswerDraft(question.id, $event)"
+                ></textarea>
+                <button
+                  class="text-button"
+                  type="submit"
+                  [disabled]="savingAnswerId() === question.id"
+                >
+                  {{ savingAnswerId() === question.id ? 'Saving…' : 'Save response' }}
+                </button>
+              </form>
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-note">No questions yet. Be the first to ask.</p>
+    }
+  </section>
+
+  @if (error()) {
+    <p class="form-feedback error" role="alert">{{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="form-feedback success" role="status">{{ success() }}</p>
+  }
+</section>

@@ -1,0 +1,258 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #faf9f5;
+  color: #282923;
+}
+.details-page {
+  min-height: 100vh;
+  padding: 0 28px 60px;
+}
+.details-header {
+  display: flex;
+  max-width: 1120px;
+  height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+  border-bottom: 1px solid #e9e7e1;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #22231f;
+  font-size: 21px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: #22231f;
+  color: #faf8f2;
+  font-size: 17px;
+}
+.brand-accent {
+  color: #e47148;
+}
+.details-content {
+  max-width: 1050px;
+  margin: 0 auto;
+}
+.back-link {
+  display: inline-block;
+  margin: 24px 0;
+  color: #9b593d;
+  text-decoration: none;
+}
+.listing-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.9fr);
+  gap: 34px;
+  align-items: start;
+  margin: 20px 0 50px;
+}
+.photo-panel {
+  display: grid;
+  min-height: 460px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #eae7df;
+  border-radius: 18px;
+  background: #fffefa;
+}
+.photo-panel img {
+  width: 100%;
+  height: 460px;
+  object-fit: contain;
+}
+.photo-placeholder {
+  display: grid;
+  width: 100%;
+  height: 460px;
+  place-items: center;
+  background: #f3eee5;
+  color: #d16f4b;
+  font-size: 48px;
+}
+.eyebrow {
+  color: #b46b4c;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.detail-copy h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -1.5px;
+}
+.condition {
+  color: #77756e;
+}
+.price {
+  display: block;
+  margin: 20px 0 4px;
+  font-size: 30px;
+}
+.stock {
+  color: #557354;
+  font-weight: 650;
+}
+.description {
+  margin: 20px 0;
+  color: #57574f;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.metadata {
+  display: flex;
+  gap: 28px;
+  margin: 20px 0;
+}
+.metadata div {
+  display: grid;
+  gap: 5px;
+}
+.metadata dt {
+  color: #8a877f;
+  font-size: 12px;
+}
+.metadata dd {
+  margin: 0;
+  font-weight: 600;
+}
+.seller-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #eae7df;
+  border-radius: 12px;
+  background: #fffefa;
+  color: inherit;
+  text-decoration: none;
+}
+.seller-link img,
+.seller-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.seller-avatar {
+  display: grid;
+  place-items: center;
+  background: #f8e9e0;
+  color: #aa5739;
+  font-weight: 700;
+}
+.seller-link span:last-child {
+  display: grid;
+  gap: 4px;
+}
+.seller-link small {
+  color: #77756e;
+}
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+.wishlist-button,
+.primary-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #e6cfc2;
+  border-radius: 9px;
+  background: #fffefa;
+  color: #a95638;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wishlist-button.is-saved {
+  background: #f9e8df;
+}
+.primary-button {
+  border-color: #272923;
+  background: #272923;
+  color: #fff;
+}
+.request-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid #eae7df;
+  border-radius: 14px;
+  background: #fffefa;
+}
+.request-form h2 {
+  margin: 0;
+}
+.request-form p {
+  margin: 0;
+  color: #77756e;
+  line-height: 1.5;
+}
+.request-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.request-form input,
+.request-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #dedbd3;
+  border-radius: 8px;
+  font: inherit;
+}
+.feedback {
+  color: #557354;
+}
+.feedback a {
+  color: #a95638;
+}
+.out-of-stock {
+  color: #9b5143;
+}
+.page-state,
+.state-card {
+  padding: 32px;
+  color: #77756e;
+}
+.state-card {
+  border: 1px solid #eae7df;
+  border-radius: 14px;
+  background: #fffefa;
+}
+.state-card a {
+  color: #a95638;
+}
+@media (max-width: 720px) {
+  .details-page {
+    padding: 0 16px 40px;
+  }
+  .listing-detail {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .photo-panel,
+  .photo-panel img,
+  .photo-placeholder {
+    min-height: 300px;
+    height: 300px;
+  }
+}

@@ -1,0 +1,7 @@
+# Keep local settings and installed packages out of source control.
+.env
+node_modules/
+uploads/
+
+# Prisma generates this client from prisma/schema.prisma.
+src/generated/prisma/

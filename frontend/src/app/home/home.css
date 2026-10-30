@@ -1,0 +1,100 @@
+/* Let Angular's page fill the browser while keeping the content centered. */
+:host { display: block; min-height: 100vh; }
+.page-shell { max-width: 1240px; min-height: 100vh; margin: 0 auto; padding: 0 54px; display: flex; flex-direction: column; }
+
+/* Header brand and campus label. */
+.topbar { height: 92px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e9e7e1; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #22231f; font-size: 21px; font-weight: 750; letter-spacing: -1.1px; text-decoration: none; }
+.brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; background: #22231f; color: #faf8f2; font-size: 17px; letter-spacing: -1.4px; }
+.brand-accent { color: #e47148; }
+.campus-tag { display: flex; align-items: center; gap: 9px; color: #565650; font-size: 13px; font-weight: 600; }
+.topbar-actions { display: flex; align-items: center; gap: 22px; }
+.sign-in-link { padding: 10px 15px; border: 1px solid #e7d8cf; border-radius: 9px; color: #a95638; font-size: 12px; font-weight: 650; text-decoration: none; }
+.explore-link { display: inline-flex; margin-top: 20px; padding: 12px 17px; background: #272923; border-color: #272923; color: #fffdf8; }
+.campus-dot, .connection-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #e47a50; }
+
+/* Arrange the main welcome text and decorative campus-goods illustration. */
+main { flex: 1; }
+.hero { min-height: 458px; display: grid; grid-template-columns: 1fr 0.92fr; align-items: center; gap: 30px; padding: 34px 0 45px; }
+.hero-copy { position: relative; z-index: 1; padding: 20px 0; }
+.eyebrow { display: flex; align-items: center; gap: 11px; color: #858279; font-size: 10px; font-weight: 750; letter-spacing: 2px; }
+.eyebrow-line { width: 22px; height: 2px; background: #e87b53; }
+h1 { margin: 23px 0 18px; color: #242520; font-size: clamp(48px, 6vw, 75px); line-height: 0.99; letter-spacing: -5.6px; font-weight: 720; }
+h1 span { color: #df7751; }
+.intro { max-width: 445px; margin: 0; color: #6f6d66; font-size: 15px; line-height: 1.8; }
+.launch-note { display: flex; gap: 13px; align-items: center; margin-top: 29px; color: #77756e; font-size: 12px; line-height: 1.7; }
+.launch-note strong { color: #373832; font-size: 13px; font-weight: 650; }
+.sparkle { display: grid; place-items: center; width: 33px; height: 33px; flex: 0 0 33px; border-radius: 10px; background: #f5e5da; color: #d76e4c; font-size: 18px; }
+
+/* Build the illustration from simple CSS shapes and floating item cards. */
+.hero-art { position: relative; width: min(100%, 460px); height: 360px; justify-self: end; overflow: hidden; border-radius: 46% 54% 48% 52% / 44% 44% 56% 56%; background: #f2e8d9; }
+.hero-art::before { content: ""; position: absolute; inset: 21px; border: 1px solid rgba(104, 87, 65, .13); border-radius: inherit; }
+.orbit { position: absolute; border: 1px solid rgba(104, 87, 65, .12); border-radius: 50%; transform: rotate(-24deg); }
+.orbit-one { width: 390px; height: 185px; left: 34px; top: 95px; }
+.orbit-two { width: 300px; height: 310px; left: 80px; top: 26px; }
+.sun { position: absolute; top: 66px; right: 69px; width: 90px; height: 90px; border-radius: 50%; background: #edb46c; opacity: .9; }
+.floating-card { position: absolute; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border: 1px solid rgba(59, 53, 44, .07); border-radius: 15px; background: #fffdf8; box-shadow: 0 12px 28px rgba(74, 58, 36, .1); }
+.card-emoji { display: grid; place-items: center; width: 46px; height: 48px; border-radius: 10px; background: #f4eee5; font-size: 26px; }
+.card-lines { display: grid; gap: 7px; width: 68px; }
+.card-lines i { display: block; height: 6px; border-radius: 8px; background: #e9e5dc; }
+.card-lines i:first-child { width: 100%; background: #c8d8cb; }
+.card-lines i:last-child { width: 62%; }
+.card-book { left: 54px; top: 75px; transform: rotate(-8deg); }
+.card-tote { right: 36px; top: 160px; transform: rotate(7deg); }
+.card-tote .card-emoji { background: #f6e1d4; }
+.card-tote .card-lines i:first-child { background: #e8baa6; }
+.card-headphones { left: 100px; bottom: 48px; transform: rotate(4deg); }
+.card-headphones .card-emoji { background: #e9e5f1; }
+.card-headphones .card-lines i:first-child { background: #b8accf; }
+.hero-sticker { position: absolute; right: 80px; bottom: 42px; display: grid; place-content: center; width: 62px; height: 62px; border-radius: 50%; background: #d97a56; color: white; text-align: center; font-size: 10px; font-weight: 800; line-height: 1.3; letter-spacing: 1px; transform: rotate(12deg); }
+.art-spark { position: absolute; color: #d7825d; }
+.spark-a { left: 87px; top: 173px; font-size: 20px; }
+.spark-b { right: 92px; top: 92px; font-size: 23px; }
+
+/* Principles cards and the live backend connection label. */
+.values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 5px 0 44px; }
+.value-card { position: relative; display: flex; align-items: flex-start; gap: 14px; min-height: 124px; padding: 22px 20px; border: 1px solid #eae7df; border-radius: 15px; background: rgba(255,255,255,.42); }
+.value-number { padding-top: 3px; color: #d68462; font-size: 10px; font-weight: 750; letter-spacing: 1px; }
+.value-card h2 { margin: 0 0 7px; color: #34352f; font-size: 14px; font-weight: 680; }
+.value-card p { max-width: 190px; margin: 0; color: #858279; font-size: 12px; line-height: 1.65; }
+.value-icon { position: absolute; right: 17px; bottom: 14px; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 9px; font-size: 15px; font-weight: 700; }
+.icon-orange { color: #cb7250; background: #f8e9e0; }
+.icon-green { color: #66816c; background: #e7eee5; }
+.icon-purple { color: #81739a; background: #eeeaf4; }
+.footer { min-height: 69px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid #e9e7e1; color: #99968e; font-size: 11px; }
+.footer-separator { padding: 0 5px; color: #d17a59; }
+.connection { display: inline-flex; align-items: center; gap: 8px; color: #817f77; }
+.connection-dot { width: 7px; height: 7px; background: #d7ae6d; }
+.connection.is-online .connection-dot { background: #63a77a; box-shadow: 0 0 0 3px #63a77a22; }
+.connection.is-offline .connection-dot { background: #d37058; }
+
+/* Adjust spacing and illustration sizes for tablet screens. */
+@media (max-width: 800px) {
+  .page-shell { padding: 0 28px; }
+  .hero { grid-template-columns: 1fr 0.82fr; gap: 5px; }
+  .hero-art { height: 320px; }
+  .card-book { left: 26px; }
+  .card-tote { right: 14px; }
+  .values { gap: 9px; }
+  .value-card { padding: 18px 13px; gap: 9px; }
+  .value-card p { max-width: 145px; }
+}
+
+/* Stack the content vertically on narrow phone screens. */
+@media (max-width: 620px) {
+  .page-shell { padding: 0 21px; }
+  .topbar { height: 75px; }
+  .topbar-actions { gap: 8px; }
+  .campus-tag { display: none; }
+  .sign-in-link { padding: 8px 9px; font-size: 11px; }
+  .hero { display: flex; flex-direction: column; align-items: stretch; padding: 34px 0 30px; gap: 15px; }
+  .hero-copy { padding: 10px 0 0; }
+  h1 { font-size: clamp(49px, 13vw, 68px); letter-spacing: -4px; }
+  .intro { max-width: 460px; font-size: 14px; }
+  .launch-note { margin-top: 20px; }
+  .hero-art { width: min(100%, 420px); height: 280px; align-self: center; }
+  .values { grid-template-columns: 1fr; margin-bottom: 28px; }
+  .value-card { min-height: 92px; padding: 18px; }
+  .value-card p { max-width: none; }
+  .footer { align-items: flex-start; flex-direction: column; justify-content: center; min-height: 76px; gap: 7px; font-size: 10px; }
+}

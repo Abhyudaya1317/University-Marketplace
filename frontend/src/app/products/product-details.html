@@ -1,0 +1,157 @@
+<div class="details-page">
+  <header class="details-header">
+    <a class="brand" routerLink="/" aria-label="CampusX home"
+      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    >
+    <app-account-navigation />
+  </header>
+  <main class="details-content">
+    <a class="back-link" routerLink="/explore">← Back to Explore</a>
+    @if (loading()) {
+      <p class="page-state" role="status">Loading listing…</p>
+    } @else if (error()) {
+      <section class="state-card" role="alert">
+        <h1>Listing unavailable</h1>
+        <p>{{ error() }}</p>
+        <a routerLink="/explore">Return to Explore</a>
+      </section>
+    } @else if (listing(); as item) {
+      <section class="listing-detail">
+        <div class="photo-panel">
+          @if (item.photoUrl && !imageUnavailable()) {
+            <img
+              [src]="item.photoUrl"
+              [alt]="item.title + ' product photo'"
+              (error)="imageUnavailable.set(true)"
+            />
+          } @else {
+            <div class="photo-placeholder" aria-label="No product photo available">✳</div>
+          }
+        </div>
+        <div class="detail-copy">
+          <p class="eyebrow">{{ categoryLabel(item.category) }}</p>
+          <h1>{{ item.title }}</h1>
+          <p class="condition">{{ categoryLabel(item.condition) }}</p>
+          <strong class="price">₹{{ item.price }}</strong>
+          <p class="stock">{{ stockLabel(item.quantityAvailable) }}</p>
+          <p class="description">{{ item.description }}</p>
+          @if (item.category === 'CLOTHING' && item.clothingGender) {
+            <p><strong>Gender:</strong> {{ categoryLabel(item.clothingGender) }}</p>
+          }
+          @if (item.category === 'FOOD' && item.proteinGrams) {
+            <p><strong>Protein:</strong> {{ item.proteinGrams }} g per serving</p>
+          }
+          <dl class="metadata">
+            <div>
+              <dt>Pickup area</dt>
+              <dd>{{ item.location }}</dd>
+            </div>
+            <div>
+              <dt>Listed</dt>
+              <dd>{{ item.createdAt | date: 'mediumDate' }}</dd>
+            </div>
+          </dl>
+          <a class="seller-link" [routerLink]="['/sellers', item.seller.id]">
+            @if (item.seller.avatarUrl) {
+              <img [src]="item.seller.avatarUrl" [alt]="item.seller.fullName" />
+            } @else {
+              <span class="seller-avatar">{{ item.seller.fullName.charAt(0) }}</span>
+            }
+            <span
+              ><strong>{{ item.seller.fullName }}</strong
+              ><small>
+                @if (item.seller.reviewCount) {
+                  {{ item.seller.averageRating }} / 5 · {{ item.seller.reviewCount }} reviews
+                } @else {
+                  No reviews yet
+                }
+              </small></span
+            >
+          </a>
+          <div class="detail-actions">
+            <button
+              type="button"
+              class="wishlist-button"
+              [class.is-saved]="saved()"
+              [attr.aria-pressed]="saved()"
+              (click)="toggleSaved()"
+              [disabled]="saving()"
+            >
+              {{ saved() ? '♥ Saved' : '♡ Save item' }}
+            </button>
+            @if (currentUserId() !== null && currentUserId() !== item.seller.id) {
+              <button type="button" class="wishlist-button" (click)="messageSeller()" [disabled]="startingConversation()">
+                {{ startingConversation() ? 'Opening chat…' : 'Message seller' }}
+              </button>
+            } @else if (currentUserId() === null) {
+              <a class="wishlist-button" routerLink="/auth">Sign in to message</a>
+            }
+            @if (currentUserId() !== item.seller.id && item.quantityAvailable > 0) {
+              <a class="primary-button" href="#request-form">Request to buy</a>
+            }
+          </div>
+          @if (feedback()) {
+            <p class="feedback" role="status">
+              {{ feedback() }}
+              @if (feedback().startsWith('Sign in')) {
+                <a routerLink="/auth">Sign in</a>
+              }
+            </p>
+          }
+          @if (currentUserId() !== item.seller.id && item.quantityAvailable > 0) {
+            <form id="request-form" class="request-form" (ngSubmit)="requestToBuy()">
+              <p class="eyebrow">CASH ON DELIVERY</p>
+              <h2>Request this item</h2>
+              <p>The seller will review your request and arrange a time and place with you.</p>
+              <label
+                >Quantity<input
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  [max]="item.quantityAvailable"
+                  step="1"
+                  required
+                  [ngModel]="quantity()"
+                  (ngModelChange)="quantity.set(+$event)"
+              /></label>
+              <label
+                >Your phone number<input
+                  name="buyerPhone"
+                  type="tel"
+                  required
+                  minlength="7"
+                  maxlength="30"
+                  autocomplete="tel"
+                  placeholder="For pickup coordination"
+                  [ngModel]="buyerPhone()"
+                  (ngModelChange)="buyerPhone.set($event)"
+              /></label>
+              <label
+                >Note to seller (optional)<textarea
+                  name="buyerMessage"
+                  rows="2"
+                  maxlength="500"
+                  [ngModel]="buyerMessage()"
+                  (ngModelChange)="buyerMessage.set($event)"
+                ></textarea>
+              </label>
+              <button class="primary-button" type="submit" [disabled]="submittingOrder()">
+                {{ submittingOrder() ? 'Sending…' : 'Send request' }}
+              </button>
+              @if (orderFeedback()) {
+                <p class="feedback" role="status">
+                  {{ orderFeedback() }} <a routerLink="/orders">My orders</a>
+                </p>
+              }
+            </form>
+          } @else if (item.quantityAvailable === 0) {
+            <p class="out-of-stock">This seller is currently out of stock.</p>
+          } @else {
+            <p class="out-of-stock">This is your own listing.</p>
+          }
+        </div>
+      </section>
+      <app-product-engagement [offers]="engagementOffers()" [listingId]="item.id" />
+    }
+  </main>
+</div>

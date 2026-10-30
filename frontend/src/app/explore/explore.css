@@ -1,0 +1,474 @@
+/* Give the marketplace a warm background and a centered, readable content area. */
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #faf9f5;
+  color: #282923;
+}
+.market-page {
+  min-height: 100vh;
+  padding: 0 28px 60px;
+}
+.market-header {
+  display: flex;
+  max-width: 1120px;
+  height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+  border-bottom: 1px solid #e9e7e1;
+}
+
+/* Keep the brand and signed-in account navigation aligned across pages. */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #22231f;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -1.1px;
+  text-decoration: none;
+}
+.brand-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 11px;
+  background: #22231f;
+  color: #faf8f2;
+  font-size: 17px;
+  letter-spacing: -1.4px;
+}
+.brand-accent {
+  color: #e47148;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.nav-link {
+  color: #737168;
+  font-size: 13px;
+  text-decoration: none;
+}
+.nav-link.active {
+  color: #a95638;
+  font-weight: 700;
+}
+.nav-button {
+  padding: 10px 14px;
+  border: 1px solid #e7d8cf;
+  border-radius: 9px;
+  color: #a95638;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+/* Use a compact introduction and keep category labels consistent on cards. */
+.market-content {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.page-intro {
+  padding: 48px 0 24px;
+}
+.eyebrow,
+.category-label {
+  color: #b46b4c;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.page-intro h1 {
+  margin: 9px 0;
+  color: #242520;
+  font-size: clamp(32px, 5vw, 48px);
+  letter-spacing: -2px;
+}
+.page-intro > p:last-child {
+  margin: 0;
+  color: #77756e;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Search applies across the marketplace; category-specific controls are optional. */
+.filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) 240px auto;
+  gap: 12px;
+  align-items: end;
+  margin: 8px 0 28px;
+  padding: 17px;
+  border: 1px solid #eae7df;
+  border-radius: 14px;
+  background: #fffefa;
+}
+.filters label,
+.search-field > label {
+  display: grid;
+  gap: 7px;
+  color: #55554e;
+  font-size: 11px;
+  font-weight: 650;
+}
+.detail-filter-field {
+  min-width: 150px;
+}
+.filters input,
+.filters select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 43px;
+  padding: 10px 12px;
+  border: 1px solid #dfddd5;
+  border-radius: 9px;
+  outline: none;
+  background: #fff;
+  color: #262721;
+  font: inherit;
+  font-size: 13px;
+}
+.filters input:focus,
+.filters select:focus {
+  border-color: #d97955;
+  box-shadow: 0 0 0 3px #d9795520;
+}
+.search-field {
+  display: grid;
+  gap: 7px;
+  color: #55554e;
+  font-size: 11px;
+  font-weight: 650;
+}
+.search-control {
+  position: relative;
+}
+.search-control input {
+  min-height: 48px;
+  padding-left: 42px;
+  border-color: #d7d9db;
+  border-radius: 10px;
+  font-size: 15px;
+}
+.search-control input::-webkit-search-cancel-button {
+  display: none;
+}
+.search-icon {
+  position: absolute;
+  z-index: 1;
+  top: 7px;
+  left: 13px;
+  color: #77756e;
+  font-size: 25px;
+  line-height: 1;
+}
+.clear-search {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  right: 10px;
+  border: 0;
+  background: transparent;
+  color: #77756e;
+  cursor: pointer;
+  font-size: 23px;
+  line-height: 1;
+}
+.search-button {
+  min-height: 43px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 9px;
+  background: #272923;
+  color: #fffdf8;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+.search-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+/* Show only a few real matches in the type-ahead suggestion panel. */
+.suggestions {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border: 1px solid #e6e5e2;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 10px 28px #2020201c;
+}
+.suggestion {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 13px;
+  border: 0;
+  background: #fff;
+  color: #34352f;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.suggestion + .suggestion {
+  border-top: 1px solid #f0efed;
+}
+.suggestion:hover,
+.suggestion:focus-visible {
+  background: #f7f8fa;
+  outline: none;
+}
+.suggestion-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border-radius: 9px;
+  background: #f8e9e0;
+  color: #cb7250;
+}
+.suggestion-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.suggestion-copy strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.suggestion-copy small,
+.no-suggestions {
+  color: #77756e;
+  font-size: 11px;
+}
+.no-suggestions {
+  margin: 0;
+  padding: 16px;
+}
+
+/* Keep listing results in responsive cards, with seller-specific prices and photos. */
+.results-caption {
+  margin: 0;
+  color: #77756e;
+  font-size: 13px;
+}
+.results-caption strong {
+  color: #34352f;
+}
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.randomize-button {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #e7d8cf;
+  border-radius: 9px;
+  background: #fffefa;
+  color: #a95638;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+.randomize-button:hover {
+  transform: translateY(-1px);
+  background: #fcf1ea;
+}
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.product-card {
+  display: flex;
+  min-height: 225px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  border: 1px solid #eae7df;
+  border-radius: 15px;
+  background: #fffefa;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px #3a342311;
+}
+.product-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: #f8e9e0;
+  color: #cb7250;
+  font-size: 18px;
+}
+.catalog-photo {
+  display: block;
+  width: 100%;
+  height: 150px;
+  margin: 0 0 13px;
+  border-radius: 11px;
+  background: #f6f4ef;
+  object-fit: cover;
+}
+.category-label {
+  font-size: 9px;
+}
+.product-card h2 {
+  margin: 6px 0 8px;
+  font-size: 19px;
+  letter-spacing: -0.4px;
+  overflow-wrap: anywhere;
+}
+.listing-condition {
+  color: #77756e;
+  font-size: 11px;
+}
+.price {
+  margin-top: auto;
+  padding-top: 9px;
+  color: #31332b;
+  font-size: 23px;
+  font-weight: 750;
+}
+.stock-label {
+  margin-top: 6px;
+  color: #557354;
+  font-size: 11px;
+  font-weight: 650;
+}
+.seller-count {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 15px;
+  color: #8a6657;
+  font-size: 11px;
+}
+
+/* Explain loading, errors, and empty searches without leaving a blank page. */
+.state-message {
+  padding: 30px;
+  color: #77756e;
+  text-align: center;
+}
+.state-card {
+  margin: 25px 0;
+  padding: 30px;
+  border: 1px solid #eae7df;
+  border-radius: 15px;
+  background: #fffefa;
+  text-align: center;
+}
+.state-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.state-card p {
+  margin: 0 0 17px;
+  color: #77756e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.secondary-button {
+  display: inline-flex;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px solid #e7d8cf;
+  border-radius: 9px;
+  background: #fffefa;
+  color: #a95638;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+/* Let the filter controls and product grid fit phones and smaller tablets. */
+@media (max-width: 760px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .search-button {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 520px) {
+  .market-page {
+    padding: 0 16px 40px;
+  }
+  .market-header {
+    height: 70px;
+  }
+  nav {
+    gap: 10px;
+  }
+  .nav-link {
+    font-size: 11px;
+  }
+  .nav-button {
+    padding: 8px;
+    font-size: 10px;
+  }
+  .brand {
+    gap: 7px;
+    font-size: 17px;
+  }
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .page-intro {
+    padding-top: 34px;
+  }
+  .filters {
+    grid-template-columns: 1fr;
+  }
+  .search-button {
+    grid-column: auto;
+  }
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+  .product-card {
+    min-height: 205px;
+  }
+  .results-toolbar {
+    align-items: flex-start;
+  }
+}

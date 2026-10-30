@@ -1,0 +1,204 @@
+<!-- Keep the seller page focused on public offers and public reputation. -->
+<div class="seller-page">
+  <header class="seller-header">
+    <a class="brand" routerLink="/" aria-label="CampusX home"
+      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    >
+    <app-account-navigation />
+  </header>
+
+  <main class="seller-content">
+    <a class="back-link" routerLink="/explore">← Back to Explore</a>
+    @if (loading()) {
+      <p class="state-message" role="status">Loading seller profile…</p>
+    } @else if (error()) {
+      <section class="state-card" role="alert">
+        <h1>Seller profile unavailable</h1>
+        <p>{{ error() }}</p>
+        <a routerLink="/explore">Return to Explore</a>
+      </section>
+    } @else if (seller(); as currentSeller) {
+      <section class="profile-heading">
+        @if (currentSeller.avatarUrl) {
+          <img
+            class="profile-avatar"
+            [src]="currentSeller.avatarUrl"
+            [alt]="currentSeller.fullName + ' profile photo'"
+          />
+        } @else {
+          <div class="profile-avatar" aria-hidden="true">
+            {{ currentSeller.fullName.charAt(0) }}
+          </div>
+        }
+        <div class="profile-copy">
+          <p class="eyebrow">CAMPUSX SELLER</p>
+          <h1>{{ currentSeller.fullName }}</h1>
+          <p>
+            {{ currentSeller.activeListingCount }} active
+            {{ currentSeller.activeListingCount === 1 ? 'listing' : 'listings' }}
+            <span class="meta-separator">·</span>
+            @if (currentSeller.reviewCount) {
+              {{ currentSeller.averageRating }} / 5 from {{ currentSeller.reviewCount }}
+              {{ currentSeller.reviewCount === 1 ? 'review' : 'reviews' }}
+            } @else {
+              No reviews yet
+            }
+          </p>
+        </div>
+        @if (isOwnProfile()) {
+          <a class="save-button secondary" routerLink="/dashboard">Your dashboard</a>
+        } @else if (isSignedIn()) {
+          <button class="save-button" type="button" [disabled]="busy()" (click)="toggleFavorite()">
+            {{ busy() ? 'Saving…' : isFavorite() ? '♥ Saved seller' : '♡ Save seller' }}
+          </button>
+        } @else {
+          <a class="save-button" routerLink="/auth">Sign in to save seller</a>
+        }
+      </section>
+
+      @if (notice()) {
+        <p class="notice" role="status">{{ notice() }}</p>
+      }
+
+      <section class="listing-section" aria-labelledby="active-listings-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SELLER CATALOG</p>
+            <h2 id="active-listings-title">
+              {{ isOwnProfile() ? 'Products you are selling' : 'Active listings' }}
+            </h2>
+          </div>
+          <span>{{ currentSeller.activeListingCount }}</span>
+        </div>
+        @if (isOwnProfile() && stockNotice()) {
+          <p class="owner-notice" role="status">{{ stockNotice() }}</p>
+        }
+        @if (listings().length === 0) {
+          <div class="empty-card">
+            <h3>No active listings yet</h3>
+            <p>This seller has no items available right now.</p>
+          </div>
+        } @else {
+          <div class="listing-grid">
+            @for (listing of listings(); track listing.id) {
+              <article class="listing-card">
+                <a class="listing-main" [routerLink]="['/products', listing.id]">
+                  @if (listing.photoUrl) {
+                    <img
+                      class="listing-photo"
+                      [src]="listing.photoUrl"
+                      [alt]="listing.title"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="listing-photo placeholder" aria-hidden="true">✳</div>
+                  }
+                  <div class="listing-copy">
+                    <p class="eyebrow">{{ categoryLabel(listing.product.category) }}</p>
+                    <h3>{{ listing.title }}</h3>
+                    <p class="listing-description">{{ listing.description }}</p>
+                    <p class="listing-location">{{ listing.location }}</p>
+                    <span class="listing-date"
+                      >Listed {{ listing.createdAt | date: 'mediumDate' }}</span
+                    >
+                  </div>
+                  <strong class="listing-price">₹{{ listing.price }}</strong>
+                </a>
+                <p class="stock-state" [class.stock-empty]="listing.quantityAvailable === 0">
+                  {{ stockLabel(listing.quantityAvailable) }}
+                </p>
+                @if (isOwnProfile()) {
+                  <div class="stock-editor">
+                    <label [for]="'stock-' + listing.id">Available quantity</label>
+                    <input
+                      [id]="'stock-' + listing.id"
+                      type="number"
+                      min="0"
+                      max="9999"
+                      step="1"
+                      [ngModel]="stockValue(listing)"
+                      (ngModelChange)="setStockDraft(listing.id, $event)"
+                    />
+                    <button
+                      type="button"
+                      (click)="updateStock(listing.id)"
+                      [disabled]="stockBusyId() === listing.id"
+                    >
+                      {{ stockBusyId() === listing.id ? 'Saving…' : 'Update stock' }}
+                    </button>
+                  </div>
+                  <details class="request-details">
+                    <summary>
+                      Requests for this product ({{ listingRequests(listing.id).length }})
+                    </summary>
+                    @if (listingRequests(listing.id).length === 0) {
+                      <p class="no-requests">No pending buyer requests.</p>
+                    } @else {
+                      <div class="request-list">
+                        @for (request of listingRequests(listing.id); track request.id) {
+                          <article class="request-card">
+                            <div class="request-heading">
+                              <strong
+                                >{{ request.quantity }} requested · ₹{{
+                                  request.price
+                                }}
+                                each</strong
+                              ><small>{{ request.createdAt | date: 'medium' }}</small>
+                            </div>
+                            <p><strong>Buyer phone:</strong> {{ request.buyerPhone }}</p>
+                            @if (request.buyerMessage) {
+                              <p><strong>Buyer note:</strong> {{ request.buyerMessage }}</p>
+                            }
+                            <label [for]="'meeting-time-' + request.id">Meetup date and time</label>
+                            <input
+                              [id]="'meeting-time-' + request.id"
+                              type="datetime-local"
+                              required
+                              [ngModel]="meetingTimeFor(request.id)"
+                              (ngModelChange)="setMeetingTime(request.id, $event)"
+                            />
+                            <label [for]="'meeting-location-' + request.id">Meetup location</label>
+                            <input
+                              [id]="'meeting-location-' + request.id"
+                              type="text"
+                              required
+                              maxlength="120"
+                              [ngModel]="meetingLocationFor(request.id)"
+                              (ngModelChange)="setMeetingLocation(request.id, $event)"
+                              placeholder="e.g. Main library entrance"
+                            />
+                            <div class="request-actions">
+                              <button
+                                type="button"
+                                (click)="respondToRequest(request, 'accept')"
+                                [disabled]="requestBusyId() === request.id"
+                              >
+                                Accept and send meetup
+                              </button>
+                              <button
+                                class="decline-button"
+                                type="button"
+                                (click)="respondToRequest(request, 'decline')"
+                                [disabled]="requestBusyId() === request.id"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </article>
+                        }
+                      </div>
+                    }
+                  </details>
+                }
+              </article>
+            }
+          </div>
+        }
+      </section>
+      @if (isOwnProfile() && requestNotice()) {
+        <p class="owner-notice" role="status">{{ requestNotice() }}</p>
+      }
+      <p class="privacy-note">Seller contact details stay private on this page.</p>
+    }
+  </main>
+</div>

@@ -1,0 +1,335 @@
+// Create seller listings and return individual active marketplace offers.
+import { prisma } from "../../lib/prisma.js";
+import { CLOTHING_GENDERS, isValidProteinGrams, isValidQuantity, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
+import { productNamesMatch } from "./productGrouping.js";
+import { listingPhotoUrl, removeListingPhoto } from "./listingPhotoUpload.js";
+
+// Create a seller offer and reuse a shared product record for the same name/category.
+export async function createListing(request, response) {
+    const { name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition } = request.body ?? {};
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    const trimmedDescription = typeof description === "string" ? description.trim() : "";
+    const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
+    const trimmedLocation = typeof location === "string" ? location.trim() : "";
+    const photoUrl = request.file ? listingPhotoUrl(request.file.filename) : null;
+
+    // Use the same server-side validation rules for creating and editing offers.
+    const validationMessage = validateListingDetails(request.body ?? {});
+    if (validationMessage) {
+        await removeListingPhoto(request.file?.path);
+        return response.status(400).json({ success: false, message: validationMessage });
+    }
+
+    try {
+        const normalizedName = normalizeProductName(trimmedName);
+        // Save the shared product and seller offer together so neither can be left half-created.
+        const result = await prisma.$transaction(async (transaction) => {
+            const product = await transaction.product.upsert({
+                where: { normalizedName_category: { normalizedName, category } },
+                create: { name: trimmedName, normalizedName, category },
+                update: {}
+            });
+
+            const listing = await transaction.listing.create({
+                data: {
+                    productId: product.id,
+                    sellerId: request.user.id,
+                    title: trimmedName,
+                    description: trimmedDescription,
+                    price: priceText,
+                    phoneNumber: phoneNumber.trim(),
+                    quantityAvailable: Number(quantityAvailable),
+                    photoUrl,
+                    location: trimmedLocation,
+                    condition,
+                    clothingGender: category === "CLOTHING" ? clothingGender : null,
+                    proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null
+                },
+                include: { product: { select: { id: true, name: true, category: true } } }
+            });
+
+            return { listing };
+        });
+
+        const { listing } = result;
+
+        return response.status(201).json({
+            success: true,
+            listing: {
+                id: listing.id,
+                title: listing.title,
+                product: listing.product,
+                description: listing.description,
+                price: listing.price.toFixed(2),
+                photoUrl: listing.photoUrl,
+                location: listing.location,
+                condition: listing.condition,
+                clothingGender: listing.clothingGender,
+                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                status: listing.status,
+                quantityAvailable: Number.isSafeInteger(listing.quantityAvailable) ? listing.quantityAvailable : null,
+                createdAt: listing.createdAt
+            }
+        });
+    } catch {
+        await removeListingPhoto(request.file?.path);
+        return response.status(500).json({ success: false, message: "We could not create the listing. Please try again." });
+    }
+}
+
+// Let a seller adjust only their own active offer's available whole-item count.
+export async function updateListingStock(request, response) {
+    const listingId = Number(request.params.listingId);
+    const quantityAvailable = request.body?.quantityAvailable;
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
+    }
+    if (!isValidQuantity(quantityAvailable)) {
+        return response.status(400).json({ success: false, message: "Enter available stock as a whole number from 0 to 9,999." });
+    }
+
+    try {
+        const updated = await prisma.listing.updateMany({
+            where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
+            data: { quantityAvailable: Number(quantityAvailable) }
+        });
+        if (updated.count !== 1) {
+            return response.status(404).json({ success: false, message: "This active listing was not found on your account." });
+        }
+        return response.json({ success: true, quantityAvailable: Number(quantityAvailable) });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not update the stock count." });
+    }
+}
+
+// Return every in-stock seller listing separately so Explore cards use listing IDs.
+export async function getExploreProducts(request, response) {
+    const search = typeof request.query.search === "string" ? request.query.search.trim().slice(0, 100) : "";
+    const category = typeof request.query.category === "string" ? request.query.category : "";
+    const gender = typeof request.query.gender === "string" ? request.query.gender : "";
+    const minProtein = typeof request.query.minProtein === "string" ? request.query.minProtein : "";
+
+    // Reject unknown category values rather than silently returning confusing results.
+    if (category && !PRODUCT_CATEGORIES.has(category)) {
+        return response.status(400).json({ success: false, message: "Choose a valid product category." });
+    }
+    if (gender && (!CLOTHING_GENDERS.has(gender) || category !== "CLOTHING")) {
+        return response.status(400).json({ success: false, message: "Choose a valid clothing gender filter." });
+    }
+    if (minProtein && (!isValidProteinGrams(minProtein) || category !== "FOOD")) {
+        return response.status(400).json({ success: false, message: "Choose a valid minimum protein filter for food." });
+    }
+
+    try {
+        // Search is universal; category-specific filters apply when browsing without search text.
+        const browsingCategory = search ? "" : category;
+        const listings = await prisma.listing.findMany({
+            where: {
+                status: "ACTIVE",
+                quantityAvailable: { gt: 0 },
+                ...(browsingCategory ? { product: { category: browsingCategory } } : {}),
+                ...(!search && gender ? { clothingGender: gender } : {}),
+                ...(!search && minProtein ? { proteinGrams: { gte: minProtein } } : {})
+            },
+            orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+            select: {
+                id: true,
+                sellerId: true,
+                title: true,
+                description: true,
+                price: true,
+                quantityAvailable: true,
+                photoUrl: true,
+                location: true,
+                condition: true,
+                clothingGender: true,
+                proteinGrams: true,
+                createdAt: true,
+                product: { select: { id: true, category: true } },
+                seller: { select: { fullName: true, avatarUrl: true } }
+            }
+        });
+
+        const matchingListings = search
+            ? listings.filter((listing) => productSearchMatches(search, listing.title))
+            : listings;
+        const results = matchingListings.map((listing) => ({
+            id: listing.id,
+            sellerId: listing.sellerId,
+            sellerName: listing.seller.fullName || "CampusX Member",
+            sellerAvatarUrl: listing.seller.avatarUrl,
+            title: listing.title,
+            category: listing.product.category,
+            productId: listing.product.id,
+            description: listing.description,
+            price: listing.price.toFixed(2),
+            quantityAvailable: listing.quantityAvailable,
+            photoUrl: listing.photoUrl,
+            location: listing.location,
+            condition: listing.condition,
+            clothingGender: listing.clothingGender,
+            proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+            createdAt: listing.createdAt
+        }));
+
+        const suggestions = search
+            ? [...new Map(matchingListings.map((listing) => [
+                normalizeProductName(listing.title),
+                { id: listing.id, name: listing.title, category: listing.product.category }
+            ])).values()].slice(0, 6)
+            : [];
+
+        return response.json({ success: true, listings: results, suggestions });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not load products right now." });
+    }
+}
+
+// Match every typed word to a listing title, retaining the existing close-keyword behavior.
+function productSearchMatches(search, title) {
+    return normalizeProductName(search).split(" ").filter(Boolean)
+        .every((word) => productNamesMatch(word, title));
+}
+
+// Return one public listing by its own ID, including only safe seller identity and reputation.
+export async function getPublicListingDetails(request, response) {
+    const listingId = Number(request.params.listingId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
+    }
+
+    try {
+        const listing = await prisma.listing.findFirst({
+            where: { id: listingId, status: "ACTIVE" },
+            select: {
+                id: true,
+                sellerId: true,
+                title: true,
+                description: true,
+                price: true,
+                quantityAvailable: true,
+                photoUrl: true,
+                location: true,
+                condition: true,
+                clothingGender: true,
+                proteinGrams: true,
+                createdAt: true,
+                product: { select: { id: true, category: true } },
+                seller: { select: { id: true, fullName: true, avatarUrl: true } }
+            }
+        });
+        if (!listing) return response.status(404).json({ success: false, message: "This listing is no longer available." });
+
+        const reputation = await prisma.listingReview.aggregate({
+            where: { listing: { sellerId: listing.sellerId, status: "ACTIVE" } },
+            _avg: { rating: true },
+            _count: { _all: true }
+        });
+
+        return response.json({
+            success: true,
+            listing: {
+                id: listing.id,
+                title: listing.title,
+                description: listing.description,
+                price: listing.price.toFixed(2),
+                quantityAvailable: listing.quantityAvailable,
+                photoUrl: listing.photoUrl,
+                location: listing.location,
+                condition: listing.condition,
+                clothingGender: listing.clothingGender,
+                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                category: listing.product.category,
+                productId: listing.product.id,
+                createdAt: listing.createdAt,
+                seller: {
+                    id: listing.seller.id,
+                    fullName: listing.seller.fullName || "CampusX Member",
+                    avatarUrl: listing.seller.avatarUrl,
+                    averageRating: reputation._avg.rating === null ? null : Number(reputation._avg.rating.toFixed(1)),
+                    reviewCount: reputation._count._all
+                }
+            }
+        });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not load this listing right now." });
+    }
+}
+
+// Return this account's saved offer IDs in one request so cards avoid N status calls.
+export async function getSavedListingIds(request, response) {
+    try {
+        const favorites = await prisma.listingFavorite.findMany({
+            where: { userId: request.user.id },
+            select: { listingId: true }
+        });
+        return response.json({ success: true, listingIds: favorites.map((favorite) => favorite.listingId) });
+    } catch (error) {
+        console.error("Wishlist read failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not load your saved offers." });
+    }
+}
+
+// Check a single seller offer's saved state for the signed-in account.
+export async function getListingFavorite(request, response) {
+    const listingId = Number(request.params.listingId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing id must be a positive integer." });
+    }
+
+    try {
+        const favorite = await prisma.listingFavorite.findUnique({
+            where: { userId_listingId: { userId: request.user.id, listingId } },
+            select: { id: true }
+        });
+        return response.json({ success: true, isSaved: Boolean(favorite) });
+    } catch (error) {
+        console.error("Wishlist status check failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not check this saved offer." });
+    }
+}
+
+// Save one active listing idempotently; the database unique key prevents duplicate hearts.
+export async function saveListing(request, response) {
+    const listingId = Number(request.params.listingId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing id must be a positive integer." });
+    }
+
+    try {
+        const listing = await prisma.listing.findFirst({
+            where: { id: listingId, status: "ACTIVE" },
+            select: { id: true }
+        });
+        if (!listing) {
+            return response.status(404).json({ success: false, message: "This offer is no longer active." });
+        }
+
+        await prisma.listingFavorite.upsert({
+            where: { userId_listingId: { userId: request.user.id, listingId } },
+            create: { userId: request.user.id, listingId },
+            update: {}
+        });
+        return response.status(201).json({ success: true, isSaved: true });
+    } catch (error) {
+        console.error("Wishlist save failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not save this offer. Please try again." });
+    }
+}
+
+// Remove only this account's saved offer; repeating the request is harmless.
+export async function removeSavedListing(request, response) {
+    const listingId = Number(request.params.listingId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing id must be a positive integer." });
+    }
+
+    try {
+        await prisma.listingFavorite.deleteMany({ where: { userId: request.user.id, listingId } });
+        return response.json({ success: true, isSaved: false });
+    } catch (error) {
+        console.error("Wishlist removal failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not remove this saved offer. Please try again." });
+    }
+}
+
