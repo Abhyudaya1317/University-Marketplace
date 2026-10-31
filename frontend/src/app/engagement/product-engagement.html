@@ -53,14 +53,14 @@
         @for (review of listingReviews(); track review.id) {
           <article class="review-card">
             <div class="review-topline">
-              <strong>{{ review.reviewerName }}</strong
+              <strong><a class="person-profile-link" [routerLink]="['/sellers', review.reviewerId]">{{ review.reviewerName }}</a></strong
               ><span class="stars" [attr.aria-label]="review.rating + ' out of 5 stars'"
                 >{{ '★'.repeat(review.rating) }}{{ '☆'.repeat(5 - review.rating) }}</span
               >
             </div>
             <p>{{ review.comment }}</p>
             <small
-              >Seller: {{ review.sellerName }} · {{ review.createdAt | date: 'mediumDate' }}</small
+              >Seller: <a class="person-profile-link" [routerLink]="['/sellers', review.sellerId]">{{ review.sellerName }}</a> · {{ review.createdAt | date: 'mediumDate' }}</small
             >
           </article>
         }
@@ -112,7 +112,7 @@
               <div>
                 <p>{{ question.question }}</p>
                 <small
-                  >{{ question.askerName }} · {{ question.createdAt | date: 'mediumDate' }}</small
+                  ><a class="person-profile-link" [routerLink]="['/sellers', question.askerId]">{{ question.askerName }}</a> · {{ question.createdAt | date: 'mediumDate' }}</small
                 >
               </div>
             </div>
@@ -122,7 +122,7 @@
                 <div>
                   <p>{{ answer.answer }}</p>
                   <small
-                    >{{ answer.sellerName }} · {{ answer.createdAt | date: 'mediumDate' }}</small
+                    ><a class="person-profile-link" [routerLink]="['/sellers', answer.sellerId]">{{ answer.sellerName }}</a> · {{ answer.createdAt | date: 'mediumDate' }}</small
                   >
                 </div>
               </div>

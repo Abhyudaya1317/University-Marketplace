@@ -1,70 +1,161 @@
-<!-- The header introduces the CampusX name and its LPU-only audience. -->
-<div class="page-shell">
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="CampusX home">
-      <span class="brand-mark" aria-hidden="true">cx</span>
-      <span>campus<span class="brand-accent">x</span></span>
+<div class="universe-shell">
+  <div class="system-strip">
+    <strong>✦ UNITRADE NETWORK</strong>
+    <span class="network-status"><i></i> CAMPUS NETWORK: {{ backendState() === 'online' ? 'CONNECTED' : backendState() === 'offline' ? 'OFFLINE' : 'CONNECTING' }}</span>
+    <span class="device-status" aria-label="Device status">
+      <span class="signal-icon" aria-label="Network signal"><i></i><i></i><i></i><i></i></span>
+      <span class="battery-icon" aria-label="Battery status"><i></i><b>{{ batteryPercent() === null ? '—' : batteryPercent() }}%</b></span>
+    </span>
+    <time>{{ clock() }}</time>
+  </div>
+  <header class="main-toolbar">
+    <a class="brand" routerLink="/" aria-label="UniTrade home">
+      <span class="brand-spark">✦</span><span>UNITRADE<sup>’99</sup></span>
     </a>
-    <div class="topbar-actions">
-      <div class="campus-tag"><span class="campus-dot"></span> Made for LPU</div>
-      <app-account-navigation />
-    </div>
+    <nav class="desktop-links" aria-label="Primary">
+      <a class="active" routerLink="/explore">MARKET</a>
+      <a href="#category-directory">CATEGORIES</a>
+      <a routerLink="/messages">COMMUNITY</a>
+    </nav>
+    <form class="toolbar-search" (ngSubmit)="searchMarketplace()">
+      <label for="toolbar-search">SEARCH:</label>
+      <input id="toolbar-search" name="search" [ngModel]="searchDraft()" (ngModelChange)="searchDraft.set($event)" placeholder="find stuff..." />
+      <button type="submit" aria-label="Search listings">↵</button>
+    </form>
+    <a class="toolbar-sell" routerLink="/sell"><span>▦</span> SELL ITEM</a>
+    <app-account-navigation />
   </header>
 
   <main>
-    <!-- The hero explains the campus marketplace and shows its coming-soon state. -->
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero retro-grid" aria-labelledby="hero-title">
+      <span class="hero-orb orb-one" aria-hidden="true"></span><span class="hero-orb orb-two" aria-hidden="true"></span>
+      <span class="hero-star star-one" aria-hidden="true">✦</span><span class="hero-star star-two" aria-hidden="true">✧</span>
       <div class="hero-copy">
-        <div class="eyebrow"><span class="eyebrow-line"></span> YOUR CAMPUS, YOUR MARKET</div>
-        <h1 id="hero-title">Good things<br />find <span>new people.</span></h1>
-        <p class="intro">CampusX is a marketplace made for the LPU community. A simpler way to pass things on, find what you need, and keep it all close to campus.</p>
-        <div class="launch-note"><span class="sparkle">✳</span><span><strong>Find it on campus.</strong><br />Compare offers from LPU students.</span></div>
-        <a class="sign-in-link explore-link" href="/explore">Explore products</a>
+        <p class="hero-label"><i></i> CAMPUS MARKETPLACE // EST. 1999</p>
+        <h1 id="hero-title"><span>BUY</span><span class="sell-line">SELL<b class="floating-amp">&amp;</b></span><span class="trade-line">TRADE ON</span><span class="campus-word">CAMPUS.</span></h1>
+        <p class="hero-description">Good stuff, close by. Trade textbooks, tech, dorm finds and skills with students on your campus.</p>
+        <div class="hero-actions">
+          <a class="browse-button" routerLink="/explore">BROWSE THE MARKET <span>→</span></a>
+          <div class="verified-badge"><span>✓</span><strong>LPU COMMUNITY</strong><small>PERSONAL EMAIL SIGN-IN</small></div>
+        </div>
       </div>
-
-      <!-- Decorative artwork hints at campus goods without adding marketplace features. -->
-      <div class="hero-art" aria-hidden="true">
-        <div class="orbit orbit-one"></div>
-        <div class="orbit orbit-two"></div>
-        <div class="sun"></div>
-        <div class="floating-card card-book"><span class="card-emoji">📚</span><span class="card-lines"><i></i><i></i></span></div>
-        <div class="floating-card card-tote"><span class="card-emoji">👜</span><span class="card-lines"><i></i><i></i></span></div>
-        <div class="floating-card card-headphones"><span class="card-emoji">🎧</span><span class="card-lines"><i></i><i></i></span></div>
-        <div class="hero-sticker">LPU<br />ONLY</div>
-        <span class="art-spark spark-a">✦</span><span class="art-spark spark-b">✳</span>
+      <div class="hero-showcase">
+        @if (showFeatured() && featuredListing(); as featured) {
+          <app-retro-window [title]="'★ LIVE_LISTING.EXE'" (closed)="showFeatured.set(false)">
+            <div class="featured-window">
+              <a class="featured-photo" [routerLink]="['/products', featured.id]">
+                @if (featured.photoUrl) { <img [src]="featured.photoUrl" [alt]="featured.title + ' product photo'" /> }
+                @else { <span>NO IMAGE DATA</span> }
+                <b>HOT FIND!</b>
+              </a>
+              <small>LOWEST LISTED PRICE · {{ categoryLabel(featured.category) }}</small>
+              <a class="featured-title" [routerLink]="['/products', featured.id]">{{ featured.title }}</a>
+              <div class="featured-meta"><strong>₹{{ featured.price }}</strong><span>BY <a [routerLink]="['/sellers', featured.sellerId]">{{ featured.sellerName }}</a></span></div>
+            </div>
+          </app-retro-window>
+        } @else if (listings().length === 0) {
+          <div class="featured-empty"><span class="empty-monitor">▣</span><strong>{{ listingError() ? 'MARKET FEED OFFLINE' : 'WAITING FOR FIRST DROP' }}</strong><a routerLink="/sell">LIST AN ITEM →</a></div>
+        }
+        @if (showDropNotice() && listings().length > 0) {
+          <aside class="drop-notice" aria-label="Marketplace notice">
+            <div class="notice-titlebar">
+              <strong>SYSTEM MESSAGE</strong>
+              <button type="button" class="notice-close" aria-label="Dismiss notice" (click)="showDropNotice.set(false)">×</button>
+            </div>
+            <div class="notice-body">
+              <span class="notice-icon" aria-hidden="true">!</span>
+              <p><strong>NEW DROP DETECTED!</strong><br />{{ listings().length }} campus listings are live.</p>
+            </div>
+            <a class="notice-cta" routerLink="/explore">VIEW NOW</a>
+          </aside>
+        }
+        <span class="campus-stamp" aria-hidden="true">CAMPUS<br />FINDS<br />ONLY</span>
       </div>
     </section>
 
-    <!-- These cards explain the basic marketplace experience. -->
-    <section class="values" aria-label="CampusX principles">
-      <article class="value-card">
-        <span class="value-number">01</span>
-        <div><h2>Close to home</h2><p>Made for the people who share your campus.</p></div>
-        <span class="value-icon icon-orange" aria-hidden="true">⌂</span>
-      </article>
-      <article class="value-card">
-        <span class="value-number">02</span>
-        <div><h2>Keep it simple</h2><p>Useful campus finds, without the clutter.</p></div>
-        <span class="value-icon icon-green" aria-hidden="true">↗</span>
-      </article>
-      <article class="value-card">
-        <span class="value-number">03</span>
-        <div><h2>Made together</h2><p>A better campus marketplace starts with us.</p></div>
-        <span class="value-icon icon-purple" aria-hidden="true">♡</span>
-      </article>
+    <div class="ticker"><strong>SELECT A DIRECTORY</strong><span>◆ FRESH LISTINGS DAILY · STUDENT TO STUDENT · SAFE CAMPUS MEETUPS ·</span></div>
+    <section class="category-directory" id="category-directory" aria-label="Marketplace categories">
+      @for (category of categories(); track category; let i = $index) {
+        <a class="directory-card" [routerLink]="['/explore']" [queryParams]="{ category }">
+          <small>{{ (i + 1).toString().padStart(2, '0') }}</small>
+          <span class="directory-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48">
+              @switch (category) {
+                @case ('ELECTRONICS') {
+                  <path fill="#c0c0c0" stroke="#080817" stroke-width="3" d="M5 6h38v28H5z" />
+                  <path fill="#55f5e9" d="M10 11h28v18H10z" />
+                  <path fill="#000080" d="M14 15h20v10H14zm5 19h10v5h7v4H12v-4h7z" />
+                }
+                @case ('CLOTHING') {
+                  <path fill="#55f5e9" stroke="#080817" stroke-width="3" d="m15 7 9 5 9-5 10 7-5 9-5-3v21H15V20l-5 3-5-9z" />
+                  <path fill="#000080" d="M19 9h10l-5 8z" />
+                }
+                @case ('SPORTS_EQUIPMENT') {
+                  <circle cx="24" cy="24" r="17" fill="#fff94f" stroke="#080817" stroke-width="3" />
+                  <path d="M9 16c8 3 11 8 11 16m8-24c-2 8-1 14 9 20M8 29c8-5 17-6 31-3" fill="none" stroke="#000080" stroke-width="3" />
+                }
+                @case ('ARTWORK') {
+                  <path fill="#ff6fcf" stroke="#080817" stroke-width="3" d="M24 5 29 18 43 18 32 27 36 42 24 33 12 42 16 27 5 18 19 18z" />
+                  <circle cx="24" cy="24" r="4" fill="#000080" />
+                }
+                @default {
+                  <path fill="#fff94f" stroke="#080817" stroke-width="3" d="M24 5 29 18 43 18 32 27 36 42 24 33 12 42 16 27 5 18 19 18z" />
+                  <path fill="#000080" d="M21 19h6v5h-6zm0 8h6v5h-6z" />
+                }
+              }
+            </svg>
+          </span>
+          <span class="directory-copy"><strong>{{ categoryLabel(category) }}</strong><b>OPEN DIRECTORY →</b></span>
+        </a>
+      } @empty {
+        <div class="directory-empty">NO CATEGORY DIRECTORIES YET · FIRST LISTING OPENS THE INDEX</div>
+      }
+    </section>
+
+    <section class="home-feed" aria-labelledby="feed-title">
+      <div class="feed-heading"><div><p>/ MARKETPLACE_FEED</p><h2 id="feed-title">FRESH ON CAMPUS</h2></div><a routerLink="/explore">OPEN FULL MARKET →</a></div>
+      <div class="feed-filters"><a class="selected" routerLink="/explore">ALL</a>@for (category of categories().slice(0, 5); track category) { <a routerLink="/explore" [queryParams]="{ category }">{{ categoryLabel(category) }}</a> }</div>
+      @if (listingError()) {
+        <div class="feed-state"><strong>MARKET FEED UNAVAILABLE</strong><p>The marketplace API could not be reached. Try again in a moment.</p><a routerLink="/explore">OPEN MARKETPLACE</a></div>
+      } @else if (homeFeed().length === 0) {
+        <div class="feed-state"><strong>NO LISTINGS HAVE DROPPED YET</strong><p>Be the first to add a campus find.</p><a routerLink="/sell">SELL AN ITEM →</a></div>
+      } @else {
+        <div class="home-product-grid">
+          @for (item of homeFeed(); track item.id; let i = $index) {
+            <article class="home-product-window">
+              <div class="product-titlebar"><strong>ITEM_{{ (i + 1).toString().padStart(3, '0') }}.{{ item.photoUrl ? 'JPG' : 'SYS' }}</strong><span><i>_</i><i>□</i><i>×</i></span></div>
+              <a class="home-product-image" [routerLink]="['/products', item.id]">
+                @if (item.photoUrl) { <img [src]="item.photoUrl" [alt]="item.title + ' product photo'" loading="lazy" /> }
+                @else { <span>NO IMAGE FILE</span> }
+                <b>#{{ (i + 1).toString().padStart(2, '0') }}</b>
+              </a>
+              <div class="home-product-info">
+                <small class="product-category">{{ categoryLabel(item.category) }}</small>
+                <a class="home-product-name" [routerLink]="['/products', item.id]">{{ item.title }}</a>
+                <p>{{ item.description }}</p>
+                <div class="seller-line"><a [routerLink]="['/sellers', item.sellerId]">{{ item.sellerName }}</a><span>{{ item.condition.replaceAll('_', ' ') }}</span></div>
+                <div class="product-buy-line"><strong>₹{{ item.price }}</strong><a [routerLink]="['/products', item.id]">VIEW ITEM +</a></div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="diagnostics retro-grid" aria-labelledby="diagnostics-title">
+      <app-retro-window [title]="'CAMPUS_NETWORK_DIAGNOSTICS.EXE'">
+        <div class="diagnostics-window">
+          <div class="diagnostics-intro"><p>／ LIVE COMMUNITY DATA</p><h2 id="diagnostics-title">GOOD PEOPLE.<br />GOOD FINDS.</h2><span>Built for campus life, powered by students like you.</span></div>
+          <article class="stat-panel stat-yellow"><small>01</small><strong>{{ listings().length }}</strong><b>LISTINGS IN THIS FEED</b><div class="pixel-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+          <article class="stat-panel stat-cyan"><small>02</small><strong>{{ sellerCount() }}</strong><b>SELLERS IN THIS FEED</b><div class="pixel-dots" aria-hidden="true">■ ■ ■ ■ ■ ■ ■ ■</div></article>
+          <article class="stat-panel stat-pink"><small>03</small><strong>{{ pickupAreaCount() }}</strong><b>PICKUP AREAS SHOWN</b><span class="diagnostic-check" aria-hidden="true">✓</span></article>
+        </div>
+      </app-retro-window>
     </section>
   </main>
 
-  <!-- Show live backend reachability without exposing server or database details. -->
-  <footer class="footer">
-    <span>© 2026 CampusX <span class="footer-separator">·</span> Built for the LPU community</span>
-    <span class="connection" [class.is-online]="backendState() === 'online'" [class.is-offline]="backendState() === 'offline'">
-      <span class="connection-dot"></span>
-      @switch (backendState()) {
-        @case ('checking') { Connecting to CampusX }
-        @case ('online') { CampusX is online }
-        @case ('offline') { CampusX is offline }
-      }
-    </span>
+  <footer class="site-footer">
+    <div class="footer-top"><a class="footer-brand" routerLink="/"><span>✦</span><b>UNITRADE</b><small>YOUR CAMPUS. YOUR MARKET.</small></a><nav aria-label="Footer"><a routerLink="/explore">MARKETPLACE</a><a routerLink="/orders">ORDERS</a><a routerLink="/messages">MESSAGES</a><a routerLink="/auth">ACCOUNT</a></nav><div class="uptime"><i></i><span>API STATUS: @switch (backendState()) { @case ('online') { ONLINE } @case ('offline') { OFFLINE } @default { CHECKING } }</span></div></div>
+    <div class="footer-bottom"><span>© 2026 UNITRADE · LPU COMMUNITY</span><span>BUILT FOR CAMPUS COMMERCE</span></div>
   </footer>
 </div>

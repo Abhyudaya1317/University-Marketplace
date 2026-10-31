@@ -1,15 +1,15 @@
 <!-- Give buyers and sellers one place to track each cash-on-delivery request. -->
 <div class="orders-page">
   <header class="orders-header">
-    <a class="brand" routerLink="/" aria-label="CampusX home"
-      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    <a class="brand" routerLink="/" aria-label="UniTrade home"
+      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
     >
     <app-account-navigation />
   </header>
 
   <main class="orders-content">
     <a class="back-link" routerLink="/explore">← Back to Explore</a>
-    <p class="eyebrow">YOUR CAMPUSX</p>
+    <p class="eyebrow">YOUR UNITRADE</p>
     <h1>My orders</h1>
     <p class="intro">
       Coordinate the exchange with the other person and pay cash in person when you both agree.
@@ -65,7 +65,9 @@
                 <p>{{ order.listing.description }}</p>
                 <p>
                   <strong>{{ order.role === 'BUYER' ? 'Seller:' : 'Buyer:' }}</strong>
-                  {{ order.role === 'BUYER' ? order.sellerName : order.buyerName }}
+                  <a class="person-profile-link" [routerLink]="['/sellers', order.role === 'BUYER' ? order.sellerId : order.buyerId]">
+                    {{ order.role === 'BUYER' ? order.sellerName : order.buyerName }}
+                  </a>
                 </p>
                 <p><strong>Quantity:</strong> {{ order.quantity }}</p>
                 <p>

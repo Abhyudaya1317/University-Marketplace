@@ -1,16 +1,30 @@
-<!-- Offer guest actions or signed-in account links based on the current session. -->
+<!-- Keep the site links visible and group signed-in actions inside one compact menu. -->
 <nav class="account-navigation" aria-label="Main navigation">
   <a routerLink="/explore">Explore</a>
   <a routerLink="/sell">Sell an item</a>
   @if (signedIn()) {
-    <a routerLink="/dashboard">Profile</a>
-    <a routerLink="/dashboard" fragment="my-listings">Items I’m selling</a>
-    <a routerLink="/orders">My orders</a>
-    <a routerLink="/messages">Messages</a>
-    <button type="button" (click)="signOut()" [disabled]="signingOut()">
-      {{ signingOut() ? 'Signing out…' : 'Sign out' }}
-    </button>
+    <details class="account-menu">
+      <summary aria-label="Open account menu">ACCOUNT <span aria-hidden="true">▾</span></summary>
+      <div class="account-menu-list" role="menu">
+        <a role="menuitem" routerLink="/dashboard">Profile</a>
+        <a role="menuitem" routerLink="/dashboard" fragment="my-listings">Items I’m selling</a>
+        <a role="menuitem" routerLink="/orders">My orders</a>
+        <a class="messages-nav-link" role="menuitem" routerLink="/messages">
+          Messages
+          @if (unreadCount() > 0) {
+            <span class="unread-badge" [attr.aria-label]="unreadCount() + ' unread messages'">
+              {{ unreadCount() > 99 ? '99+' : unreadCount() }}
+            </span>
+          }
+        </a>
+        <button role="menuitem" type="button" (click)="signOut()" [disabled]="signingOut()">
+          {{ signingOut() ? 'Signing out…' : 'Sign out' }}
+        </button>
+      </div>
+    </details>
   } @else {
-    <a class="account-button" routerLink="/auth">Sign in / Join</a>
+    <a class="account-button" routerLink="/auth" [queryParams]="signInQueryParams"
+      >Sign in / Join</a
+    >
   }
 </nav>

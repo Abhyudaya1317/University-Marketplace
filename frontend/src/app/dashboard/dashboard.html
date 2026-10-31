@@ -1,14 +1,14 @@
 <!-- Combine the signed-in seller profile, inventory controls, and saved sellers in one place. -->
 <div class="dashboard-page">
   <header class="dashboard-header">
-    <a class="brand" routerLink="/" aria-label="CampusX home"
-      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    <a class="brand" routerLink="/" aria-label="UniTrade home"
+      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
     >
     <app-account-navigation />
   </header>
 
   <main class="dashboard-content">
-    <p class="eyebrow">YOUR CAMPUSX PROFILE</p>
+    <p class="eyebrow">YOUR UNITRADE PROFILE</p>
     <h1>My profile</h1>
     @if (loading()) {
       <p class="state-message" role="status">Loading your dashboard…</p>
@@ -29,7 +29,7 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">SELLER PROFILE</p>
-            <h2 id="my-profile-title">{{ profile()?.fullName || 'CampusX Member' }}</h2>
+            <h2 id="my-profile-title">{{ profile()?.fullName || 'UniTrade Member' }}</h2>
           </div>
           <span class="section-count"
             >{{ profile()?.activeListingCount ?? 0 }} active items ·
@@ -180,7 +180,7 @@
                               {{ request.quantity }} requested · ₹{{ request.price }} each</strong
                             >
                             <small>{{ request.createdAt | date: 'medium' }}</small>
-                            <p><strong>Buyer:</strong> {{ request.buyerName }}</p>
+                            <p><strong>Buyer:</strong> <a class="person-profile-link" [routerLink]="['/sellers', request.buyerId]">{{ request.buyerName }}</a></p>
                             <p><strong>Buyer phone:</strong> {{ request.buyerPhone }}</p>
                             @if (request.buyerMessage) {
                               <p><strong>Buyer note:</strong> {{ request.buyerMessage }}</p>
@@ -206,8 +206,16 @@
                             <div class="request-actions">
                               <button
                                 type="button"
+                                class="message-buyer-button"
+                                (click)="messageBuyer(request)"
+                                [disabled]="messageBusyId() === request.id"
+                              >
+                                {{ messageBusyId() === request.id ? 'Opening chat…' : 'Message buyer' }}
+                              </button>
+                              <button
+                                type="button"
                                 (click)="respondToRequest(request, 'accept')"
-                                [disabled]="requestBusyId() === request.id"
+                                [disabled]="requestBusyId() === request.id || messageBusyId() === request.id"
                               >
                                 Accept request
                               </button>
@@ -215,7 +223,7 @@
                                 type="button"
                                 class="decline-button"
                                 (click)="respondToRequest(request, 'decline')"
-                                [disabled]="requestBusyId() === request.id"
+                                [disabled]="requestBusyId() === request.id || messageBusyId() === request.id"
                               >
                                 Decline
                               </button>
@@ -449,7 +457,7 @@
                     >
                   }
                   <span class="saved-copy"
-                    ><strong>{{ favorite.title }} · {{ favorite.sellerName }}</strong
+                    ><strong>{{ favorite.title }}</strong
                     ><small>{{ favorite.product.category.replaceAll('_', ' ') }}</small
                     ><small>{{ favorite.description }}</small
                     ><small
@@ -457,6 +465,9 @@
                       {{ favorite.savedAt | date: 'mediumDate' }}</small
                     ></span
                   >
+                </a>
+                <a class="text-link" [routerLink]="['/sellers', favorite.sellerId]">
+                  Seller: {{ favorite.sellerName }}
                 </a>
                 <button
                   class="remove-saved-product"
@@ -472,4 +483,69 @@
       </section>
     }
   </main>
+  @if (buyerChat(); as chat) {
+    <div class="buyer-chat-backdrop" (click)="closeBuyerChat()">
+      <aside
+        class="buyer-chat-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Message buyer"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="buyer-chat-header">
+          <div>
+            <p class="eyebrow">BUYER CHAT</p>
+            <h2><a [routerLink]="['/sellers', chat.otherUser.id]">{{ chat.otherUser.fullName }}</a></h2>
+            <a class="buyer-chat-listing" [routerLink]="['/products', chat.listing.id]">{{ chat.listing.title }}</a>
+          </div>
+          <button type="button" class="buyer-chat-close" aria-label="Close chat" (click)="closeBuyerChat()">×</button>
+        </header>
+
+        @if (buyerChatLoading()) {
+          <p class="buyer-chat-state" role="status">Opening conversation…</p>
+        } @else {
+          <div class="buyer-chat-messages" aria-live="polite">
+            @for (message of chat.messages; track message.id) {
+              <article class="buyer-chat-message" [class.own-message]="message.senderId === profile()?.id">
+                <strong>{{ message.senderId === profile()?.id ? 'You' : message.senderName }}</strong>
+                <p>{{ message.body }}</p>
+                <time [attr.datetime]="message.createdAt">{{ message.createdAt | date: 'short' }}</time>
+              </article>
+            } @empty {
+              <p class="buyer-chat-state">No messages yet. Send a message to discuss this request.</p>
+            }
+          </div>
+          <form class="buyer-chat-compose" (submit)="$event.preventDefault()">
+            <textarea
+              name="buyerChatMessage"
+              rows="3"
+              maxlength="2000"
+              required
+              [ngModel]="buyerChatDraft()"
+              (ngModelChange)="buyerChatDraft.set($event)"
+              (keydown.enter)="handleBuyerChatEnter($event)"
+              placeholder="Write a message…"
+              aria-label="Message to buyer"
+            ></textarea>
+            <button
+              type="button"
+              (click)="sendBuyerChatMessage()"
+              [disabled]="buyerChatSending() || !buyerChatDraft().trim()"
+            >
+              {{ buyerChatSending() ? 'Sending…' : 'Send message' }}
+            </button>
+          </form>
+        }
+        @if (buyerChatError()) {
+          <p class="buyer-chat-error" role="alert">{{ buyerChatError() }}</p>
+        }
+        @if (buyerChatNotice()) {
+          <p class="buyer-chat-notice" role="status">{{ buyerChatNotice() }}</p>
+        }
+        @if (chat.id > 0) {
+          <a class="buyer-chat-full-link" [routerLink]="['/messages', chat.id]">Open full chat →</a>
+        }
+      </aside>
+    </div>
+  }
 </div>

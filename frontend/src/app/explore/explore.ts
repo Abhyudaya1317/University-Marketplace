@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AccountNavigation } from '../shared/account-navigation';
 
 // One Explore card represents one seller's listing, with its own ID and price.
@@ -34,6 +34,7 @@ interface ExploreResponse {
 })
 export class Explore {
   private readonly http = inject(HttpClient);
+  private readonly route = inject(ActivatedRoute);
   protected readonly listings = signal<ExploreListing[]>([]);
   protected readonly suggestions = signal<NonNullable<ExploreResponse['suggestions']>>([]);
   protected readonly loading = signal(true);
@@ -75,7 +76,18 @@ export class Explore {
   ];
 
   constructor() {
-    this.loadListings();
+    this.route.queryParamMap.subscribe((params) => {
+      const category = params.get('category') ?? '';
+      const search = params.get('search') ?? '';
+      const categoryChanged = category !== this.selectedCategory();
+      this.selectedCategory.set(category);
+      this.searchText.set(search);
+      if (categoryChanged) {
+        this.selectedGender.set('');
+        this.minimumProtein.set('');
+      }
+      this.loadListings();
+    });
   }
 
   protected searchProducts(): void {

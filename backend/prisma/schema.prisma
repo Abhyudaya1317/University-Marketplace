@@ -148,11 +148,21 @@ model Message {
   conversationId Int
   senderId       Int
   body           String       @db.VarChar(2000)
+  type           MessageType  @default(TEXT)
+  attachmentName String?      @db.VarChar(100)
+  contactName    String?      @db.VarChar(100)
+  contactPhone   String?      @db.VarChar(30)
+  locationLabel  String?      @db.VarChar(120)
+  latitude       Float?
+  longitude      Float?
+  readAt         DateTime?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
+  @@index([conversationId, readAt, senderId])
+  @@index([senderId, readAt])
   @@index([senderId, createdAt])
 }
 
@@ -284,4 +294,12 @@ enum ClothingGender {
   WOMEN
   UNISEX
   OTHER
+}
+
+// Identify the safe, supported kinds of private chat messages.
+enum MessageType {
+  TEXT
+  IMAGE
+  CONTACT
+  LOCATION
 }

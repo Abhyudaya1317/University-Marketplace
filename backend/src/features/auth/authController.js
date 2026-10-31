@@ -11,6 +11,7 @@ import {
     hashSessionToken
 } from "./authSecurity.js";
 import { isEmailDeliveryConfigured, sendPasswordResetCode } from "./emailService.js";
+import { normalizeFrontendReturnUrl } from "./authReturnUrl.js";
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 const RESEND_WAIT_MS = 60 * 1000;
@@ -19,6 +20,7 @@ const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 const PASSWORD_SALT_ROUNDS = 12;
 const SESSION_COOKIE = "campusx_session";
 const OAUTH_STATE_COOKIE = "campusx_google_state";
+const OAUTH_RETURN_COOKIE = "campusx_google_return";
 
 // Normalize email so case or surrounding spaces cannot create duplicate accounts.
 function normalizeEmail(value) {
@@ -252,6 +254,13 @@ export function startGoogleSignIn(request, response) {
     }
 
     const state = randomBytes(32).toString("base64url");
+    response.cookie(OAUTH_RETURN_COOKIE, normalizeFrontendReturnUrl(request.query?.returnUrl), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/auth/google",
+        maxAge: 10 * 60 * 1000
+    });
     response.cookie(OAUTH_STATE_COOKIE, state, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -275,6 +284,7 @@ export async function finishGoogleSignIn(request, response) {
     const savedState = request.cookies?.[OAUTH_STATE_COOKIE];
     const receivedState = request.query?.state;
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:4200";
+    const returnUrl = normalizeFrontendReturnUrl(request.cookies?.[OAUTH_RETURN_COOKIE]);
 
     response.clearCookie(OAUTH_STATE_COOKIE, {
         httpOnly: true,
@@ -282,25 +292,31 @@ export async function finishGoogleSignIn(request, response) {
         sameSite: "lax",
         path: "/api/auth/google"
     });
+    response.clearCookie(OAUTH_RETURN_COOKIE, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/auth/google"
+    });
 
     if (!googleClient) {
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_not_configured");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_not_configured", returnUrl);
     }
 
     if (!savedState) {
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_state_cookie_missing");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_state_cookie_missing", returnUrl);
     }
 
     if (typeof receivedState !== "string" || !safeStringMatch(savedState, receivedState)) {
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_state_mismatch");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_state_mismatch", returnUrl);
     }
 
     if (request.query?.error) {
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_sign_in_cancelled");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_sign_in_cancelled", returnUrl);
     }
 
     if (typeof request.query?.code !== "string") {
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_code_missing");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_code_missing", returnUrl);
     }
 
     try {
@@ -310,7 +326,7 @@ export async function finishGoogleSignIn(request, response) {
         const email = profile?.email_verified ? normalizeEmail(profile.email) : null;
 
         if (!email) {
-            return redirectAfterGoogleFailure(response, frontendUrl, "google_email_unverified");
+            return redirectAfterGoogleFailure(response, frontendUrl, "google_email_unverified", returnUrl);
         }
 
         const googleName = normalizeFullName(profile.name);
@@ -326,7 +342,7 @@ export async function finishGoogleSignIn(request, response) {
             })
             : await prisma.user.create({ data: { email, fullName: googleName, avatarUrl: googleAvatar } });
         await createUserSession(user, response);
-        return response.redirect(`${frontendUrl}/`);
+        return response.redirect(new URL(returnUrl, frontendUrl).toString());
     } catch (error) {
         // Log only safe provider error identifiers, never OAuth codes or client secrets.
         console.error("Google OAuth callback failed:", {
@@ -335,14 +351,17 @@ export async function finishGoogleSignIn(request, response) {
             status: error?.response?.status,
             providerError: safeProviderError(error?.response?.data?.error)
         });
-        return redirectAfterGoogleFailure(response, frontendUrl, "google_callback_failed");
+        return redirectAfterGoogleFailure(response, frontendUrl, "google_callback_failed", returnUrl);
     }
 }
 
 // Give the account page a safe reason code and record the failure stage for local debugging.
-function redirectAfterGoogleFailure(response, frontendUrl, reason) {
+function redirectAfterGoogleFailure(response, frontendUrl, reason, returnUrl = "/") {
     console.warn("Google OAuth sign-in did not complete:", reason);
-    return response.redirect(`${frontendUrl}/auth?error=${reason}`);
+    const authUrl = new URL("/auth", frontendUrl);
+    authUrl.searchParams.set("error", reason);
+    if (returnUrl !== "/") authUrl.searchParams.set("returnUrl", returnUrl);
+    return response.redirect(authUrl.toString());
 }
 
 // Only permit a short provider error identifier into logs; do not print response bodies.

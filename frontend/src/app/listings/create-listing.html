@@ -1,9 +1,9 @@
 <!-- Give sellers a focused listing form without changing the temporary home design. -->
 <main class="sell-page">
   <header class="sell-header">
-    <a class="brand" href="/" aria-label="CampusX home">
-      <span class="brand-mark" aria-hidden="true">cx</span>
-      <span>campus<span class="brand-accent">x</span></span>
+    <a class="brand" href="/" aria-label="UniTrade home">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span>UNITRADE<sup>’99</sup></span>
     </a>
     <a class="back-link" href="/">Back to home</a>
   </header>
@@ -14,15 +14,15 @@
       <p class="state-message" role="status">Checking your sign-in…</p>
     } @else if (!user()) {
       <!-- Keep listing creation available only to accounts with a valid server session. -->
-      <p class="eyebrow">SELL ON CAMPUSX</p>
+      <p class="eyebrow">SELL ON UNITRADE</p>
       <h1 id="sell-title">Sign in to list an item</h1>
-      <p class="description">Use your personal email to sign in or create a CampusX account first.</p>
+      <p class="description">Use your personal email to sign in or create a UniTrade account first.</p>
       <a class="primary-button" href="/auth">Sign in or join</a>
     } @else if (loadingListing()) {
       <p class="state-message" role="status">Loading your listing…</p>
     } @else {
       <!-- Ask for the details buyers need to compare a seller's product offer. -->
-      <p class="eyebrow">SELL ON CAMPUSX</p>
+      <p class="eyebrow">SELL ON UNITRADE</p>
       <h1 id="sell-title">{{ isEditing() ? 'Edit your listing.' : 'List something useful.' }}</h1>
       <p class="description">Signed in as {{ user()?.email }}. @if (isEditing()) { Update the offer details below. } @else { Listings are free right now. }</p>
 

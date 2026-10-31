@@ -16,6 +16,7 @@ interface CampusOrder {
   buyerPhone: string | null;
   sellerPhone: string | null;
   sellerId: number;
+  buyerId: number;
   sellerName: string;
   buyerName: string;
   buyerMessage: string | null;

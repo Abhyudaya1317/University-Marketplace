@@ -1,8 +1,10 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { interval } from 'rxjs';
 import { AccountNavigation } from '../shared/account-navigation';
 
 // Match the private summary endpoint without pulling account contact data into this page.
@@ -60,6 +62,7 @@ interface DashboardResponse {
 // Describe only pending order fields that the seller needs to arrange a campus handoff.
 interface SellerRequest {
   id: number;
+  buyerId: number;
   listingId: number;
   productName: string;
   listingTitle: string;
@@ -69,6 +72,22 @@ interface SellerRequest {
   buyerMessage: string | null;
   price: string;
   createdAt: string;
+}
+
+// Keep the side chat limited to information returned for this private conversation.
+interface SellerChatThread {
+  id: number;
+  otherUser: { id: number; fullName: string };
+  listing: { id: number; title: string; price: string };
+  messages: Array<{
+    id: number;
+    senderId: number;
+    senderName: string;
+    type: string;
+    body: string;
+    createdAt: string;
+    attachmentUrl?: string | null;
+  }>;
 }
 
 // Give a signed-in user one place to find their current listings and saved sellers.
@@ -101,6 +120,7 @@ export class Dashboard {
   protected readonly meetingLocations = signal<Record<number, string>>({});
   protected readonly stockBusyId = signal<number | null>(null);
   protected readonly requestBusyId = signal<number | null>(null);
+  protected readonly messageBusyId = signal<number | null>(null);
   protected readonly stockNotice = signal('');
   protected readonly requestNotice = signal('');
   protected readonly managementNotice = signal('');
@@ -110,6 +130,14 @@ export class Dashboard {
   protected readonly profileNameDraft = signal('');
   protected readonly profileNotice = signal('');
   protected readonly profileSaving = signal(false);
+  protected readonly buyerChat = signal<SellerChatThread | null>(null);
+  protected readonly buyerChatLoading = signal(false);
+  protected readonly buyerChatError = signal('');
+  protected readonly buyerChatNotice = signal('');
+  protected readonly buyerChatDraft = signal('');
+  protected readonly buyerChatSending = signal(false);
+  private buyerChatFetchInFlight = false;
+  private buyerChatRefreshPendingId: number | null = null;
 
   // Load account-owned records through the session-protected dashboard endpoint.
   constructor() {
@@ -133,6 +161,12 @@ export class Dashboard {
         );
         this.loading.set(false);
       },
+    });
+
+    // Refresh an open side chat so new buyer messages arrive without leaving the dashboard.
+    interval(3000).pipe(takeUntilDestroyed()).subscribe(() => {
+      const conversationId = this.buyerChat()?.id;
+      if (conversationId && conversationId > 0) this.refreshBuyerChat(conversationId);
     });
   }
 
@@ -343,6 +377,123 @@ export class Dashboard {
 
   protected setMeetingLocation(requestId: number, value: string): void {
     this.meetingLocations.update((locations) => ({ ...locations, [requestId]: value }));
+  }
+
+  // Open or resume this request's private chat in a side drawer on the dashboard.
+  protected messageBuyer(request: SellerRequest): void {
+    if (this.messageBusyId() !== null) return;
+    this.messageBusyId.set(request.id);
+    this.requestNotice.set('');
+    this.buyerChatError.set('');
+    this.buyerChatNotice.set('');
+    this.buyerChatDraft.set('');
+    this.buyerChatLoading.set(true);
+    this.buyerChat.set({
+      id: 0,
+      otherUser: { id: request.buyerId, fullName: request.buyerName },
+      listing: { id: request.listingId, title: request.listingTitle || request.productName, price: request.price },
+      messages: [],
+    });
+    this.http
+      .post<{ success: boolean; conversation: { id: number }; message?: string }>(
+        `/api/orders/${request.id}/conversation`,
+        {},
+      )
+      .subscribe({
+        next: (response) => {
+          this.messageBusyId.set(null);
+          if (this.buyerChat()) this.loadBuyerChat(response.conversation.id);
+        },
+        error: (response: HttpErrorResponse) => {
+          this.buyerChatError.set(response.error?.message ?? 'We could not open a chat with this buyer.');
+          this.buyerChatLoading.set(false);
+          this.messageBusyId.set(null);
+        },
+      });
+  }
+
+  protected closeBuyerChat(): void {
+    this.buyerChat.set(null);
+    this.buyerChatDraft.set('');
+    this.buyerChatError.set('');
+    this.buyerChatNotice.set('');
+    this.buyerChatLoading.set(false);
+  }
+
+  protected sendBuyerChatMessage(): void {
+    const conversationId = this.buyerChat()?.id;
+    const body = this.buyerChatDraft().trim();
+    if (!conversationId || conversationId < 1 || !body || body.length > 2000 || this.buyerChatSending()) return;
+
+    this.buyerChatSending.set(true);
+    this.buyerChatError.set('');
+    this.http.post<{ success: boolean; message: SellerChatThread['messages'][number] }>(`/api/messages/${conversationId}`, { body }).subscribe({
+      next: (response) => {
+        this.buyerChatDraft.set('');
+        this.buyerChatSending.set(false);
+        this.buyerChatNotice.set('Message sent.');
+        this.buyerChat.update((chat) => {
+          if (!chat || chat.id !== conversationId || chat.messages.some((item) => item.id === response.message.id)) return chat;
+          return { ...chat, messages: [...chat.messages, response.message] };
+        });
+        this.refreshBuyerChat(conversationId);
+      },
+      error: (response: HttpErrorResponse) => {
+        this.buyerChatError.set(response.error?.message ?? 'Message could not be sent.');
+        this.buyerChatNotice.set('');
+        this.buyerChatSending.set(false);
+      },
+    });
+  }
+
+  // Enter sends from the compact chat box; Shift+Enter inserts a new line.
+  protected handleBuyerChatEnter(event: Event): void {
+    const keyEvent = event as KeyboardEvent;
+    if (keyEvent.shiftKey || keyEvent.isComposing) return;
+    keyEvent.preventDefault();
+    this.sendBuyerChatMessage();
+  }
+
+  // Fetch the thread using the existing participant-checked messages endpoint.
+  private loadBuyerChat(conversationId: number): void {
+    this.buyerChat.update((chat) => chat ? { ...chat, id: conversationId } : chat);
+    this.buyerChatLoading.set(true);
+    this.fetchBuyerChat(conversationId);
+  }
+
+  private refreshBuyerChat(conversationId: number): void {
+    if (this.buyerChatFetchInFlight) {
+      this.buyerChatRefreshPendingId = conversationId;
+      return;
+    }
+    this.fetchBuyerChat(conversationId);
+  }
+
+  private fetchBuyerChat(conversationId: number): void {
+    if (this.buyerChatFetchInFlight) return;
+    this.buyerChatFetchInFlight = true;
+    this.http.get<{ conversation: SellerChatThread }>(`/api/messages/${conversationId}`).subscribe({
+      next: (response) => {
+        if (this.buyerChat()?.id === conversationId) this.buyerChat.set(response.conversation);
+        this.buyerChatError.set('');
+        this.buyerChatLoading.set(false);
+        this.buyerChatFetchInFlight = false;
+        this.refreshBuyerChatIfQueued();
+      },
+      error: (response: HttpErrorResponse) => {
+        this.buyerChatError.set(response.error?.message ?? 'This conversation could not be loaded.');
+        this.buyerChatLoading.set(false);
+        this.buyerChatFetchInFlight = false;
+        this.refreshBuyerChatIfQueued();
+      },
+    });
+  }
+
+  private refreshBuyerChatIfQueued(): void {
+    const pendingConversationId = this.buyerChatRefreshPendingId;
+    if (pendingConversationId === null) return;
+    this.buyerChatRefreshPendingId = null;
+    if (this.buyerChat()?.id === pendingConversationId) this.refreshBuyerChat(pendingConversationId);
   }
 
   // Accept a buyer request only after the seller enters a future meetup time and location.

@@ -51,6 +51,7 @@ function presentOrder(order, viewerId) {
         meetingAt: order.meetingAt,
         meetingLocation: order.meetingLocation,
         sellerId: order.sellerId,
+        buyerId: order.buyerId,
         buyerName: order.buyer.fullName || "CampusX Member",
         sellerName: order.seller.fullName || "CampusX Member",
         listing: {
@@ -96,6 +97,17 @@ export async function createOrder(request, response) {
             if (listing.quantityAvailable < 1) return { error: "OUT_OF_STOCK" };
             if (quantity > listing.quantityAvailable) return { error: "QUANTITY_UNAVAILABLE" };
 
+            // Avoid multiple unresolved requests from the same buyer for the same offer.
+            const existingRequest = await transaction.order.findFirst({
+                where: {
+                    listingId: listing.id,
+                    buyerId: request.user.id,
+                    status: { in: ["PENDING", "ACCEPTED", "SELLER_CONFIRMED"] }
+                },
+                select: { id: true }
+            });
+            if (existingRequest) return { error: "ACTIVE_REQUEST_EXISTS" };
+
             return transaction.order.create({
                 data: {
                     listingId: listing.id,
@@ -122,9 +134,15 @@ export async function createOrder(request, response) {
         if (createdOrder.error === "QUANTITY_UNAVAILABLE") {
             return response.status(409).json({ success: false, message: "That quantity is no longer available. Choose a smaller amount." });
         }
+        if (createdOrder.error === "ACTIVE_REQUEST_EXISTS") {
+            return response.status(409).json({ success: false, message: "You already have an open request for this offer. Check My Orders for its status." });
+        }
 
         return response.status(201).json({ success: true, order: presentOrder(createdOrder, request.user.id) });
-    } catch {
+    } catch (error) {
+        if (error?.code === "P2034") {
+            return response.status(409).json({ success: false, message: "This request changed while being processed. Check My Orders before trying again." });
+        }
         return response.status(500).json({ success: false, message: "We could not place the order. Please try again." });
     }
 }
@@ -152,6 +170,7 @@ export async function getSellerRequests(request, response) {
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
             select: {
                 id: true,
+                buyerId: true,
                 listingId: true,
                 buyerPhone: true,
                 quantity: true,
@@ -166,6 +185,7 @@ export async function getSellerRequests(request, response) {
             success: true,
             requests: orders.map((order) => ({
                 id: order.id,
+                buyerId: order.buyerId,
                 listingId: order.listingId,
                 productName: order.listing.product.name,
                 listingTitle: order.listing.title,
@@ -179,6 +199,38 @@ export async function getSellerRequests(request, response) {
         });
     } catch {
         return response.status(500).json({ success: false, message: "We could not load your buyer requests." });
+    }
+}
+
+// Let the seller open the existing private chat for a buyer's order request.
+export async function openOrderConversation(request, response) {
+    const orderId = Number(request.params.orderId);
+    if (!Number.isSafeInteger(orderId) || orderId < 1) {
+        return response.status(400).json({ success: false, message: "Order ID must be a positive integer." });
+    }
+
+    try {
+        const order = await prisma.order.findFirst({
+            where: {
+                id: orderId,
+                sellerId: request.user.id,
+                status: { in: ["PENDING", "ACCEPTED", "SELLER_CONFIRMED"] }
+            },
+            select: { listingId: true, buyerId: true, sellerId: true }
+        });
+        if (!order) {
+            return response.status(404).json({ success: false, message: "This open buyer request was not found." });
+        }
+
+        const conversation = await prisma.conversation.upsert({
+            where: { listingId_buyerId: { listingId: order.listingId, buyerId: order.buyerId } },
+            create: { listingId: order.listingId, buyerId: order.buyerId, sellerId: order.sellerId },
+            update: {}
+        });
+        return response.json({ success: true, conversation: { id: conversation.id } });
+    } catch (error) {
+        console.error("Order conversation open failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not open a chat with this buyer." });
     }
 }
 
@@ -252,7 +304,10 @@ export async function updateOrderStatus(request, response) {
         if (result.error === "INSUFFICIENT_STOCK") return response.status(409).json({ success: false, message: "There is not enough stock left for this request. Decline it or ask the buyer to request a smaller quantity." });
 
         return response.json({ success: true, status: result.status });
-    } catch {
+    } catch (error) {
+        if (error?.code === "P2034") {
+            return response.status(409).json({ success: false, message: "The order changed while being updated. Refresh My Orders and try again." });
+        }
         return response.status(500).json({ success: false, message: "We could not update this order. Please try again." });
     }
 }

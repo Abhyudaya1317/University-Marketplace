@@ -152,13 +152,39 @@ export async function archiveListing(request, response) {
 
     try {
         const archivedAt = new Date();
-        const result = await prisma.listing.updateMany({
-            where: { id: listingId, sellerId: request.user.id, status: { in: ["ACTIVE", "SOLD"] } },
-            data: { status: "ARCHIVED", archivedAt }
-        });
-        if (result.count !== 1) return response.status(404).json({ success: false, message: "This listing was not found or is already archived." });
-        return response.json({ success: true, status: "ARCHIVED", archivedAt });
+        const result = await prisma.$transaction(async (transaction) => {
+            const listing = await transaction.listing.findFirst({
+                where: { id: listingId, sellerId: request.user.id, status: { in: ["ACTIVE", "SOLD"] } },
+                select: { id: true }
+            });
+            if (!listing) return { error: "NOT_FOUND" };
+
+            // Keep accepted and pending exchanges visible until both sides finish the handoff.
+            const openOrder = await transaction.order.findFirst({
+                where: {
+                    listingId,
+                    status: { in: ["PENDING", "ACCEPTED", "SELLER_CONFIRMED"] }
+                },
+                select: { id: true }
+            });
+            if (openOrder) return { error: "OPEN_ORDERS" };
+
+            const archived = await transaction.listing.updateMany({
+                where: { id: listingId, sellerId: request.user.id, status: { in: ["ACTIVE", "SOLD"] } },
+                data: { status: "ARCHIVED", archivedAt }
+            });
+            return archived.count === 1 ? { archivedAt } : { error: "NOT_FOUND" };
+        }, { isolationLevel: "Serializable" });
+
+        if (result.error === "OPEN_ORDERS") {
+            return response.status(409).json({ success: false, message: "This listing has an open buyer request or meetup. Finish or decline it before archiving the listing." });
+        }
+        if (result.error === "NOT_FOUND") return response.status(404).json({ success: false, message: "This listing was not found or is already archived." });
+        return response.json({ success: true, status: "ARCHIVED", archivedAt: result.archivedAt });
     } catch (error) {
+        if (error?.code === "P2034") {
+            return response.status(409).json({ success: false, message: "A buyer request changed while archiving. Refresh the listing and try again." });
+        }
         logListingFailure("archive listing", error);
         return response.status(500).json({ success: false, message: "We could not move this listing to your archive." });
     }

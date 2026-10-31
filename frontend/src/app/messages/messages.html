@@ -1,7 +1,7 @@
 <div class="messages-page">
   <header class="messages-header">
-    <a class="brand" routerLink="/" aria-label="CampusX home"
-      ><span class="brand-mark">cx</span><span>campus<span class="brand-accent">x</span></span></a
+    <a class="brand" routerLink="/" aria-label="UniTrade home"
+      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
     >
     <app-account-navigation />
   </header>
@@ -23,20 +23,53 @@
           <header class="thread-heading">
             <div>
               <p class="eyebrow">PRIVATE CHAT</p>
-              <h1>{{ thread.otherUser.fullName }}</h1>
+              <h1>
+                <a class="person-link" [routerLink]="['/sellers', thread.otherUser.id]">
+                  {{ thread.otherUser.fullName }}
+                </a>
+              </h1>
               <a [routerLink]="['/products', thread.listing.id]"
                 >{{ thread.listing.title }} · ₹{{ thread.listing.price }}</a
               >
+              <small class="live-updates">New messages check automatically every 3 seconds.</small>
             </div>
             @if (thread.listing.photoUrl) {
               <img [src]="thread.listing.photoUrl" [alt]="thread.listing.title" />
             }
           </header>
-          <div class="message-list" aria-live="polite">
+          <div #messageList class="message-list" aria-live="polite">
             @for (message of thread.messages; track message.id) {
-              <article class="message-bubble" [class.own-message]="isOwnMessage(message.senderId)">
-                <strong>{{ isOwnMessage(message.senderId) ? 'You' : message.senderName }}</strong>
-                <p>{{ message.body }}</p>
+              <article
+                class="message-bubble"
+                [class.own-message]="isOwnMessage(message.senderId)"
+                [class.other-message]="!isOwnMessage(message.senderId)"
+              >
+                @if (isOwnMessage(message.senderId)) {
+                  <strong>You</strong>
+                } @else {
+                  <a class="sender-profile-link" [routerLink]="['/sellers', message.senderId]">{{
+                    message.senderName
+                  }}</a>
+                }
+                @if (message.type === 'IMAGE' && message.attachmentUrl) {
+                  <img class="shared-image" [src]="message.attachmentUrl" [alt]="'Image shared by ' + message.senderName" />
+                  @if (message.body !== 'Shared a photo') {
+                    <p>{{ message.body }}</p>
+                  }
+                } @else if (message.type === 'CONTACT') {
+                  <div class="shared-contact">
+                    <small>Shared contact</small>
+                    <strong>{{ message.contactName }}</strong>
+                    <a [href]="'tel:' + message.contactPhone">{{ message.contactPhone }}</a>
+                  </div>
+                } @else if (message.type === 'LOCATION' && message.latitude !== null && message.longitude !== null) {
+                  <a class="shared-location" [href]="mapLocationUrl(message)" target="_blank" rel="noopener noreferrer">
+                    <strong>⌖ {{ message.locationLabel || 'Shared location' }}</strong>
+                    <small>Open map</small>
+                  </a>
+                } @else {
+                  <p>{{ message.body }}</p>
+                }
                 <time [attr.datetime]="message.createdAt">{{
                   message.createdAt | date: 'short'
                 }}</time>
@@ -63,8 +96,56 @@
               rows="3"
               [ngModel]="draft()"
               (ngModelChange)="draft.set($event)"
+              (keydown.enter)="handleEnterKey($event)"
               placeholder="Write a message about this listing"
             ></textarea>
+            <div class="attachment-tools" aria-label="Message attachments">
+              <input
+                #imageInput
+                class="visually-hidden"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="sendImage($event)"
+              />
+              <button type="button" (click)="imageInput.click()" [disabled]="sending()">
+                {{ uploadingImage() ? 'Uploading image…' : 'Photo' }}
+              </button>
+              <button type="button" (click)="toggleContactForm()" [disabled]="sending()">
+                Share contact
+              </button>
+              <button type="button" (click)="shareLocation()" [disabled]="sending() || sharingLocation()">
+                {{ sharingLocation() ? 'Getting location…' : 'Share location' }}
+              </button>
+            </div>
+            @if (contactFormOpen()) {
+              <div class="contact-share-form">
+                <label for="shared-contact-name">Contact name</label>
+                <input
+                  id="shared-contact-name"
+                  name="contactName"
+                  type="text"
+                  minlength="2"
+                  maxlength="100"
+                  [ngModelOptions]="{ standalone: true }"
+                  [ngModel]="contactName()"
+                  (ngModelChange)="contactName.set($event)"
+                />
+                <label for="shared-contact-phone">Phone number</label>
+                <input
+                  id="shared-contact-phone"
+                  name="contactPhone"
+                  type="tel"
+                  minlength="7"
+                  maxlength="30"
+                  [ngModelOptions]="{ standalone: true }"
+                  [ngModel]="contactPhone()"
+                  (ngModelChange)="contactPhone.set($event)"
+                />
+                <button type="button" (click)="shareContact()" [disabled]="sending()">
+                  {{ sending() ? 'Sharing…' : 'Send contact' }}
+                </button>
+              </div>
+            }
             <div class="form-footer">
               <small>{{ draft().trim().length }} / 2,000 characters</small
               ><button type="submit" [disabled]="sending() || !draft().trim()">
@@ -82,9 +163,9 @@
       }
     } @else {
       <section class="page-heading">
-        <p class="eyebrow">CAMPUSX INBOX</p>
+        <p class="eyebrow">UNITRADE INBOX</p>
         <h1>Messages</h1>
-        <p>Private conversations about campus listings.</p>
+        <p>Private conversations about campus listings. New conversations appear automatically.</p>
       </section>
       @if (loading()) {
         <p class="page-state" role="status">Loading your inbox…</p>
@@ -92,7 +173,11 @@
         <section class="state-card" role="alert">
           <h2>Inbox unavailable</h2>
           <p>{{ error() }}</p>
-          <a routerLink="/auth">Sign in</a>
+          @if (signInRequired()) {
+            <a routerLink="/auth" [queryParams]="{ returnUrl: '/messages' }">Sign in</a>
+          } @else {
+            <button type="button" (click)="loadInbox()">Try again</button>
+          }
         </section>
       } @else if (conversations().length === 0) {
         <section class="state-card">
@@ -103,23 +188,31 @@
       } @else {
         <section class="inbox-list" aria-label="Your conversations">
           @for (item of conversations(); track item.id) {
-            <a class="inbox-row" [routerLink]="['/messages', item.id]">
+            <article class="inbox-row" [class.has-unread]="item.unreadCount > 0">
               @if (item.listing.photoUrl) {
                 <img [src]="item.listing.photoUrl" [alt]="item.listing.title" />
               } @else {
                 <span class="listing-placeholder" aria-hidden="true">✳</span>
               }
               <span class="inbox-copy"
-                ><strong>{{ item.otherUser.fullName }}</strong
-                ><span>{{ item.listing.title }} · ₹{{ item.listing.price }}</span
+                ><a class="person-link" [routerLink]="['/sellers', item.otherUser.id]">{{
+                  item.otherUser.fullName
+                }}</a
+                ><a class="conversation-link" [routerLink]="['/messages', item.id]"
+                  >{{ item.listing.title }} · ₹{{ item.listing.price }}</a
                 ><small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span
               >
+              @if (item.unreadCount > 0) {
+                <span class="conversation-unread-badge" [attr.aria-label]="item.unreadCount + ' unread messages'">
+                  {{ item.unreadCount > 99 ? '99+' : item.unreadCount }}
+                </span>
+              }
               @if (item.lastMessage) {
                 <time [attr.datetime]="item.lastMessage.createdAt">{{
                   item.lastMessage.createdAt | date: 'short'
                 }}</time>
               }
-            </a>
+            </article>
           }
         </section>
       }

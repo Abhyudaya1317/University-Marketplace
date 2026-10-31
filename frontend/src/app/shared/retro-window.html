@@ -1,0 +1,13 @@
+<section class="retro-window" [class.is-maximized]="maximized()" aria-label="Application window">
+  <header class="retro-window-titlebar">
+    <strong>{{ title() }}</strong>
+    <div class="retro-window-controls">
+      <button type="button" aria-label="Minimize window" (click)="toggleMinimized()">_</button>
+      <button type="button" aria-label="Toggle window size" (click)="toggleMaximized()">□</button>
+      <button type="button" aria-label="Close window" (click)="closeWindow()">×</button>
+    </div>
+  </header>
+  @if (!minimized()) {
+    <div class="retro-window-content"><ng-content /></div>
+  }
+</section>

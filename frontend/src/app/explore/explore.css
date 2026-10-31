@@ -307,16 +307,24 @@ nav {
   display: flex;
   min-height: 225px;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 20px;
+  align-items: stretch;
+  padding: 0;
   border: 1px solid #eae7df;
   border-radius: 15px;
   background: #fffefa;
   color: inherit;
-  text-decoration: none;
   transition:
     transform 0.16s ease,
     box-shadow 0.16s ease;
+}
+.product-card-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px 20px 0;
+  color: inherit;
+  text-decoration: none;
 }
 .product-card:hover {
   transform: translateY(-3px);
@@ -371,12 +379,16 @@ nav {
 .seller-count {
   display: flex;
   justify-content: space-between;
-  width: 100%;
+  box-sizing: border-box;
+  width: calc(100% - 40px);
   margin-top: auto;
   padding-top: 15px;
+  padding-bottom: 20px;
   color: #8a6657;
   font-size: 11px;
+  text-decoration: none;
 }
+.seller-count:hover span:first-child { text-decoration: underline; }
 
 /* Explain loading, errors, and empty searches without leaving a blank page. */
 .state-message {

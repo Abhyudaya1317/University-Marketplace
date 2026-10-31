@@ -470,6 +470,10 @@
   background: #fffefa;
   color: #89583f;
 }
+.request-actions .message-buyer-button {
+  background: var(--navy, #000080);
+  color: #fff;
+}
 .dashboard-notice {
   padding: 10px 12px;
   border-radius: 9px;

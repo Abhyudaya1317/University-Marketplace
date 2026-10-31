@@ -1,8 +1,8 @@
 <!-- Keep personal-email authentication separate from the temporary home page. -->
 <main class="auth-shell">
-  <a class="brand" href="/" aria-label="CampusX home">
-    <span class="brand-mark" aria-hidden="true">cx</span>
-    <span>campus<span class="brand-accent">x</span></span>
+  <a class="brand" href="/" aria-label="UniTrade home">
+    <span class="brand-mark" aria-hidden="true">✦</span>
+    <span>UNITRADE<sup>’99</sup></span>
   </a>
 
   <section class="auth-card" aria-labelledby="auth-title">
@@ -14,73 +14,160 @@
       <button class="primary-button" type="button" (click)="signOut()">Sign out</button>
     } @else {
       <!-- The headline and message change based on the selected account task. -->
-      <p class="eyebrow">MADE FOR THE LPU COMMUNITY</p>
+      <p class="eyebrow">UNITRADE · LPU COMMUNITY</p>
       <h1 id="auth-title">
-        @if (mode() === 'signup') { Create your account }
-        @else if (mode() === 'reset') { Reset your password }
-        @else { Welcome back }
+        @if (mode() === 'signup') {
+          Create your account
+        } @else if (mode() === 'reset') {
+          Reset your password
+        } @else {
+          Welcome back
+        }
       </h1>
-      <p class="description">Use your personal email to continue with CampusX.</p>
+      <p class="description">Use your personal email to continue with UniTrade.</p>
 
       @if (mode() !== 'reset') {
         <!-- Sign-up and sign-in share one small form and endpoint choice. -->
         <form (ngSubmit)="submitPasswordForm()">
           @if (mode() === 'signup') {
             <label for="full-name">Full name</label>
-            <input id="full-name" name="fullName" type="text" autocomplete="name" required minlength="2" maxlength="100"
-              [(ngModel)]="fullName" placeholder="Your name as other students will see it">
+            <input
+              id="full-name"
+              name="fullName"
+              type="text"
+              autocomplete="name"
+              required
+              minlength="2"
+              maxlength="100"
+              [(ngModel)]="fullName"
+              placeholder="Your name as other students will see it"
+            />
           }
           <label for="email">Email address</label>
-          <input id="email" name="email" type="email" autocomplete="email" required maxlength="254"
-            [(ngModel)]="email" placeholder="you@example.com">
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            maxlength="254"
+            [(ngModel)]="email"
+            placeholder="you@example.com"
+          />
 
           <label for="password">Password</label>
-          <input id="password" name="password" type="password"
+          <input
+            id="password"
+            name="password"
+            type="password"
             [attr.autocomplete]="mode() === 'signup' ? 'new-password' : 'current-password'"
-            required minlength="10" maxlength="128" [(ngModel)]="password" placeholder="At least 10 characters">
+            required
+            minlength="10"
+            maxlength="128"
+            [(ngModel)]="password"
+            placeholder="At least 10 characters"
+          />
 
           <button class="primary-button" type="submit" [disabled]="busy()">
-            @if (busy()) { Please wait… } @else if (mode() === 'signup') { Create account } @else { Sign in }
+            @if (busy()) {
+              Please wait…
+            } @else if (mode() === 'signup') {
+              Create account
+            } @else {
+              Sign in
+            }
           </button>
         </form>
-        <button class="text-button forgot-button" type="button" (click)="chooseMode('reset')">Forgot password?</button>
+        <button class="text-button forgot-button" type="button" (click)="chooseMode('reset')">
+          Forgot password?
+        </button>
 
         <div class="divider"><span>or</span></div>
         <!-- OAuth starts at the backend so the Google client secret stays on the server. -->
-        <a class="google-button" href="/api/auth/google"><span aria-hidden="true">G</span> Continue with Google</a>
+        <a class="google-button" [href]="googleSignInUrl"
+          ><span aria-hidden="true">G</span> Continue with Google</a
+        >
 
         <p class="switch-mode">
-          @if (mode() === 'signup') { Already have an account? <button class="text-button" type="button" (click)="chooseMode('login')">Sign in</button> }
-          @else { New to CampusX? <button class="text-button" type="button" (click)="chooseMode('signup')">Create an account</button> }
+          @if (mode() === 'signup') {
+            Already have an account?
+            <button class="text-button" type="button" (click)="chooseMode('login')">Sign in</button>
+          } @else {
+            New to UniTrade?
+            <button class="text-button" type="button" (click)="chooseMode('signup')">
+              Create an account
+            </button>
+          }
         </p>
       } @else {
         <!-- Password recovery uses a short-lived email code before changing the password. -->
         <form (ngSubmit)="resetCodeSent() ? resetPassword() : requestResetCode()">
           <label for="reset-email">Email address</label>
-          <input id="reset-email" name="resetEmail" type="email" autocomplete="email" required maxlength="254"
-            [(ngModel)]="email" placeholder="you@example.com">
+          <input
+            id="reset-email"
+            name="resetEmail"
+            type="email"
+            autocomplete="email"
+            required
+            maxlength="254"
+            [(ngModel)]="email"
+            placeholder="you@example.com"
+          />
 
           @if (resetCodeSent()) {
             <label for="reset-code">Six-digit email code</label>
-            <input id="reset-code" name="resetCode" inputmode="numeric" autocomplete="one-time-code"
-              required pattern="[0-9]{6}" maxlength="6" [(ngModel)]="resetCode" placeholder="000000">
+            <input
+              id="reset-code"
+              name="resetCode"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              required
+              pattern="[0-9]{6}"
+              maxlength="6"
+              [(ngModel)]="resetCode"
+              placeholder="000000"
+            />
             <label for="new-password">New password</label>
-            <input id="new-password" name="newPassword" type="password" autocomplete="new-password"
-              required minlength="10" maxlength="128" [(ngModel)]="newPassword" placeholder="At least 10 characters">
+            <input
+              id="new-password"
+              name="newPassword"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength="10"
+              maxlength="128"
+              [(ngModel)]="newPassword"
+              placeholder="At least 10 characters"
+            />
           }
 
           <button class="primary-button" type="submit" [disabled]="busy()">
-            @if (busy()) { Please wait… } @else if (resetCodeSent()) { Update password } @else { Send reset code }
+            @if (busy()) {
+              Please wait…
+            } @else if (resetCodeSent()) {
+              Update password
+            } @else {
+              Send reset code
+            }
           </button>
         </form>
-        <button class="text-button back-button" type="button" (click)="chooseMode('login')">Back to sign in</button>
+        <button class="text-button back-button" type="button" (click)="chooseMode('login')">
+          Back to sign in
+        </button>
       }
 
-      @if (notice()) { <p class="feedback success" role="status">{{ notice() }}</p> }
-      @if (error()) { <p class="feedback failure" role="alert">{{ error() }}</p> }
+      @if (notice()) {
+        <p class="feedback success" role="status">{{ notice() }}</p>
+      }
+      @if (error()) {
+        <p class="feedback failure" role="alert">{{ error() }}</p>
+      }
 
       <!-- Account creation uses personal email; CampusX does not verify student status. -->
-      <p class="community-note">CampusX is intended for the LPU community. We use personal email for account access and do not verify student status.</p>
+      <p class="community-note">
+        UniTrade is intended for the LPU community. We use personal email for account access and do
+        not verify student status.
+      </p>
     }
   </section>
 </main>

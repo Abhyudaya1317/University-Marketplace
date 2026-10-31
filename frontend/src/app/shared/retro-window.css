@@ -1,0 +1,39 @@
+:host { display: block; }
+.retro-window {
+  overflow: hidden;
+  border: 3px solid #fff;
+  outline: 1px solid var(--navy, #000080);
+  background: var(--os-gray, #c0c0c0);
+  box-shadow: 7px 7px 0 #080817;
+  transform: rotate(1.1deg);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.retro-window.is-maximized { transform: rotate(0); box-shadow: 3px 3px 0 #080817; }
+.retro-window-titlebar {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 7px 4px 10px;
+  background: var(--navy, #000080);
+  color: #fff;
+}
+.retro-window-titlebar strong { overflow: hidden; font: 9px/1.5 var(--pixel, monospace); text-overflow: ellipsis; white-space: nowrap; }
+.retro-window-controls { display: flex; gap: 4px; }
+.retro-window-controls button {
+  width: 25px;
+  height: 23px;
+  padding: 0;
+  border: 2px outset #eee;
+  background: var(--os-gray, #c0c0c0);
+  color: var(--ink, #080817);
+  font: bold 15px/1 var(--body, sans-serif);
+  cursor: pointer;
+  box-shadow: none;
+}
+.retro-window-controls button:active { border-style: inset; transform: translate(1px, 1px); }
+.retro-window-content { padding: 10px; }
+@media (max-width: 620px) {
+  .retro-window { transform: none; }
+}

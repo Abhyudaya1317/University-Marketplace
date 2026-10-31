@@ -32,6 +32,8 @@
 .answer-form { display: grid; gap: 8px; margin: 14px 0 0 35px; }
 .text-button { justify-self: start; padding: 8px 0; border: 0; background: transparent; color: #a95638; cursor: pointer; font-size: 10px; font-weight: 700; }
 .empty-note { margin: 14px 0 0; }
+.person-profile-link { color: #98563d; text-decoration: none; }
+.person-profile-link:hover { text-decoration: underline; }
 .form-feedback { margin: 0; padding: 10px 12px; border-radius: 8px; font-size: 11px; }
 .form-feedback.error { background: #f9e8e5; color: #a33f34; }
 .form-feedback.success { background: #eaf2e9; color: #34754b; }

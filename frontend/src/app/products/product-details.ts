@@ -44,6 +44,8 @@ export class ProductDetails {
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly currentUserId = signal<number | null>(null);
+  protected readonly sessionCheckComplete = signal(false);
+  protected readonly sessionError = signal('');
   protected readonly saved = signal(false);
   protected readonly saving = signal(false);
   protected readonly feedback = signal('');
@@ -53,6 +55,7 @@ export class ProductDetails {
   protected readonly buyerMessage = signal('');
   protected readonly submittingOrder = signal(false);
   protected readonly orderFeedback = signal('');
+  protected readonly requestSubmitted = signal(false);
   protected readonly startingConversation = signal(false);
   protected readonly engagementOffers = computed(() => {
     const current = this.listing();
@@ -61,8 +64,21 @@ export class ProductDetails {
 
   constructor() {
     this.http.get<{ user?: { id: number } }>('/api/auth/me').subscribe({
-      next: (response) => this.currentUserId.set(response.user?.id ?? null),
-      error: () => this.currentUserId.set(null),
+      next: (response) => {
+        this.currentUserId.set(response.user?.id ?? null);
+        this.sessionCheckComplete.set(true);
+      },
+      error: (response: HttpErrorResponse) => {
+        this.currentUserId.set(null);
+        this.sessionCheckComplete.set(true);
+        if (response.status !== 401) {
+          this.sessionError.set(
+            response.status === 0
+              ? 'CampusX could not reach the backend. Start the backend server, then try messaging again.'
+              : 'CampusX could not verify your sign-in. Refresh the page and try again.',
+          );
+        }
+      },
     });
     this.route.paramMap.subscribe((params) => {
       const listingId = Number(params.get('listingId'));
@@ -78,6 +94,8 @@ export class ProductDetails {
   private loadListing(listingId: number): void {
     this.loading.set(true);
     this.error.set('');
+    this.orderFeedback.set('');
+    this.requestSubmitted.set(false);
     this.http
       .get<{ success: boolean; listing: ListingDetails; message?: string }>(
         `/api/listings/public/${listingId}`,
@@ -135,6 +153,14 @@ export class ProductDetails {
   protected requestToBuy(): void {
     const listing = this.listing();
     if (!listing || this.submittingOrder()) return;
+    if (!this.currentUserId()) {
+      void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    if (!Number.isSafeInteger(this.quantity()) || this.quantity() < 1 || this.quantity() > listing.quantityAvailable) {
+      this.orderFeedback.set(`Choose a whole-number quantity from 1 to ${listing.quantityAvailable}.`);
+      return;
+    }
     this.submittingOrder.set(true);
     this.orderFeedback.set('');
     this.http
@@ -147,6 +173,7 @@ export class ProductDetails {
       .subscribe({
         next: () => {
           this.orderFeedback.set('Request sent. The seller can accept or decline it.');
+          this.requestSubmitted.set(true);
           this.submittingOrder.set(false);
         },
         error: (response: HttpErrorResponse) => {
@@ -173,10 +200,24 @@ export class ProductDetails {
           void this.router.navigate(['/messages', response.conversation.id]);
         },
         error: (response: HttpErrorResponse) => {
-          this.feedback.set(response.error?.message ?? 'We could not open a chat with this seller.');
+          this.feedback.set(this.chatErrorMessage(response));
           this.startingConversation.set(false);
         },
       });
+  }
+
+  // Explain whether chat failed because of sign-in, a missing listing, or the backend.
+  private chatErrorMessage(response: HttpErrorResponse): string {
+    if (response.status === 0) {
+      return 'CampusX could not reach the backend. Start the backend server, then try again.';
+    }
+    if (response.status === 401) {
+      return 'Your sign-in could not be verified. Sign in again, then retry messaging.';
+    }
+    if (response.status >= 500) {
+      return 'CampusX could not create the chat. Check that PostgreSQL is running and the latest database migrations are applied.';
+    }
+    return response.error?.message ?? 'We could not open a chat with this seller.';
   }
 
   protected categoryLabel(value: string): string {

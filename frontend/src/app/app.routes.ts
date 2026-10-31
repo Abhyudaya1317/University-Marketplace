@@ -12,6 +12,20 @@ import { Messages } from './messages/messages';
 // Keep page URLs and their feature components together in one route list.
 export const routes: Routes = [
   {
+    path: 'home',
+    component: Home,
+  },
+  {
+    path: 'products',
+    redirectTo: 'explore',
+    pathMatch: 'full',
+  },
+  {
+    path: 'profile',
+    redirectTo: 'dashboard',
+    pathMatch: 'full',
+  },
+  {
     path: 'auth',
     component: Auth,
   },
