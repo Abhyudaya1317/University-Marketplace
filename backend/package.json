@@ -6,10 +6,15 @@
   "scripts": {
     "test": "node --test",
     "start": "node src/server.js",
+    "build":"ng build --configuration production",
+    "watch":"ng build --watch --configuration development",
     "dev": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:check": "node src/scripts/checkDatabase.js"
+  },
+  "engines":{
+    "node": ">=22.0.0"
   },
   "keywords": [],
   "author": "",
