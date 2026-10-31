@@ -18,15 +18,19 @@
     } @else if (listing(); as item) {
       <section class="listing-detail">
         <div class="photo-panel">
-          @if (item.photoUrl && !imageUnavailable()) {
-            <img
-              [src]="item.photoUrl"
-              [alt]="item.title + ' product photo'"
-              (error)="imageUnavailable.set(true)"
-            />
-          } @else {
-            <div class="photo-placeholder" aria-label="No product photo available">✳</div>
-          }
+          <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
+            <img class="paint-frame-image" src="/images/untitled-paint.jpg" alt="Untitled Paint window" />
+            @if (item.photoUrl && !imageUnavailable()) {
+              <img
+                class="paint-product-image"
+                [src]="item.photoUrl"
+                [alt]="item.title + ' product photo'"
+                (error)="imageUnavailable.set(true)"
+              />
+            } @else {
+              <div class="paint-placeholder" aria-label="No product photo available">✳</div>
+            }
+          </div>
         </div>
         <div class="detail-copy">
           <p class="eyebrow">{{ categoryLabel(item.category) }}</p>

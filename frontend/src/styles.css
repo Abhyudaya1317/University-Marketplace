@@ -723,3 +723,44 @@ body .stat-yellow { background: var(--yellow); }
 body .stat-cyan { background: var(--cyan); }
 body .stat-pink { background: var(--pink); }
 body .account-navigation .unread-badge { border-radius: 50% !important; }
+
+/* Use the supplied Paint screenshot as the exact frame and overlay only the live product photo. */
+body .details-page .photo-panel {
+  min-height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body .details-page .paint-screenshot {
+  position: relative;
+  width: min(100%, 583px);
+  margin: 0 auto;
+  line-height: 0;
+}
+body .details-page .paint-frame-image {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  object-fit: fill !important;
+}
+body .details-page .paint-product-image {
+  position: absolute !important;
+  top: 11%;
+  left: 22.4%;
+  width: 69.7% !important;
+  height: 65.5% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+}
+body .details-page .paint-placeholder {
+  position: absolute;
+  top: 11%;
+  left: 22.4%;
+  width: 69.7%;
+  height: 65.5%;
+  background: #fff;
+}
+body .details-page .detail-copy h1 { text-shadow: none !important; }
