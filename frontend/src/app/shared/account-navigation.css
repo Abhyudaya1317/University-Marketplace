@@ -53,6 +53,18 @@
 .account-menu > summary::-webkit-details-marker { display: none; }
 .account-menu > summary::marker { content: ''; }
 .account-menu[open] > summary { border-style: inset; }
+.options-notification-badge {
+  display: inline-grid;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  padding: 0 4px;
+  border: 1px solid var(--deep-navy, #080817);
+  border-radius: 50%;
+  background: var(--electric-blue, #174bff);
+  color: #fff;
+  font: 700 10px/1 var(--body, sans-serif);
+}
 .account-menu-list {
   position: absolute;
   z-index: 1500;
@@ -87,13 +99,13 @@
 .account-menu-list > a:hover,
 .account-menu-list > button:hover { background: var(--yellow, #fff94f); }
 .account-menu-list > button { width: 100%; border-bottom: 0; }
-.account-menu-list .unread-badge {
+.account-menu-list .notification-badge {
   min-width: 24px;
   height: 24px;
   border: 2px solid var(--deep-navy, #080817);
   border-radius: 50%;
-  background: var(--pink, #ff6fcf);
-  color: var(--deep-navy, #080817);
+  background: var(--electric-blue, #174bff);
+  color: #fff;
   font: 9px/1 var(--body, sans-serif);
 }
 
@@ -103,7 +115,7 @@
   gap: 7px;
 }
 
-.unread-badge {
+.notification-badge {
   display: inline-grid;
   min-width: 20px;
   height: 20px;

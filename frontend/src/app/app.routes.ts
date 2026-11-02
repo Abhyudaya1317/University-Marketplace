@@ -50,6 +50,10 @@ export const routes: Routes = [
     component: Dashboard,
   },
   {
+    path: 'items-selling',
+    component: Dashboard,
+  },
+  {
     path: 'orders',
     component: MyOrders,
   },

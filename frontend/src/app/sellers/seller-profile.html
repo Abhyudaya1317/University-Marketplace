@@ -18,7 +18,16 @@
         <a routerLink="/explore">Return to Explore</a>
       </section>
     } @else if (seller(); as currentSeller) {
-      <section class="profile-heading">
+      <section class="profile-console" aria-labelledby="seller-profile-name">
+        <div class="profile-window-titlebar">
+          <strong>PROFILE.EXE</strong><span aria-hidden="true"><i>_</i><i>□</i><i>×</i></span>
+        </div>
+        <nav class="profile-window-menu" aria-label="Profile shortcuts">
+          <a routerLink="/orders">MY ORDERS</a>
+          <a routerLink="/messages">MESSAGES</a>
+          <a routerLink="/items-selling">ITEMS I’M SELLING</a>
+        </nav>
+      <div class="profile-heading">
         @if (currentSeller.avatarUrl) {
           <img
             class="profile-avatar"
@@ -31,34 +40,55 @@
           </div>
         }
         <div class="profile-copy">
-          <p class="eyebrow">UNITRADE SELLER</p>
-          <h1>{{ currentSeller.fullName }}</h1>
-          <p>
-            {{ currentSeller.activeListingCount }} active
-            {{ currentSeller.activeListingCount === 1 ? 'listing' : 'listings' }}
-            <span class="meta-separator">·</span>
-            @if (currentSeller.reviewCount) {
-              {{ currentSeller.averageRating }} / 5 from {{ currentSeller.reviewCount }}
-              {{ currentSeller.reviewCount === 1 ? 'review' : 'reviews' }}
-            } @else {
-              No reviews yet
-            }
-          </p>
+          <p class="eyebrow profile-handle">@CAMPUSX_{{ currentSeller.id }}</p>
+          <div class="profile-stats">
+            <div><strong>{{ currentSeller.activeListingCount }}</strong><span>listings</span></div>
+            <div><strong>{{ currentSeller.followerCount }}</strong><span>followers</span></div>
+            <div><strong>{{ currentSeller.followingCount }}</strong><span>following</span></div>
+          </div>
+          <h1 id="seller-profile-name">{{ currentSeller.fullName }}</h1>
+          @if (currentSeller.reviewCount) {
+            <p>{{ currentSeller.averageRating }} / 5 · {{ currentSeller.reviewCount }} seller reviews</p>
+          } @else {
+            <p>LPU marketplace member</p>
+          }
         </div>
         @if (isOwnProfile()) {
-          <a class="save-button secondary" routerLink="/dashboard">Your dashboard</a>
+          <a class="save-button secondary" routerLink="/dashboard">EDIT YOUR PROFILE</a>
         } @else if (isSignedIn()) {
           <button class="save-button" type="button" [disabled]="busy()" (click)="toggleFavorite()">
-            {{ busy() ? 'Saving…' : isFavorite() ? '♥ Saved seller' : '♡ Save seller' }}
+            {{ busy() ? 'UPDATING…' : isFavorite() ? '✓ FOLLOWING' : '+ FOLLOW SELLER' }}
           </button>
         } @else {
-          <a class="save-button" routerLink="/auth">Sign in to save seller</a>
+          <a class="save-button" routerLink="/auth">SIGN IN TO FOLLOW</a>
         }
+      </div>
       </section>
 
       @if (notice()) {
         <p class="notice" role="status">{{ notice() }}</p>
       }
+
+      <section class="profile-gallery-section" aria-label="Seller listing photos">
+        @if (listings().length === 0) {
+          <div class="profile-gallery-empty"><strong>NO POSTS YET</strong><p>This seller has no active listings.</p></div>
+        } @else {
+          <div class="profile-photo-grid">
+            @for (listing of listings(); track listing.id) {
+              <a class="profile-photo-tile" [routerLink]="['/products', listing.id]" [attr.aria-label]="'Open listing: ' + listing.title">
+                @if (listing.photoUrl) {
+                  <img [src]="listing.photoUrl" [alt]="listing.title" loading="lazy" />
+                } @else if (listing.photoUrl2) {
+                  <img [src]="listing.photoUrl2" [alt]="listing.title" loading="lazy" />
+                } @else {
+                  <span class="profile-photo-placeholder" aria-hidden="true">✳</span>
+                }
+                <span class="profile-photo-caption"><strong>{{ listing.title }}</strong><small>₹{{ listing.price }}</small></span>
+              </a>
+            }
+          </div>
+        }
+      </section>
 
       <section class="listing-section" aria-labelledby="active-listings-title">
         <div class="section-heading">

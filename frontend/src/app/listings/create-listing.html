@@ -46,10 +46,18 @@
         <div class="form-field">
           <label for="condition">Condition</label>
           <select id="condition" name="condition" required [(ngModel)]="condition">
-            <option value="NEW">New</option><option value="LIKE_NEW">Like new</option>
+            <option value="NEW">Brand new</option><option value="LIKE_NEW">Like new</option>
             <option value="GOOD">Good</option><option value="FAIR">Fair</option>
+            <option value="OLD">Old / used</option><option value="CUSTOM">Custom</option>
           </select>
         </div>
+        @if (condition === 'CUSTOM') {
+          <div class="form-field">
+            <label for="custom-condition">Custom condition</label>
+            <input id="custom-condition" name="customCondition" type="text" required minlength="2" maxlength="80"
+              [(ngModel)]="customCondition" placeholder="Describe the item's condition">
+          </div>
+        }
 
         @if (category === 'CLOTHING') {
           <div class="form-field">
@@ -107,18 +115,22 @@
         </div>
 
         <div class="form-field">
-          <label for="product-photo">Product photo (optional)</label>
-          <input #photoInput id="product-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp"
-            (change)="selectPhoto($event)">
-          <small>JPG, PNG, or WebP · maximum 5 MB.</small>
+          <label for="product-photo">Product photos (exactly 2 required)</label>
+          <input #photoInput id="product-photo" name="photos" type="file" accept="image/jpeg,image/png,image/webp"
+            multiple [required]="!isEditing()" (change)="selectPhotos($event)">
+          <small>Choose two JPG, PNG, or WebP photos · maximum 5 MB each. When editing, select both to replace the existing photos.</small>
           @if (photoError()) { <small class="failure" role="alert">{{ photoError() }}</small> }
-          @if (photoPreview(); as preview) {
-            <img class="photo-preview" [src]="preview" alt="Preview of the selected product photo">
-          } @else if (currentPhotoUrl() && !removeCurrentPhoto()) {
-            <img class="photo-preview" [src]="currentPhotoUrl()" alt="Current product photo">
-          }
-          @if (isEditing() && currentPhotoUrl()) {
-            <label class="remove-photo-option"><input name="removeCurrentPhoto" type="checkbox" [ngModel]="removeCurrentPhoto()" (ngModelChange)="removeCurrentPhoto.set($event)"> Remove current photo</label>
+          @if (photoPreviews().length > 0) {
+            <div class="photo-preview-row">
+              @for (preview of photoPreviews(); track preview; let i = $index) {
+                <img class="photo-preview" [src]="preview" [alt]="'Preview of product photo ' + (i + 1)">
+              }
+            </div>
+          } @else if (isEditing()) {
+            <div class="photo-preview-row">
+              @if (currentPhotoUrl()) { <img class="photo-preview" [src]="currentPhotoUrl()" alt="Current product photo 1"> }
+              @if (currentPhotoUrl2()) { <img class="photo-preview" [src]="currentPhotoUrl2()" alt="Current product photo 2"> }
+            </div>
           }
         </div>
 

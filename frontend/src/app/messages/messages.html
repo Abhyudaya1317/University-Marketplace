@@ -21,6 +21,11 @@
       } @else if (conversation(); as thread) {
         <section class="thread-card" aria-label="Private conversation">
           <header class="thread-heading">
+            @if (thread.otherUser.avatarUrl) {
+              <img class="thread-person-avatar" [src]="thread.otherUser.avatarUrl" [alt]="thread.otherUser.fullName + ' profile photo'" />
+            } @else {
+              <span class="thread-person-avatar avatar-fallback" aria-hidden="true">{{ thread.otherUser.fullName.charAt(0) }}</span>
+            }
             <div>
               <p class="eyebrow">PRIVATE CHAT</p>
               <h1>
@@ -33,9 +38,6 @@
               >
               <small class="live-updates">New messages check automatically every 3 seconds.</small>
             </div>
-            @if (thread.listing.photoUrl) {
-              <img [src]="thread.listing.photoUrl" [alt]="thread.listing.title" />
-            }
           </header>
           <div #messageList class="message-list" aria-live="polite">
             @for (message of thread.messages; track message.id) {
@@ -189,15 +191,15 @@
         <section class="inbox-list" aria-label="Your conversations">
           @for (item of conversations(); track item.id) {
             <article class="inbox-row" [class.has-unread]="item.unreadCount > 0">
-              @if (item.listing.photoUrl) {
-                <img [src]="item.listing.photoUrl" [alt]="item.listing.title" />
+              @if (item.otherUser.avatarUrl) {
+                <img class="inbox-avatar" [src]="item.otherUser.avatarUrl" [alt]="item.otherUser.fullName + ' profile photo'" />
               } @else {
-                <span class="listing-placeholder" aria-hidden="true">✳</span>
+                <span class="listing-placeholder inbox-avatar" aria-hidden="true">{{ item.otherUser.fullName.charAt(0) }}</span>
               }
               <span class="inbox-copy"
-                ><a class="person-link" [routerLink]="['/sellers', item.otherUser.id]">{{
+                ><strong class="person-name">{{
                   item.otherUser.fullName
-                }}</a
+                }}</strong
                 ><a class="conversation-link" [routerLink]="['/messages', item.id]"
                   >{{ item.listing.title }} · ₹{{ item.listing.price }}</a
                 ><small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span

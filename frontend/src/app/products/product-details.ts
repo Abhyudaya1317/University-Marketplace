@@ -14,8 +14,10 @@ interface ListingDetails {
   price: string;
   quantityAvailable: number;
   photoUrl: string | null;
+  photoUrl2: string | null;
   location: string;
   condition: string;
+  customCondition: string | null;
   clothingGender: string | null;
   proteinGrams: string | null;
   category: string;
@@ -49,7 +51,13 @@ export class ProductDetails {
   protected readonly saved = signal(false);
   protected readonly saving = signal(false);
   protected readonly feedback = signal('');
-  protected readonly imageUnavailable = signal(false);
+  protected readonly unavailablePhotoUrls = signal<Set<string>>(new Set());
+  protected readonly activePhotoIndex = signal(0);
+  protected readonly productPhotos = computed(() => {
+    const item = this.listing();
+    return [item?.photoUrl, item?.photoUrl2].filter((url): url is string => Boolean(url));
+  });
+  protected readonly activePhotoUrl = computed(() => this.productPhotos()[this.activePhotoIndex()] ?? null);
   protected readonly buyerPhone = signal('');
   protected readonly quantity = signal(1);
   protected readonly buyerMessage = signal('');
@@ -94,6 +102,8 @@ export class ProductDetails {
   private loadListing(listingId: number): void {
     this.loading.set(true);
     this.error.set('');
+    this.activePhotoIndex.set(0);
+    this.unavailablePhotoUrls.set(new Set());
     this.orderFeedback.set('');
     this.requestSubmitted.set(false);
     this.http
@@ -225,6 +235,28 @@ export class ProductDetails {
       .toLowerCase()
       .replaceAll('_', ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  // Switch between the two listing photos without stretching either image.
+  protected stepPhoto(direction: number): void {
+    const count = this.productPhotos().length;
+    if (count < 2) return;
+    this.activePhotoIndex.update((index) => (index + direction + count) % count);
+  }
+
+  protected isPhotoAvailable(url: string): boolean {
+    return !this.unavailablePhotoUrls().has(url);
+  }
+
+  protected markPhotoUnavailable(url: string): void {
+    this.unavailablePhotoUrls.update((urls) => new Set(urls).add(url));
+  }
+
+  protected conditionLabel(item: ListingDetails): string {
+    if (item.condition === 'CUSTOM' && item.customCondition) return item.customCondition;
+    if (item.condition === 'NEW') return 'Brand new';
+    if (item.condition === 'OLD') return 'Old / used';
+    return this.categoryLabel(item.condition);
   }
 
   protected stockLabel(quantity: number): string {

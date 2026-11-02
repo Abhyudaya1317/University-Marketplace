@@ -108,6 +108,12 @@
   object-fit: cover;
   background: #f4eee5;
 }
+.inbox-avatar { border-radius: 50%; }
+.person-name { color: inherit; font-size: 15px; font-weight: 700; }
+.thread-heading { display: flex; align-items: center; gap: 16px; }
+.thread-heading { justify-content: flex-start; }
+.thread-heading .thread-person-avatar { width: 62px; height: 62px; flex: 0 0 62px; border: 2px solid #777; object-fit: cover; }
+.thread-heading .avatar-fallback { display: grid; place-items: center; background: #eee; color: #000080; font-size: 24px; }
 .listing-placeholder {
   display: grid;
   place-items: center;

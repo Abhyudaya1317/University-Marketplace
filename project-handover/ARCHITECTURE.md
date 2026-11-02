@@ -54,9 +54,9 @@ Angular 21 uses standalone components and a small root app shell. App routing is
 | messages/messages.ts/html/css | In-progress inbox and conversation view with manual refresh. |
 | shared/account-navigation.* | Header/navigation and sign-out/session display shared by pages. |
 
-Routes: /, /auth, /sell, /explore, /products/:listingId, /sellers/:sellerId, /dashboard, /orders, /messages, /messages/:conversationId. Unknown routes redirect to /. Message route ordering puts the parameter route before the base inbox.
+Routes: /, /home, /auth, /sell, /explore, /products/:listingId, /sellers/:sellerId, /dashboard, /items-selling, /orders, /messages, /messages/:conversationId. /profile redirects to /dashboard. Unknown routes redirect to /. Message route ordering puts the parameter route before the base inbox. /items-selling currently reuses the Dashboard component.
 
-Angular HttpClient sends same-origin /api calls through the Angular development proxy in frontend/proxy.conf.json, which targets port 5000. No explicit interceptors/guards were found in app.config.ts. Components call /api/auth/me to determine the current user. Server authorization remains authoritative; hiding a button is not security.
+Angular HttpClient sends same-origin /api calls through frontend/proxy.conf.json. The backend default is port 5000, but the current local private backend/.env sets PORT=5002 and the proxy targets http://127.0.0.1:5002. Keep these values matched and restart both dev servers after changing them. No explicit interceptors/guards were found in app.config.ts. Components call /api/auth/me to determine the current user. Server authorization remains authoritative; hiding a button is not security.
 
 State is mostly component-local Angular signals. This matters for async UI refresh, especially with modern zoneless behavior. Direct mutable property assignment may not refresh all UI; use signals or established Angular reactivity. Forms use template-driven FormsModule in several components; validation is repeated in the backend and frontend for UX.
 
@@ -96,7 +96,7 @@ Product search is deterministic local keyword matching, prefix and one-edit tole
 
 ## Images
 
-Multer stores allowed listing images in backend/uploads/listings. UI limits JPG/PNG/WebP to 5 MB and previews locally. Backend serves them under /api/uploads/listings with nosniff and cache headers. Replacement/deletion removes files in some paths. This is local filesystem storage; backups, durability in cloud deployment, multi-instance sharing, image transformations, malware scanning, quotas and CDN are not demonstrated.
+Multer stores allowed listing images in backend/uploads/listings. Listing creation requires exactly two JPG/PNG/WebP photos (5 MB each); Listing has photoUrl and photoUrl2. Backend serves them under /api/uploads/listings with nosniff and cache headers. The authenticated profile-photo endpoint stores avatars under backend/uploads/profiles and serves them under /api/uploads/profiles. This is local filesystem storage; backups, durability in cloud deployment, multi-instance sharing, image transformations, malware scanning, quotas and CDN are not demonstrated.
 
 ## Payment architecture
 
@@ -104,7 +104,7 @@ No Razorpay SDK, payment route, payment model, webhook, capture/escrow, refund o
 
 ## Database and migration strategy
 
-PostgreSQL schema lives in backend/prisma/schema.prisma; sequential SQL migrations are in backend/prisma/migrations. There are 14 migration directories, ending in 20261030180000_add_private_messaging. Migrations are additive across the project history. Current verification could not query live migration status because the Prisma schema engine errored and db:check returned its safe connection failure. Confirm local DB target before any migration command. Never use migrate reset or drop/recreate to solve a connection problem.
+PostgreSQL schema lives in backend/prisma/schema.prisma; sequential SQL migrations are in backend/prisma/migrations. There are 15 migration directories, ending in 20261101120000_add_second_listing_photo_custom_condition. Migrations are additive across the project history. On 2026-11-01, local backend health and Explore product reads were verified through the frontend proxy; the API returned five listings, confirming live database reads. Prisma migrate status was not rerun, so migration bookkeeping remains unconfirmed. Never use migrate reset or drop/recreate to solve a connection problem.
 
 ## Architecture risks and discrepancies
 
@@ -115,4 +115,4 @@ PostgreSQL schema lives in backend/prisma/schema.prisma; sequential SQL migratio
 5. Search filters in application memory without pagination. A 1000s-of-listings marketplace needs indexed DB search/pagination or deliberate bounded APIs.
 6. Local uploads are not production-grade shared storage.
 7. Messages currently have no integration test and no live push; schema is present but database status is unconfirmed in this handoff.
-8. Git contains only one README-only commit (a05037d, “first commit”); the backend/frontend implementation is untracked, so application provenance and implementation history cannot be established from Git.
+8. The current workspace has uncommitted source changes on branch angular-vercel. Inspect git status before editing and preserve user changes; do not rely on a previous handoff's branch or clean-tree snapshot.

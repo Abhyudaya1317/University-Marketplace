@@ -8,8 +8,6 @@
       </div>
       <span class="section-count">{{ listingReviews().length }} reviews</span>
     </div>
-    <p class="section-note">Community feedback is not purchase-verified yet.</p>
-
     @if (currentUserId() && reviewableOffer()) {
       <form class="engagement-form review-form" (ngSubmit)="submitReview()">
         <p class="offer-review-context">Reviewing this seller · ₹{{ reviewableOffer()?.price }}</p>

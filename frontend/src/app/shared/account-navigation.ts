@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
@@ -8,6 +8,12 @@ import { interval } from 'rxjs';
 interface AccountResponse {
   success: boolean;
   user?: { id: number; email: string };
+}
+
+// Keep the seller's pending request total separate from their message unread total.
+interface SellerRequestsResponse {
+  success: boolean;
+  pendingCount: number;
 }
 
 @Component({
@@ -24,6 +30,10 @@ export class AccountNavigation {
   protected readonly signedIn = signal(false);
   protected readonly signingOut = signal(false);
   protected readonly unreadCount = signal(0);
+  protected readonly pendingRequestCount = signal(0);
+  protected readonly totalNotificationCount = computed(
+    () => this.unreadCount() + this.pendingRequestCount(),
+  );
   protected readonly signInQueryParams = { returnUrl: this.router.url };
 
   constructor() {
@@ -32,7 +42,7 @@ export class AccountNavigation {
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         if (this.signedIn() && typeof document !== 'undefined' && document.visibilityState === 'visible') {
-          this.refreshUnreadCount();
+          this.refreshNotificationCounts();
         }
       });
   }
@@ -42,27 +52,27 @@ export class AccountNavigation {
     this.http.get<AccountResponse>('/api/auth/me').subscribe({
       next: (response) => {
         this.signedIn.set(Boolean(response.user));
-        if (response.user) this.refreshUnreadCount();
+        if (response.user) this.refreshNotificationCounts();
       },
       error: () => {
         this.signedIn.set(false);
         this.unreadCount.set(0);
+        this.pendingRequestCount.set(0);
       },
     });
   }
 
   // Keep the small navigation badge in sync while the app is open.
-  private refreshUnreadCount(): void {
-    // Use the same inbox response as the Messages page so the badge and thread counts agree.
-    this.http.get<{ conversations: Array<{ unreadCount: number }> }>('/api/messages').subscribe({
-      next: (response) => {
-        const totalUnread = (response.conversations ?? []).reduce(
-          (total, conversation) => total + (Number.isSafeInteger(conversation.unreadCount) ? conversation.unreadCount : 0),
-          0,
-        );
-        this.unreadCount.set(totalUnread);
-      },
-      // Keep the last known count during a temporary network failure instead of hiding it.
+  private refreshNotificationCounts(): void {
+    // Ask the dedicated endpoint for unread messages so the menu badge stays lightweight.
+    this.http.get<{ unreadCount: number }>('/api/messages/unread-count').subscribe({
+      next: (response) => this.unreadCount.set(Math.max(0, Number(response.unreadCount) || 0)),
+      error: () => undefined,
+    });
+
+    // Fetch a count only; the menu does not need the buyer's private request details.
+    this.http.get<SellerRequestsResponse>('/api/orders/seller/requests/count').subscribe({
+      next: (response) => this.pendingRequestCount.set(Math.max(0, Number(response.pendingCount) || 0)),
       error: () => undefined,
     });
   }
@@ -75,6 +85,7 @@ export class AccountNavigation {
       next: () => {
         this.signedIn.set(false);
         this.unreadCount.set(0);
+        this.pendingRequestCount.set(0);
         this.signingOut.set(false);
         void this.router.navigateByUrl('/');
       },

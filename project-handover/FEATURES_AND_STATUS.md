@@ -2,6 +2,10 @@
 
 Status vocabulary follows the project request. “Implemented but not tested” means source code exists but this handoff did not verify the end-to-end flow. Backend unit tests and frontend production build passing do not imply database or browser integration was verified.
 
+## Latest local runtime verification — 2026-11-01
+
+Backend health returned success, GET /api/products returned five real listings, and Angular /explore rendered those five listings through the configured proxy. This verifies the local frontend → backend → database read path for Explore only; it does not verify write flows, auth, migration bookkeeping, or production. Local backend PORT is 5002 in ignored backend/.env and frontend/proxy.conf.json targets 127.0.0.1:5002; keep them matched.
+
 ## Identity, accounts and access
 
 ### Signup/login/logout/session — IMPLEMENTED BUT NOT TESTED end-to-end
@@ -30,7 +34,7 @@ Current product decision is not to inspect student ID images or restrict by LPU 
 
 ### My Profile — PARTIALLY IMPLEMENTED
 
-Dashboard combines account profile, name editing, own inventory, favorites and archive controls. Public seller profile is separate. Full name, email and avatar are populated; reviews are aggregate community ratings. Source: frontend/src/app/dashboard/* and sellers/seller-profile.*; backend/src/features/sellers/sellerController.js; auth profile endpoint. Browser/data flow not verified now.
+Dashboard combines account profile, name editing, own inventory, favorites and archive controls; /items-selling currently reuses the Dashboard component. Public seller profile is separate. Full name, email and avatar are populated. A profile-photo upload endpoint/UI exists, but upload persistence and display were not end-to-end verified in this check. Source: frontend/src/app/dashboard/* and sellers/seller-profile.*; backend/src/features/sellers/sellerController.js and auth profile endpoint.
 
 ### Seller names — IMPLEMENTED in API responses, not end-to-end verified
 
@@ -44,7 +48,7 @@ Public profile provides favorite seller controls. SellerFavorite has unique fan/
 
 ### Create listing — IMPLEMENTED BUT NOT TESTED end-to-end
 
-Form supports title/name, category, description, price, phone, campus pickup location, condition, stock, optional photo, clothing gender and food protein. Backend validates and creates/reuses Product, then creates seller-owned Listing. Routes POST /api/listings. UI frontend/src/app/listings/create-listing.*. Images are local disk files; max 5 MB, JPG/PNG/WebP, checked by signature.
+Form supports title/name, category, description, price, phone, campus pickup location, condition, stock, clothing gender and food protein. Listing creation requires exactly two photos. Backend validates and creates/reuses Product, then creates seller-owned Listing. Routes POST /api/listings. Images are local disk files; max 5 MB each, JPG/PNG/WebP, checked by signature. OLD and CUSTOM condition values plus customCondition were added in migration 20261101120000_add_second_listing_photo_custom_condition.
 
 Listing fee first-three-free / ₹2 later is NOT IMPLEMENTED. User email comes from account; phone number stored per listing. Category values are enum.
 
@@ -62,9 +66,9 @@ Dashboard has active and archive areas. Archive allows ACTIVE/SOLD offers, sets 
 
 ## Product discovery
 
-### Explore — IMPLEMENTED, build passed; API/database flow NOT VERIFIED
+### Explore — IMPLEMENTED; local read path VERIFIED 2026-11-01
 
-Current expected architecture is Explore → every active individual Listing card → /products/:listingId. API GET /api/products queries status ACTIVE and quantityAvailable > 0 and returns listings (singular offer cards), sorted by price ascending then recent date/ID. Explore component includes category filter, search, category-specific clothing gender and food protein filters, loading/error/empty states, photo fallback, randomization and suggestions.
+Current expected architecture is Explore → every active individual Listing card → /products/:listingId. API GET /api/products queries status ACTIVE and quantityAvailable > 0 and returns listings (singular offer cards), sorted by price ascending then recent date/ID. On 2026-11-01 the API returned five records and the browser rendered all five through the proxy. Explore includes category filter, search, clothing gender and food protein filters, loading/error/empty states, photo fallback, randomization and suggestions. Other filters and write flows remain unverified.
 
 Frontend: frontend/src/app/explore/explore.ts/html/css, product-matching.ts. Backend: listingsController.getExploreProducts and productGrouping.js. Note productGrouping.js still contains old group logic and its tests, but it is not used to transform current Explore results. README text is stale and conflicts.
 
@@ -116,7 +120,7 @@ No provider SDK, webhooks or payment table/routes exist. Only PaymentMethod.CASH
 
 ### Buyer/seller direct messaging — IMPLEMENTED BUT NOT DATABASE-INTEGRATION-TESTED
 
-Schema, migration SQL, routes/controller, validation unit tests, Angular inbox/thread page, navigation link and listing-detail “Message seller” action are present. Conversation is keyed to listing + buyer; both participants can read/send; message body trim length 1–2000; thread shows latest 100; inbox newest first. Current implementation is pull/manual refresh, no Socket.IO/WebSocket/SSE. Angular tests verify opening/loading/sending and display of a participant access error; backend unit tests cover normalization. Database migration and actual live authorization/persistence were not verified because PostgreSQL was unreachable.
+Schema, migration SQL, routes/controller, validation unit tests, Angular inbox/thread page, navigation link and listing-detail “Message seller” action are present. Conversation is keyed to listing + buyer; both participants can read/send; message body trim length 1–2000; thread shows latest 100; inbox newest first. Current implementation uses periodic/manual refresh, no Socket.IO/WebSocket/SSE. Angular tests verify opening/loading/sending and display of a participant access error; backend unit tests cover normalization. PostgreSQL is now reachable for read queries, but messaging migration, authorization, persistence and end-to-end flows were not verified.
 
 ## Other roadmap
 

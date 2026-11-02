@@ -3,19 +3,19 @@
 ~~~text
 You are continuing CampusX in the existing repository. First read every file in project-handover/, especially CAMPUSX_MASTER_HANDOFF.md, BUGS_AND_PENDING_WORK.md, DATABASE_SCHEMA.md, API_REFERENCE.md, and CODEX_INSTRUCTIONS.md. Then inspect the actual code and current Git status; treat source as truth if the handover and source differ.
 
-Do not restart or rebuild the project. At handoff, main has a README-only commit a05037d; backend/, frontend/, and project-handover/ are untracked. Preserve the entire tree and any local database/uploads. Never expose private environment values.
+The workspace is on branch angular-vercel and contains uncommitted changes. Preserve the entire tree and any local database/uploads. Never expose private environment values. Local frontend is http://localhost:4200; backend currently uses PORT=5002 in ignored backend/.env and frontend/proxy.conf.json points to 127.0.0.1:5002. Health and product reads were verified; /explore displayed five real listings on 2026-11-01.
 
-Before feature work, confirm local PostgreSQL is available and identify the intended database without resetting or deleting anything. During handoff npm run db:check failed safely, and Prisma migrate status failed with a schema-engine error. Check the service and private DATABASE_URL locally; apply only reviewed pending migrations to the confirmed database. Do not run prisma migrate reset or destructive SQL.
+Before feature work, run a read-only Prisma migration status check against the intended local database. Local runtime API reads now work, but Prisma migration bookkeeping was not verified. The latest schema migration is 20261101120000_add_second_listing_photo_custom_condition. Never run prisma migrate reset or destructive SQL.
 
 Prioritize the existing user-reported marketplace reliability issues:
-1. Verify/fix individual-listing wishlist save/remove, refresh persistence, and auth behavior.
-2. Verify/fix profile identity and display the actual registered seller name.
-3. Verify/fix Items I’m Selling with the authenticated seller's real listings.
-4. Verify archive, restore, permanent deletion confirmation, ownership rules, and protection of order history.
-5. Verify individual product detail pages and images by direct URL.
-6. Ensure Explore displays every active individual seller listing directly, with correct search/category filtering.
+1. Test the profile photo upload and verify account/seller identity and follow state.
+2. Test individual-listing wishlist save/remove, refresh persistence, and signed-out behavior.
+3. Test listing creation with two photos, edit, archive/restore, and ownership protections.
+4. Test COD request acceptance/decline/cancel/confirmation and stock updates.
+5. Test messaging persistence, participant authorization, unread indicators, and periodic refresh.
+6. Check listing image persistence and PostgreSQL migration status before further schema work.
 
-Also validate current COD stock/order flow and the in-progress buyer/seller messages (the message feature exists in source but was not end-to-end tested at handoff). Use real database records and separate accounts. Add focused tests for regressions. Do not fake data, suppress errors, or claim a feature works without verifying frontend → backend → PostgreSQL.
+Use real database records and separate accounts. Add focused tests for regressions. Do not fake data, suppress errors, or claim a feature works without verifying frontend → backend → PostgreSQL.
 
 Preserve decisions: personal email/password and Google sign-in; no student ID recognition or LPU email restriction; LPU is intended audience but not verified; listing fee proposal is not implemented; cash on delivery only; no Razorpay/escrow/payout; renting postponed; Explore is individual listings; wishlist and Q&A/reviews attach to listing IDs; reviews are not purchase-verified.
 

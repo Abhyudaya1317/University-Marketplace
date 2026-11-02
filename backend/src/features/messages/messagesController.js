@@ -149,8 +149,8 @@ export async function getMyConversations(request, response) {
                 updatedAt: true,
                 buyerId: true,
                 sellerId: true,
-                buyer: { select: { id: true, fullName: true } },
-                seller: { select: { id: true, fullName: true } },
+                buyer: { select: { id: true, fullName: true, avatarUrl: true } },
+                seller: { select: { id: true, fullName: true, avatarUrl: true } },
                 listing: {
                     select: {
                         id: true,
@@ -196,6 +196,7 @@ export async function getMyConversations(request, response) {
                     otherUser: {
                         id: otherUser.id,
                         fullName: otherUser.fullName || "CampusX Member",
+                        avatarUrl: otherUser.avatarUrl,
                     },
                     listing: {
                         id: conversation.listing.id,
@@ -283,8 +284,8 @@ export async function getConversation(request, response) {
                 id: true,
                 buyerId: true,
                 sellerId: true,
-                buyer: { select: { id: true, fullName: true } },
-                seller: { select: { id: true, fullName: true } },
+                buyer: { select: { id: true, fullName: true, avatarUrl: true } },
+                seller: { select: { id: true, fullName: true, avatarUrl: true } },
                 listing: {
                     select: {
                         id: true,
@@ -337,6 +338,7 @@ export async function getConversation(request, response) {
                 otherUser: {
                     id: otherUser.id,
                     fullName: otherUser.fullName || "CampusX Member",
+                    avatarUrl: otherUser.avatarUrl,
                 },
                 listing: {
                     id: conversation.listing.id,

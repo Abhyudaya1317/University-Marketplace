@@ -17,6 +17,7 @@ Actual endpoints are mounted by backend/src/server.js. All responses are JSON ex
 | POST /api/auth/logout | Cookie optional | None | {success:true}; revokes session and clears cookie | signOut |
 | GET /api/auth/me | Cookie required by handler | None | {success:true,user}; 401 absent/expired | getCurrentUser |
 | PATCH /api/auth/profile | Required | {fullName} | {success:true,user}; 400 invalid | updateCurrentProfile |
+| POST /api/auth/profile/photo | Required; multipart/form-data | avatar image | {success:true,user:{avatarUrl}}; 400 invalid/missing file | updateCurrentProfilePhoto |
 | POST /api/auth/password-reset/request-code | No | {email} | Generic success to avoid account disclosure; 503 if SMTP unavailable; 429 resend delay | requestPasswordResetCode |
 | POST /api/auth/password-reset/verify-code | No | {email, six-digit code, newPassword} | {success:true,message}; 400 invalid/expired | resetPassword |
 | GET /api/auth/google | Provider config required | Browser redirect | Redirect to Google; 503 if not configured | startGoogleSignIn |
@@ -26,11 +27,11 @@ Actual endpoints are mounted by backend/src/server.js. All responses are JSON ex
 
 | Method and path | Auth | Request | Response / behavior | Source |
 |---|---|---|---|---|
-| GET /api/products | No | Query search, category, gender, minProtein | {success:true,listings:[individual active in-stock offers],suggestions:[up to 6 title/category items]}; category-specific validation errors 400 | listings/productsRoutes.js → getExploreProducts |
+| GET /api/products | No | Query search, category, gender, proteinOnly | {success:true,listings:[individual active in-stock offers],suggestions:[up to 6 title/category items]}; category-specific validation errors 400 | listings/productsRoutes.js → getExploreProducts |
 | GET /api/listings/public/:listingId | No | Listing ID | {success:true,listing:{offer fields,seller:{id,fullName,avatarUrl,averageRating,reviewCount}}}; 404 unavailable | listingsRoutes.js → getPublicListingDetails |
-| POST /api/listings | Required; multipart/form-data; optional photo | name, category, description, price, quantityAvailable, phoneNumber, location, condition; clothingGender for clothing; proteinGrams for food; photo optional | 201 {success:true,listing}; 400 validation; 401 session | createListing |
+| POST /api/listings | Required; multipart/form-data; exactly two photos required | name, category, description, price, quantityAvailable, phoneNumber, location, condition; customCondition for CUSTOM; clothingGender for clothing; proteinGrams for food | 201 {success:true,listing}; 400 validation; 401 session | createListing |
 | GET /api/listings/:listingId | Required, owner only | ID | {success:true,listing} for active owner's edit form; 404 otherwise | listingManagementController.getListingForEdit |
-| PATCH /api/listings/:listingId | Required, owner only; multipart | Same listing fields and optional photo/removePhoto | {success:true,listing}; 400/404/500 | updateListing |
+| PATCH /api/listings/:listingId | Required, owner only; multipart | Same listing fields; optional replacement of both photos and removePhoto | {success:true,listing}; 400/404/500 | updateListing |
 | PATCH /api/listings/:listingId/stock | Required, owner only | {quantityAvailable: integer 0–9999} | {success:true,quantityAvailable}; 404 if not active/owned | updateListingStock |
 | PATCH /api/listings/:listingId/archive | Required, owner only | None | {success:true,status:"ARCHIVED",archivedAt}; supports ACTIVE/SOLD | archiveListing |
 | PATCH /api/listings/:listingId/restore | Required, owner only | None | {success:true,status:"ACTIVE"}; only own archived offer | restoreListing |
@@ -76,6 +77,7 @@ Reviews are not purchase-verified; endpoint does not require a completed Order.
 |---|---|---|---|---|
 | POST /api/orders | Required | {listingId,buyerPhone,quantity,buyerMessage?} | 201 {success:true,order}; rejects self, inactive, out-of-stock, too-large quantity; no payment capture | createOrder |
 | GET /api/orders/mine | Required | None | {success:true,orders:[buyer/seller participant rows]}; private contact shaping | getMyOrders |
+| GET /api/orders/seller/requests/count | Required | None | {success:true,pendingCount}; count of the signed-in seller's pending buyer requests only | getSellerRequestCount |
 | GET /api/orders/seller/requests | Required | None | {success:true,requests:[pending seller requests]} | getSellerRequests |
 | PATCH /api/orders/:orderId | Required; relevant participant | {action,meetingAt?,meetingLocation?} | {success:true,status}; actions accept, decline, cancel, confirmHandoff, confirmReceipt; invalid state 409; accept decrements stock transactionally | updateOrderStatus |
 

@@ -95,20 +95,10 @@
         </label>
       }
       @if (showFoodFilters) {
-        <label class="detail-filter-field"
-          ><span>Protein per serving</span>
-          <select
-            aria-label="Filter food by minimum protein"
-            [ngModel]="minimumProtein()"
-            (ngModelChange)="minimumProtein.set($event); loadDetailFilter()"
-          >
-            <option value="">Any amount</option>
-            <option value="5">At least 5 g</option>
-            <option value="10">At least 10 g</option>
-            <option value="20">At least 20 g</option>
-            <option value="30">At least 30 g</option>
-          </select>
-        </label>
+        <button class="protein-toggle" type="button" [class.active]="proteinOnly()"
+          [attr.aria-pressed]="proteinOnly()" (click)="proteinOnly.set(!proteinOnly()); loadDetailFilter()">
+          {{ proteinOnly() ? '✓ Protein foods only' : 'Protein foods only' }}
+        </button>
       }
       <button class="search-button" type="submit">Search</button>
     </form>
@@ -144,21 +134,23 @@
       <section class="product-grid" aria-label="Marketplace listings">
         @for (listing of visibleListings(); track listing.id) {
           <article class="product-card">
+            <div class="catalog-media">
+              <a class="catalog-photo-link" [routerLink]="['/products', listing.id]" [attr.aria-label]="'Open ' + listing.title">
+                @if (photoFor(listing); as photo) {
+                  <img class="catalog-photo" [src]="photo" [alt]="listing.title + ' product photo'" loading="lazy" (error)="markPhotoUnavailable(listing.id)" />
+                } @else {
+                  <span class="product-icon" aria-label="No product photo available">✳</span>
+                }
+              </a>
+              @if (listing.photoUrl2) {
+                <button class="catalog-photo-arrow previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(listing, -1, $event)">‹</button>
+                <button class="catalog-photo-arrow next" type="button" aria-label="Next product photo" (click)="stepPhoto(listing, 1, $event)">›</button>
+              }
+            </div>
             <a class="product-card-main" [routerLink]="['/products', listing.id]">
-            @if (hasPhoto(listing)) {
-              <img
-                class="catalog-photo"
-                [src]="listing.photoUrl"
-                [alt]="listing.title + ' product photo'"
-                loading="lazy"
-                (error)="markPhotoUnavailable(listing.id)"
-              />
-            } @else {
-              <span class="product-icon" aria-label="No product photo available">✳</span>
-            }
             <span class="category-label">{{ categoryLabel(listing.category) }}</span>
             <h2>{{ listing.title }}</h2>
-            <span class="listing-condition">{{ conditionLabel(listing.condition) }}</span>
+            <span class="listing-condition">{{ listingConditionLabel(listing) }}</span>
             <strong class="price">₹{{ listing.price }}</strong>
             <span class="stock-label">{{ stockLabel(listing.quantityAvailable) }}</span>
             </a>

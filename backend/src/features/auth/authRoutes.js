@@ -9,8 +9,10 @@ import {
     signOut,
     signUp,
     updateCurrentProfile,
+    updateCurrentProfilePhoto,
     startGoogleSignIn
 } from "./authController.js";
+import { uploadProfilePhoto } from "./profilePhotoUpload.js";
 
 // Keep all account endpoints grouped under /api/auth.
 const router = express.Router();
@@ -29,5 +31,6 @@ router.get("/google/callback", finishGoogleSignIn);
 router.get("/me", getCurrentUser);
 router.post("/logout", signOut);
 router.patch("/profile", requireAuth, updateCurrentProfile);
+router.post("/profile/photo", requireAuth, uploadProfilePhoto, updateCurrentProfilePhoto);
 
 export default router;

@@ -33,7 +33,9 @@ interface EditListingResponse {
     phoneNumber: string;
     location: string;
     photoUrl: string | null;
+    photoUrl2: string | null;
     condition: string;
+    customCondition: string | null;
     clothingGender: string | null;
     proteinGrams: string | null;
   };
@@ -58,12 +60,12 @@ export class CreateListing implements OnDestroy {
   protected readonly error = signal('');
   protected readonly success = signal('');
   protected readonly createdListingId = signal<number | null>(null);
-  protected readonly photoPreview = signal<string | null>(null);
+  protected readonly photoPreviews = signal<string[]>([]);
   protected readonly photoError = signal('');
   protected readonly isEditing = signal(false);
   protected readonly loadingListing = signal(false);
   protected readonly currentPhotoUrl = signal<string | null>(null);
-  protected readonly removeCurrentPhoto = signal(false);
+  protected readonly currentPhotoUrl2 = signal<string | null>(null);
 
   @ViewChild('photoInput') private photoInput?: ElementRef<HTMLInputElement>;
 
@@ -78,7 +80,9 @@ export class CreateListing implements OnDestroy {
   protected clothingGender = '';
   protected proteinGrams: number | string = '';
   protected condition = 'GOOD';
-  private selectedPhoto: File | null = null;
+  protected customCondition = '';
+  private selectedPhotos: File[] = [];
+  private previewUrls: string[] = [];
 
   // Use the same controlled category values the backend accepts.
   protected readonly categories = [
@@ -122,6 +126,14 @@ export class CreateListing implements OnDestroy {
       this.error.set(this.photoError());
       return;
     }
+    if (this.condition === 'CUSTOM' && this.customCondition.trim().length < 2) {
+      this.error.set('Describe the custom condition in at least 2 characters.');
+      return;
+    }
+    if ((!this.isEditing() && this.selectedPhotos.length !== 2) || (this.isEditing() && this.selectedPhotos.length !== 0 && this.selectedPhotos.length !== 2)) {
+      this.error.set(this.isEditing() ? 'Choose exactly two photos to replace the current photos.' : 'Choose exactly two product photos before publishing.');
+      return;
+    }
 
     // Catch category-specific omissions before sending the form to the API.
     if (this.category === 'CLOTHING' && !this.clothingGender) {
@@ -141,7 +153,7 @@ export class CreateListing implements OnDestroy {
       return;
     }
 
-    // FormData carries normal fields and the optional photo in one multipart request.
+    // FormData carries listing details and both required photos in one request.
     const formData = new FormData();
     formData.append('name', this.name);
     formData.append('category', this.category);
@@ -151,10 +163,10 @@ export class CreateListing implements OnDestroy {
     formData.append('phoneNumber', this.phoneNumber);
     formData.append('location', this.location);
     formData.append('condition', this.condition);
-    formData.append('removePhoto', String(this.removeCurrentPhoto()));
+    formData.append('customCondition', this.condition === 'CUSTOM' ? this.customCondition.trim() : '');
     if (this.category === 'CLOTHING') formData.append('clothingGender', this.clothingGender);
     if (this.category === 'FOOD') formData.append('proteinGrams', String(this.proteinGrams));
-    if (this.selectedPhoto) formData.append('photo', this.selectedPhoto);
+    for (const photo of this.selectedPhotos) formData.append('photos', photo);
 
     this.busy.set(true);
 
@@ -182,12 +194,11 @@ export class CreateListing implements OnDestroy {
         this.clothingGender = '';
         this.proteinGrams = '';
         this.condition = 'GOOD';
-        this.selectedPhoto = null;
+        this.clearSelectedPhotos();
         this.currentPhotoUrl.set(null);
-        this.removeCurrentPhoto.set(false);
+        this.currentPhotoUrl2.set(null);
+        this.customCondition = '';
         this.photoError.set('');
-        if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview()!);
-        this.photoPreview.set(null);
         if (this.photoInput) this.photoInput.nativeElement.value = '';
         this.busy.set(false);
       },
@@ -198,39 +209,43 @@ export class CreateListing implements OnDestroy {
     });
   }
 
-  // Keep only one small, browser-recognized image and show the seller a local preview.
-  protected selectPhoto(event: Event): void {
+  // Require two supported images and show both before the seller publishes.
+  protected selectPhotos(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
+    const files = Array.from(input.files ?? []);
     this.photoError.set('');
-    if (file) this.removeCurrentPhoto.set(false);
-    if (file && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      this.photoError.set('Choose a JPG, PNG, or WebP image.');
-      this.clearSelectedPhoto();
+    this.clearSelectedPhotos();
+    if (files.length !== 2) {
+      this.photoError.set('Choose exactly two product photos.');
       input.value = '';
       return;
     }
-    if (file && file.size > 5 * 1024 * 1024) {
-      this.photoError.set('Product photos must be 5 MB or smaller.');
-      this.clearSelectedPhoto();
+    if (files.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) {
+      this.photoError.set('Both photos must be JPG, PNG, or WebP images.');
       input.value = '';
       return;
     }
-    if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview()!);
-    this.selectedPhoto = file;
-    this.photoPreview.set(file ? URL.createObjectURL(file) : null);
+    if (files.some((file) => file.size > 5 * 1024 * 1024)) {
+      this.photoError.set('Each product photo must be 5 MB or smaller.');
+      input.value = '';
+      return;
+    }
+    this.selectedPhotos = files;
+    this.previewUrls = files.map((file) => URL.createObjectURL(file));
+    this.photoPreviews.set(this.previewUrls);
   }
 
-  // Revoke the local preview URL and discard a file that failed validation.
-  private clearSelectedPhoto(): void {
-    this.selectedPhoto = null;
-    if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview()!);
-    this.photoPreview.set(null);
+  // Release browser preview URLs whenever the selected files change.
+  private clearSelectedPhotos(): void {
+    this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    this.previewUrls = [];
+    this.selectedPhotos = [];
+    this.photoPreviews.set([]);
   }
 
   // Release the browser's temporary preview URL when the seller leaves this page.
   ngOnDestroy(): void {
-    if (this.photoPreview()) URL.revokeObjectURL(this.photoPreview()!);
+    this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }
 
   // Clear fields that belong to the previously selected category.
@@ -261,6 +276,8 @@ export class CreateListing implements OnDestroy {
           this.clothingGender = listing.clothingGender ?? '';
           this.proteinGrams = listing.proteinGrams ?? '';
           this.currentPhotoUrl.set(listing.photoUrl);
+          this.currentPhotoUrl2.set(listing.photoUrl2);
+          this.customCondition = listing.customCondition ?? '';
         }
         this.loadingListing.set(false);
       },

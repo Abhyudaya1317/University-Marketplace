@@ -6,8 +6,8 @@
 - npm reported by local shell: 11.13.0; frontend package declares npm@11.13.0.
 - Angular framework/CLI: package ranges Angular 21.2.x / CLI 21.2.7.
 - Backend: Express 5.3.x, Prisma 7.10.x and PostgreSQL adapter.
-- PostgreSQL expected on localhost:5432. Current connection check failed, so service and credentials must be confirmed locally.
-- Frontend dev URL http://localhost:4200; API default http://localhost:5000.
+- PostgreSQL expected on localhost:5432. On 2026-11-01, backend health and product reads succeeded against the local database.
+- Frontend dev URL http://localhost:4200; backend default is port 5000. Current ignored backend/.env overrides PORT=5002 and frontend/proxy.conf.json targets 127.0.0.1:5002.
 
 ## Install
 
@@ -75,9 +75,9 @@ cd frontend
 npm start
 ~~~
 
-Open http://localhost:4200. Angular proxy configuration is frontend/proxy.conf.json mapping /api to localhost:5000. Health endpoint is http://localhost:5000/api/health (or through proxy at http://localhost:4200/api/health).
+Open http://localhost:4200. Current Angular proxy configuration is frontend/proxy.conf.json mapping /api to http://127.0.0.1:5002. Health endpoint is http://localhost:5002/api/health (or through proxy at http://localhost:4200/api/health).
 
-If PORT changes, update frontend/proxy.conf.json target. Restart backend after changing private .env. If stale server is on 5000, inspect process and command path before stopping it; don't kill unrelated Node processes.
+If PORT changes, update frontend/proxy.conf.json target and restart both backend and Angular. Ports 5000 and 5001 were occupied by unidentified Node processes during the 2026-11-01 repair; CampusX was moved to 5002. Do not stop unknown processes.
 
 ## Verify and build
 
@@ -92,7 +92,7 @@ npm test
 npm run build
 ~~~
 
-Handoff/chat-integration evidence on 2026-10-30: backend npm test passed 16/16; Angular npm test passed 9/9; Angular npm run build completed, with component CSS size warnings. Prisma schema validate passed. db:check failed generically because localhost:5432 did not accept TCP; migration status failed with schema engine error. No DB-backed messaging test was possible.
+Earlier handoff/chat-integration evidence on 2026-10-30: backend npm test passed 16/16; Angular npm test passed 9/9; Prisma schema validate passed. On 2026-11-01, Angular production build succeeded after increasing the anyComponentStyle maximumError budget from 8kB to 10kB. Local health and Explore product reads succeeded through the proxy; the page rendered five listings. Prisma migration status and database-backed write/message flows were not checked in that repair.
 
 ## Photo files
 

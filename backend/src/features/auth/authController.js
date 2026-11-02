@@ -12,6 +12,7 @@ import {
 } from "./authSecurity.js";
 import { isEmailDeliveryConfigured, sendPasswordResetCode } from "./emailService.js";
 import { normalizeFrontendReturnUrl } from "./authReturnUrl.js";
+import { profilePhotoUrl, removeProfilePhoto, removeProfilePhotoByUrl } from "./profilePhotoUpload.js";
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 const RESEND_WAIT_MS = 60 * 1000;
@@ -427,6 +428,36 @@ export async function updateCurrentProfile(request, response) {
     } catch {
         return response.status(500).json({ success: false, message: "We could not update your profile. Please try again." });
     }
+}
+
+// Save one authenticated user's photo and keep provider photos untouched on disk.
+export async function updateCurrentProfilePhoto(request, response) {
+    if (!request.file) return response.status(400).json({ success: false, message: "Choose a profile photo to upload." });
+    const avatarUrl = profilePhotoUrl(request.file.filename);
+    let user;
+    try {
+        const currentUser = await prisma.user.findUnique({
+            where: { id: request.user.id },
+            select: { avatarUrl: true },
+        });
+        user = await prisma.user.update({
+            where: { id: request.user.id },
+            data: { avatarUrl },
+            select: { id: true, email: true, fullName: true, avatarUrl: true },
+        });
+        if (currentUser?.avatarUrl && currentUser.avatarUrl !== avatarUrl) {
+            try {
+                await removeProfilePhotoByUrl(currentUser.avatarUrl);
+            } catch {
+                console.warn("Previous profile photo cleanup failed.");
+            }
+        }
+    } catch (error) {
+        await removeProfilePhoto(request.file.path);
+        console.error("Profile photo update failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not update your profile photo. Please try again." });
+    }
+    return response.json({ success: true, user });
 }
 
 // Revoke the current server-side session and remove its browser cookie.

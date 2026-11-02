@@ -1,4 +1,4 @@
-<!-- Combine the signed-in seller profile, inventory controls, and saved sellers in one place. -->
+<!-- Keep the public-facing profile compact and route private account management separately. -->
 <div class="dashboard-page">
   <header class="dashboard-header">
     <a class="brand" routerLink="/" aria-label="UniTrade home"
@@ -8,8 +8,6 @@
   </header>
 
   <main class="dashboard-content">
-    <p class="eyebrow">YOUR UNITRADE PROFILE</p>
-    <h1>My profile</h1>
     @if (loading()) {
       <p class="state-message" role="status">Loading your dashboard…</p>
     } @else if (!signedIn()) {
@@ -25,462 +23,578 @@
         <a class="primary-link" routerLink="/explore">Explore products</a>
       </section>
     } @else {
-      <section class="dashboard-section profile-section" aria-labelledby="my-profile-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">SELLER PROFILE</p>
-            <h2 id="my-profile-title">{{ profile()?.fullName || 'UniTrade Member' }}</h2>
-          </div>
-          <span class="section-count"
-            >{{ profile()?.activeListingCount ?? 0 }} active items ·
-            {{ profile()?.archivedListingCount ?? 0 }} archived</span
-          >
-        </div>
-        @if (profile()) {
-          <div class="profile-details">
-            @if (profile()!.avatarUrl) {
-              <img
-                class="profile-avatar"
-                [src]="profile()!.avatarUrl"
-                [alt]="profile()!.fullName + ' profile photo'"
-              />
-            }
-            <span>{{ profile()!.email }}</span>
-            @if (profile()!.reviewCount > 0) {
-              <span
-                >{{ profile()!.averageRating }} / 5 · {{ profile()!.reviewCount }}
-                {{ profile()!.reviewCount === 1 ? 'review' : 'reviews' }}</span
-              >
+      @if (!itemsRoute) {
+        @if (profile(); as currentProfile) {
+          <section class="profile-console" aria-labelledby="my-profile-title">
+            <div class="profile-window-titlebar">
+              <strong>PROFILE.EXE</strong>
+              <span aria-hidden="true"><i>_</i><i>□</i><i>×</i></span>
+            </div>
+            <nav class="profile-window-menu" aria-label="Profile shortcuts">
+              <a routerLink="/orders">MY ORDERS</a>
+              <a routerLink="/messages">MESSAGES</a>
+              <a routerLink="/items-selling">ITEMS I’M SELLING</a>
+            </nav>
+            <div class="profile-console-body">
+              <p class="profile-handle">@CAMPUSX_{{ currentProfile.id }}</p>
+              <div class="profile-summary">
+                @if (currentProfile.avatarUrl) {
+                  <img
+                    class="profile-avatar"
+                    [src]="currentProfile.avatarUrl"
+                    [alt]="currentProfile.fullName + ' profile photo'"
+                  />
+                } @else {
+                  <span class="profile-avatar profile-avatar-fallback" aria-hidden="true">{{
+                    currentProfile.fullName.charAt(0)
+                  }}</span>
+                }
+                <div class="profile-summary-main">
+                  <div class="profile-stats" aria-label="Profile statistics">
+                    <div>
+                      <strong>{{ currentProfile.activeListingCount }}</strong
+                      ><span>listings</span>
+                    </div>
+                    <div>
+                      <strong>{{ currentProfile.followerCount }}</strong
+                      ><span>followers</span>
+                    </div>
+                    <div>
+                      <strong>{{ favoriteSellers().length }}</strong
+                      ><span>following</span>
+                    </div>
+                  </div>
+                  <button class="profile-action" type="button" (click)="toggleProfileEdit()">
+                    {{ profileEditOpen() ? 'CANCEL EDIT' : 'EDIT YOUR PROFILE' }}
+                  </button>
+                </div>
+                <div class="profile-display-name">
+                  <h1 id="my-profile-title">{{ currentProfile.fullName || 'UniTrade Member' }}</h1>
+                  @if (currentProfile.reviewCount > 0) {
+                    <p>
+                      {{ currentProfile.averageRating }} / 5 ·
+                      {{ currentProfile.reviewCount }} seller reviews
+                    </p>
+                  } @else {
+                    <p>CampusX member · LPU community</p>
+                  }
+                </div>
+              </div>
+              @if (profileEditOpen()) {
+                <form class="profile-name-form" (ngSubmit)="saveProfileName()">
+                  <label for="profile-photo">Profile photo</label>
+                  <input
+                    id="profile-photo"
+                    class="profile-photo-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    (change)="uploadProfilePhoto($event)"
+                    [disabled]="profilePhotoUploading()"
+                  />
+                  <small>JPG, PNG, or WebP · up to 5 MB</small>
+                  <label for="profile-name">Display name</label>
+                  <input
+                    id="profile-name"
+                    name="profileName"
+                    required
+                    minlength="2"
+                    maxlength="100"
+                    [ngModel]="profileNameDraft()"
+                    (ngModelChange)="profileNameDraft.set($event)"
+                  />
+                  <button type="submit" [disabled]="profileSaving()">
+                    {{ profileSaving() ? 'Saving…' : 'Save name' }}
+                  </button>
+                </form>
+              }
+              @if (profileNotice()) {
+                <p class="dashboard-notice" role="status">{{ profileNotice() }}</p>
+              }
+            </div>
+          </section>
+
+          <section class="profile-gallery-section" aria-label="Your active listing photos">
+            @if (profileGridListings().length === 0) {
+              <div class="profile-gallery-empty">
+                <strong>NO POSTS YET</strong>
+                <p>Active listings will appear here as photo tiles.</p>
+                <a routerLink="/sell">LIST YOUR FIRST ITEM →</a>
+              </div>
             } @else {
-              <span>No seller reviews yet</span>
+              <div class="profile-photo-grid">
+                @for (listing of profileGridListings(); track listing.id) {
+                  <a
+                    class="profile-photo-tile"
+                    [routerLink]="['/products', listing.id]"
+                    [attr.aria-label]="'Open listing: ' + listing.title"
+                  >
+                    @if (listing.photoUrl) {
+                      <img [src]="listing.photoUrl" [alt]="listing.title" loading="lazy" />
+                    } @else if (listing.photoUrl2) {
+                      <img [src]="listing.photoUrl2" [alt]="listing.title" loading="lazy" />
+                    } @else {
+                      <span class="profile-photo-placeholder" aria-hidden="true">✳</span>
+                    }
+                    <span class="profile-photo-caption"
+                      ><strong>{{ listing.title }}</strong
+                      ><small>₹{{ listing.price }}</small></span
+                    >
+                  </a>
+                }
+              </div>
             }
+          </section>
+        }
+      }
+
+      @if (itemsRoute) {
+        <header class="items-page-heading">
+          <div>
+            <p class="eyebrow">SELLER CONTROL PANEL</p>
+            <h1>Items I’m selling</h1>
+            <p>Manage active listings, your archive, saved sellers, and saved offers.</p>
           </div>
-          <form class="profile-name-form" (ngSubmit)="saveProfileName()">
-            <label for="profile-name">Your display name</label>
-            <input
-              id="profile-name"
-              name="profileName"
-              required
-              minlength="2"
-              maxlength="100"
-              [ngModel]="profileNameDraft()"
-              (ngModelChange)="profileNameDraft.set($event)"
-            />
-            <button type="submit" [disabled]="profileSaving()">
-              {{ profileSaving() ? 'Saving…' : 'Save name' }}
-            </button>
-          </form>
-          @if (profileNotice()) {
-            <p class="dashboard-notice" role="status">{{ profileNotice() }}</p>
+          <a class="text-link" routerLink="/dashboard">← Back to profile</a>
+        </header>
+
+        <section class="dashboard-section" id="my-listings" aria-labelledby="my-listings-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">YOUR SELLER CATALOG</p>
+              <h2 id="my-listings-title">Active listings</h2>
+            </div>
+            <a class="text-link" routerLink="/sell">+ List an item</a>
+          </div>
+          @if (stockNotice()) {
+            <p class="dashboard-notice" role="status">{{ stockNotice() }}</p>
           }
-        }
-      </section>
-
-      <section class="dashboard-section" id="my-listings" aria-labelledby="my-listings-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">YOUR SELLER CATALOG</p>
-            <h2 id="my-listings-title">Items I’m selling</h2>
-          </div>
-          <a class="text-link" routerLink="/sell">+ List an item</a>
-        </div>
-        @if (stockNotice()) {
-          <p class="dashboard-notice" role="status">{{ stockNotice() }}</p>
-        }
-        @if (requestNotice()) {
-          <p class="dashboard-notice" role="status">{{ requestNotice() }}</p>
-        }
-        @if (managementNotice()) {
-          <p class="dashboard-notice" role="status">{{ managementNotice() }}</p>
-        }
-        @if (activeListings().length === 0) {
-          <div class="empty-state">
-            <h3>No listings yet</h3>
-            <p>When you list an item, it will appear here.</p>
-            <a class="primary-link" routerLink="/sell">Create your first listing</a>
-          </div>
-        } @else {
-          <div class="listing-grid">
-            @for (listing of activeListings(); track listing.id) {
-              <article class="listing-card">
-                <a class="listing-main" [routerLink]="['/products', listing.id]">
-                  @if (listing.photoUrl) {
-                    <img
-                      class="listing-photo"
-                      [src]="listing.photoUrl"
-                      [alt]="listing.title"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <div class="listing-photo placeholder" aria-hidden="true">✳</div>
-                  }
-                  <div class="listing-copy">
-                    <p class="eyebrow">{{ listing.product.category.replaceAll('_', ' ') }}</p>
-                    <h3>{{ listing.title }}</h3>
-                    <p class="listing-description">{{ listing.description }}</p>
-                    <p class="listing-location">{{ listing.location }}</p>
-                    <small>Condition: {{ statusLabel(listing.condition) }}</small>
-                    <small>Listed {{ listing.createdAt | date: 'mediumDate' }}</small>
-                  </div>
-                  <strong class="listing-price">₹{{ listing.price }}</strong>
-                </a>
-                <div class="listing-owner-tools">
-                  <span class="status-pill" [class.status-active]="listing.status === 'ACTIVE'">{{
-                    statusLabel(listing.status)
-                  }}</span>
-                  <span class="stock-state" [class.stock-empty]="listing.quantityAvailable === 0">{{
-                    stockLabel(listing.quantityAvailable)
-                  }}</span>
-                  @if (listing.status === 'ACTIVE') {
-                    <div class="listing-actions">
-                      <a
-                        class="management-button"
-                        [routerLink]="['/sell']"
-                        [queryParams]="{ edit: listing.id }"
-                        >Edit listing</a
-                      >
-                      <button
-                        class="management-button archive-button"
-                        type="button"
-                        (click)="askToArchive(listing.id)"
-                      >
-                        Move to archive
-                      </button>
-                    </div>
-                  }
-                  @if (listing.status === 'ACTIVE') {
-                    <div class="stock-editor">
-                      <label [for]="'stock-' + listing.id">Available quantity</label>
-                      <input
-                        [id]="'stock-' + listing.id"
-                        type="number"
-                        min="0"
-                        max="9999"
-                        step="1"
-                        [ngModel]="stockValue(listing)"
-                        (ngModelChange)="setStockDraft(listing.id, $event)"
+          @if (requestNotice()) {
+            <p class="dashboard-notice" role="status">{{ requestNotice() }}</p>
+          }
+          @if (managementNotice()) {
+            <p class="dashboard-notice" role="status">{{ managementNotice() }}</p>
+          }
+          @if (activeListings().length === 0) {
+            <div class="empty-state">
+              <h3>No listings yet</h3>
+              <p>When you list an item, it will appear here.</p>
+              <a class="primary-link" routerLink="/sell">Create your first listing</a>
+            </div>
+          } @else {
+            <div class="listing-grid">
+              @for (listing of activeListings(); track listing.id) {
+                  <article class="listing-card" [class.has-buyer-request]="listingRequests(listing.id).length > 0">
+                  <a class="listing-main" [routerLink]="['/products', listing.id]">
+                    @if (listing.photoUrl) {
+                      <img
+                        class="listing-photo"
+                        [src]="listing.photoUrl"
+                        [alt]="listing.title"
+                        loading="lazy"
                       />
-                      <button
-                        type="button"
-                        (click)="updateStock(listing.id)"
-                        [disabled]="stockBusyId() === listing.id"
-                      >
-                        {{ stockBusyId() === listing.id ? 'Saving…' : 'Update stock' }}
-                      </button>
-                    </div>
-                    <details class="request-details">
-                      <summary>Buyer requests ({{ listingRequests(listing.id).length }})</summary>
-                      @if (listingRequests(listing.id).length === 0) {
-                        <p class="no-requests">No pending requests for this item.</p>
-                      } @else {
-                        @for (request of listingRequests(listing.id); track request.id) {
-                          <div class="request-card">
-                            <strong
-                              >{{ request.listingTitle || request.productName }} ·
-                              {{ request.quantity }} requested · ₹{{ request.price }} each</strong
-                            >
-                            <small>{{ request.createdAt | date: 'medium' }}</small>
-                            <p><strong>Buyer:</strong> <a class="person-profile-link" [routerLink]="['/sellers', request.buyerId]">{{ request.buyerName }}</a></p>
-                            <p><strong>Buyer phone:</strong> {{ request.buyerPhone }}</p>
-                            @if (request.buyerMessage) {
-                              <p><strong>Buyer note:</strong> {{ request.buyerMessage }}</p>
-                            }
-                            <label [for]="'meeting-time-' + request.id">Meetup date and time</label>
-                            <input
-                              [id]="'meeting-time-' + request.id"
-                              type="datetime-local"
-                              required
-                              [ngModel]="meetingTimes()[request.id]"
-                              (ngModelChange)="setMeetingTime(request.id, $event)"
-                            />
-                            <label [for]="'meeting-location-' + request.id">Meetup location</label>
-                            <input
-                              [id]="'meeting-location-' + request.id"
-                              type="text"
-                              required
-                              maxlength="120"
-                              [ngModel]="meetingLocations()[request.id]"
-                              (ngModelChange)="setMeetingLocation(request.id, $event)"
-                              placeholder="e.g. Main library entrance"
-                            />
-                            <div class="request-actions">
-                              <button
-                                type="button"
-                                class="message-buyer-button"
-                                (click)="messageBuyer(request)"
-                                [disabled]="messageBusyId() === request.id"
-                              >
-                                {{ messageBusyId() === request.id ? 'Opening chat…' : 'Message buyer' }}
-                              </button>
-                              <button
-                                type="button"
-                                (click)="respondToRequest(request, 'accept')"
-                                [disabled]="requestBusyId() === request.id || messageBusyId() === request.id"
-                              >
-                                Accept request
-                              </button>
-                              <button
-                                type="button"
-                                class="decline-button"
-                                (click)="respondToRequest(request, 'decline')"
-                                [disabled]="requestBusyId() === request.id || messageBusyId() === request.id"
-                              >
-                                Decline
-                              </button>
-                            </div>
-                          </div>
-                        }
+                    } @else {
+                      <div class="listing-photo placeholder" aria-hidden="true">✳</div>
+                    }
+                    <div class="listing-copy">
+                      <p class="eyebrow">{{ listing.product.category.replaceAll('_', ' ') }}</p>
+                      <h3>{{ listing.title }}</h3>
+                      @if (listingRequests(listing.id).length > 0) {
+                        <p class="pending-request-notice">
+                          You have {{ listingRequests(listing.id).length }} buyer
+                          {{ listingRequests(listing.id).length === 1 ? 'request' : 'requests' }}
+                          on the item.
+                        </p>
                       }
-                    </details>
-                  }
-                </div>
-              </article>
-            }
-          </div>
-        }
-      </section>
-
-      <section class="dashboard-section" aria-labelledby="archived-listings-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">YOUR PRIVATE CATALOG</p>
-            <h2 id="archived-listings-title">Archived Listings</h2>
-          </div>
-          <span class="section-count">{{ archivedListings().length }}</span>
-        </div>
-        @if (archivedListings().length === 0) {
-          <div class="empty-state">
-            <h3>Your archive is empty</h3>
-            <p>
-              Listings you move to archive will stay here until you restore or permanently delete
-              them.
-            </p>
-          </div>
-        } @else {
-          <div class="listing-grid">
-            @for (listing of archivedListings(); track listing.id) {
-              <article class="listing-card archived-listing-card">
-                <div class="listing-main">
-                  @if (listing.photoUrl) {
-                    <img
-                      class="listing-photo"
-                      [src]="listing.photoUrl"
-                      [alt]="listing.title"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <div class="listing-photo placeholder" aria-hidden="true">✳</div>
-                  }
-                  <div class="listing-copy">
-                    <p class="eyebrow">{{ listing.product.category.replaceAll('_', ' ') }}</p>
-                    <h3>{{ listing.title }}</h3>
-                    <strong>₹{{ listing.price }}</strong>
-                    <p class="listing-description">{{ listing.description }}</p>
-                    <small
-                      >Archived
-                      {{
-                        listing.archivedAt
-                          ? (listing.archivedAt | date: 'mediumDate')
-                          : 'date unavailable'
-                      }}</small
+                      <p class="listing-description">{{ listing.description }}</p>
+                      <p class="listing-location">{{ listing.location }}</p>
+                      <small>Condition: {{ statusLabel(listing.condition) }}</small>
+                      <small>Listed {{ listing.createdAt | date: 'mediumDate' }}</small>
+                    </div>
+                    <strong class="listing-price">₹{{ listing.price }}</strong>
+                  </a>
+                  <div class="listing-owner-tools">
+                    <span class="status-pill" [class.status-active]="listing.status === 'ACTIVE'">{{
+                      statusLabel(listing.status)
+                    }}</span>
+                    <span
+                      class="stock-state"
+                      [class.stock-empty]="listing.quantityAvailable === 0"
+                      >{{ stockLabel(listing.quantityAvailable) }}</span
                     >
+                    @if (listing.status === 'ACTIVE') {
+                      <div class="listing-actions">
+                        <a
+                          class="management-button"
+                          [routerLink]="['/sell']"
+                          [queryParams]="{ edit: listing.id }"
+                          >Edit listing</a
+                        >
+                        <button
+                          class="management-button archive-button"
+                          type="button"
+                          (click)="askToArchive(listing.id)"
+                        >
+                          Move to archive
+                        </button>
+                      </div>
+                    }
+                    @if (listing.status === 'ACTIVE') {
+                      <div class="stock-editor">
+                        <label [for]="'stock-' + listing.id">Available quantity</label>
+                        <input
+                          [id]="'stock-' + listing.id"
+                          type="number"
+                          min="0"
+                          max="9999"
+                          step="1"
+                          [ngModel]="stockValue(listing)"
+                          (ngModelChange)="setStockDraft(listing.id, $event)"
+                        />
+                        <button
+                          type="button"
+                          (click)="updateStock(listing.id)"
+                          [disabled]="stockBusyId() === listing.id"
+                        >
+                          {{ stockBusyId() === listing.id ? 'Saving…' : 'Update stock' }}
+                        </button>
+                      </div>
+                      <details class="request-details" [open]="listingRequests(listing.id).length > 0">
+                        <summary>Buyer requests ({{ listingRequests(listing.id).length }})</summary>
+                        @if (listingRequests(listing.id).length === 0) {
+                          <p class="no-requests">No pending requests for this item.</p>
+                        } @else {
+                          @for (request of listingRequests(listing.id); track request.id) {
+                            <div class="request-card">
+                              <strong
+                                >{{ request.listingTitle || request.productName }} ·
+                                {{ request.quantity }} requested · ₹{{ request.price }} each</strong
+                              >
+                              <small>{{ request.createdAt | date: 'medium' }}</small>
+                              <p>
+                                <strong>Buyer:</strong>
+                                <a
+                                  class="person-profile-link"
+                                  [routerLink]="['/sellers', request.buyerId]"
+                                  >{{ request.buyerName }}</a
+                                >
+                              </p>
+                              <p><strong>Buyer phone:</strong> {{ request.buyerPhone }}</p>
+                              @if (request.buyerMessage) {
+                                <p><strong>Buyer note:</strong> {{ request.buyerMessage }}</p>
+                              }
+                              <label [for]="'meeting-time-' + request.id"
+                                >Meetup date and time</label
+                              >
+                              <input
+                                [id]="'meeting-time-' + request.id"
+                                type="datetime-local"
+                                required
+                                [ngModel]="meetingTimes()[request.id]"
+                                (ngModelChange)="setMeetingTime(request.id, $event)"
+                              />
+                              <label [for]="'meeting-location-' + request.id"
+                                >Meetup location</label
+                              >
+                              <input
+                                [id]="'meeting-location-' + request.id"
+                                type="text"
+                                required
+                                maxlength="120"
+                                [ngModel]="meetingLocations()[request.id]"
+                                (ngModelChange)="setMeetingLocation(request.id, $event)"
+                                placeholder="e.g. Main library entrance"
+                              />
+                              <div class="request-actions">
+                                <button
+                                  type="button"
+                                  class="message-buyer-button"
+                                  (click)="messageBuyer(request)"
+                                  [disabled]="messageBusyId() === request.id"
+                                >
+                                  {{
+                                    messageBusyId() === request.id
+                                      ? 'Opening chat…'
+                                      : 'Message buyer'
+                                  }}
+                                </button>
+                                <button
+                                  type="button"
+                                  (click)="respondToRequest(request, 'accept')"
+                                  [disabled]="
+                                    requestBusyId() === request.id || messageBusyId() === request.id
+                                  "
+                                >
+                                  Accept request
+                                </button>
+                                <button
+                                  type="button"
+                                  class="decline-button"
+                                  (click)="respondToRequest(request, 'decline')"
+                                  [disabled]="
+                                    requestBusyId() === request.id || messageBusyId() === request.id
+                                  "
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          }
+                        }
+                      </details>
+                    }
                   </div>
-                </div>
-                <div class="archived-actions">
-                  <button
-                    class="management-button"
-                    type="button"
-                    (click)="restoreListing(listing.id)"
-                    [disabled]="managementBusyId() === listing.id"
-                  >
-                    {{ managementBusyId() === listing.id ? 'Working…' : 'Restore' }}
-                  </button>
-                  <button
-                    class="management-button delete-button"
-                    type="button"
-                    (click)="askToDelete(listing.id)"
-                  >
-                    Permanently delete
-                  </button>
-                </div>
-              </article>
-            }
-          </div>
-        }
-      </section>
-
-      @if (archiveDialogListingId()) {
-        <div class="modal-backdrop">
-          <section
-            class="confirmation-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="archive-confirm-title"
-          >
-            <p class="eyebrow">ARCHIVE LISTING</p>
-            <h2 id="archive-confirm-title">Are you sure you want to remove this listing?</h2>
-            <p>
-              Your listing will be moved to your archive. You can restore it or permanently delete
-              it later.
-            </p>
-            @if (managementNotice()) {
-              <p class="dashboard-notice" role="alert">{{ managementNotice() }}</p>
-            }
-            <div class="modal-actions">
-              <button
-                class="management-button"
-                type="button"
-                (click)="cancelArchive()"
-                [disabled]="managementBusyId() !== null"
-              >
-                Cancel</button
-              ><button
-                class="management-button archive-button"
-                type="button"
-                (click)="confirmArchive()"
-                [disabled]="managementBusyId() !== null"
-              >
-                {{ managementBusyId() !== null ? 'Moving…' : 'Move to Archive' }}
-              </button>
+                </article>
+              }
             </div>
-          </section>
-        </div>
-      }
+          }
+        </section>
 
-      @if (deleteDialogListingId()) {
-        <div class="modal-backdrop">
-          <section
-            class="confirmation-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-confirm-title"
-          >
-            <p class="eyebrow">PERMANENT DELETE</p>
-            <h2 id="delete-confirm-title">
-              Are you sure you want to permanently delete this listing?
-            </h2>
-            <p>
-              This action cannot be undone. All listing information associated with this listing
-              will be permanently removed. Listings with order history must remain archived.
-            </p>
-            @if (managementNotice()) {
-              <p class="dashboard-notice" role="alert">{{ managementNotice() }}</p>
-            }
-            <div class="modal-actions">
-              <button
-                class="management-button"
-                type="button"
-                (click)="cancelDelete()"
-                [disabled]="managementBusyId() !== null"
-              >
-                Cancel</button
-              ><button
-                class="management-button delete-button"
-                type="button"
-                (click)="confirmDelete()"
-                [disabled]="managementBusyId() !== null"
-              >
-                {{ managementBusyId() !== null ? 'Deleting…' : 'Permanently Delete' }}
-              </button>
+        <section class="dashboard-section" aria-labelledby="archived-listings-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">YOUR PRIVATE CATALOG</p>
+              <h2 id="archived-listings-title">Archived Listings</h2>
             </div>
-          </section>
-        </div>
-      }
-
-      <section class="dashboard-section" aria-labelledby="saved-sellers-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">PEOPLE TO FOLLOW</p>
-            <h2 id="saved-sellers-title">Saved sellers</h2>
+            <span class="section-count">{{ archivedListings().length }}</span>
           </div>
-          <span class="section-count">{{ favoriteSellers().length }}</span>
-        </div>
-        @if (favoriteSellers().length === 0) {
-          <div class="empty-state">
-            <h3>No saved sellers yet</h3>
-            <p>Open a seller profile and save it to find that seller again here.</p>
-            <a class="text-link" routerLink="/explore">Browse campus products →</a>
-          </div>
-        } @else {
-          <div class="saved-grid">
-            @for (favorite of favoriteSellers(); track favorite.sellerId) {
-              <a class="saved-card" [routerLink]="['/sellers', favorite.sellerId]">
-                <span class="item-mark" aria-hidden="true">{{ favorite.sellerName.charAt(0) }}</span
-                ><span class="saved-copy"
-                  ><strong>{{ favorite.sellerName }}</strong>
-                  @if (favorite.latestListing) {
-                    <small
-                      >Latest: {{ favorite.latestListing.product.name }} · ₹{{
-                        favorite.latestListing.price
-                      }}</small
+          @if (archivedListings().length === 0) {
+            <div class="empty-state">
+              <h3>Your archive is empty</h3>
+              <p>
+                Listings you move to archive will stay here until you restore or permanently delete
+                them.
+              </p>
+            </div>
+          } @else {
+            <div class="listing-grid">
+              @for (listing of archivedListings(); track listing.id) {
+                <article class="listing-card archived-listing-card">
+                  <div class="listing-main">
+                    @if (listing.photoUrl) {
+                      <img
+                        class="listing-photo"
+                        [src]="listing.photoUrl"
+                        [alt]="listing.title"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <div class="listing-photo placeholder" aria-hidden="true">✳</div>
+                    }
+                    <div class="listing-copy">
+                      <p class="eyebrow">{{ listing.product.category.replaceAll('_', ' ') }}</p>
+                      <h3>{{ listing.title }}</h3>
+                      <strong>₹{{ listing.price }}</strong>
+                      <p class="listing-description">{{ listing.description }}</p>
+                      <small
+                        >Archived
+                        {{
+                          listing.archivedAt
+                            ? (listing.archivedAt | date: 'mediumDate')
+                            : 'date unavailable'
+                        }}</small
+                      >
+                    </div>
+                  </div>
+                  <div class="archived-actions">
+                    <button
+                      class="management-button"
+                      type="button"
+                      (click)="restoreListing(listing.id)"
+                      [disabled]="managementBusyId() === listing.id"
                     >
-                  } @else {
-                    <small>No active listing right now</small>
-                  }
-                  <small>Saved {{ favorite.savedAt | date: 'mediumDate' }}</small></span
-                ><span class="card-arrow" aria-hidden="true">→</span>
-              </a>
-            }
-          </div>
-        }
-      </section>
-
-      <section class="dashboard-section" aria-labelledby="saved-offers-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">YOUR SHORTLIST</p>
-            <h2 id="saved-offers-title">Saved offers</h2>
-          </div>
-          <span class="section-count">{{ savedListings().length }}</span>
-        </div>
-        @if (savedListings().length === 0) {
-          <div class="empty-state">
-            <h3>No saved offers yet</h3>
-            <p>Open a product and tap the heart on a seller’s individual offer to keep it here.</p>
-            <a class="text-link" routerLink="/explore">Browse campus products →</a>
-          </div>
-        } @else {
-          <div class="saved-grid">
-            @for (favorite of savedListings(); track favorite.listingId) {
-              <article class="saved-product-card">
-                <a class="saved-product-link" [routerLink]="['/products', favorite.listingId]">
-                  @if (favorite.photoUrl) {
-                    <img
-                      class="saved-product-photo"
-                      [src]="favorite.photoUrl"
-                      [alt]="favorite.title + ' product photo'"
-                      loading="lazy"
-                    />
-                  } @else {
-                    <span class="saved-product-photo saved-product-placeholder" aria-hidden="true"
-                      >✳</span
+                      {{ managementBusyId() === listing.id ? 'Working…' : 'Restore' }}
+                    </button>
+                    <button
+                      class="management-button delete-button"
+                      type="button"
+                      (click)="askToDelete(listing.id)"
                     >
-                  }
-                  <span class="saved-copy"
-                    ><strong>{{ favorite.title }}</strong
-                    ><small>{{ favorite.product.category.replaceAll('_', ' ') }}</small
-                    ><small>{{ favorite.description }}</small
-                    ><small
-                      >₹{{ favorite.price }} · Saved
-                      {{ favorite.savedAt | date: 'mediumDate' }}</small
-                    ></span
-                  >
-                </a>
-                <a class="text-link" [routerLink]="['/sellers', favorite.sellerId]">
-                  Seller: {{ favorite.sellerName }}
-                </a>
+                      Permanently delete
+                    </button>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </section>
+
+        @if (archiveDialogListingId()) {
+          <div class="modal-backdrop">
+            <section
+              class="confirmation-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="archive-confirm-title"
+            >
+              <p class="eyebrow">ARCHIVE LISTING</p>
+              <h2 id="archive-confirm-title">Are you sure you want to remove this listing?</h2>
+              <p>
+                Your listing will be moved to your archive. You can restore it or permanently delete
+                it later.
+              </p>
+              @if (managementNotice()) {
+                <p class="dashboard-notice" role="alert">{{ managementNotice() }}</p>
+              }
+              <div class="modal-actions">
                 <button
-                  class="remove-saved-product"
+                  class="management-button"
                   type="button"
-                  (click)="removeSavedListing(favorite.listingId)"
+                  (click)="cancelArchive()"
+                  [disabled]="managementBusyId() !== null"
                 >
-                  Remove
+                  Cancel</button
+                ><button
+                  class="management-button archive-button"
+                  type="button"
+                  (click)="confirmArchive()"
+                  [disabled]="managementBusyId() !== null"
+                >
+                  {{ managementBusyId() !== null ? 'Moving…' : 'Move to Archive' }}
                 </button>
-              </article>
-            }
+              </div>
+            </section>
           </div>
         }
-      </section>
+
+        @if (deleteDialogListingId()) {
+          <div class="modal-backdrop">
+            <section
+              class="confirmation-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-confirm-title"
+            >
+              <p class="eyebrow">PERMANENT DELETE</p>
+              <h2 id="delete-confirm-title">
+                Are you sure you want to permanently delete this listing?
+              </h2>
+              <p>
+                This action cannot be undone. All listing information associated with this listing
+                will be permanently removed. Listings with order history must remain archived.
+              </p>
+              @if (managementNotice()) {
+                <p class="dashboard-notice" role="alert">{{ managementNotice() }}</p>
+              }
+              <div class="modal-actions">
+                <button
+                  class="management-button"
+                  type="button"
+                  (click)="cancelDelete()"
+                  [disabled]="managementBusyId() !== null"
+                >
+                  Cancel</button
+                ><button
+                  class="management-button delete-button"
+                  type="button"
+                  (click)="confirmDelete()"
+                  [disabled]="managementBusyId() !== null"
+                >
+                  {{ managementBusyId() !== null ? 'Deleting…' : 'Permanently Delete' }}
+                </button>
+              </div>
+            </section>
+          </div>
+        }
+
+        <section class="dashboard-section" aria-labelledby="saved-sellers-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">PEOPLE TO FOLLOW</p>
+              <h2 id="saved-sellers-title">Saved sellers</h2>
+            </div>
+            <span class="section-count">{{ favoriteSellers().length }}</span>
+          </div>
+          @if (favoriteSellers().length === 0) {
+            <div class="empty-state">
+              <h3>No saved sellers yet</h3>
+              <p>Open a seller profile and save it to find that seller again here.</p>
+              <a class="text-link" routerLink="/explore">Browse campus products →</a>
+            </div>
+          } @else {
+            <div class="saved-grid">
+              @for (favorite of favoriteSellers(); track favorite.sellerId) {
+                <a class="saved-card" [routerLink]="['/sellers', favorite.sellerId]">
+                  <span class="item-mark" aria-hidden="true">{{
+                    favorite.sellerName.charAt(0)
+                  }}</span
+                  ><span class="saved-copy"
+                    ><strong>{{ favorite.sellerName }}</strong>
+                    @if (favorite.latestListing) {
+                      <small
+                        >Latest: {{ favorite.latestListing.product.name }} · ₹{{
+                          favorite.latestListing.price
+                        }}</small
+                      >
+                    } @else {
+                      <small>No active listing right now</small>
+                    }
+                    <small>Saved {{ favorite.savedAt | date: 'mediumDate' }}</small></span
+                  ><span class="card-arrow" aria-hidden="true">→</span>
+                </a>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="saved-offers-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">YOUR SHORTLIST</p>
+              <h2 id="saved-offers-title">Saved offers</h2>
+            </div>
+            <span class="section-count">{{ savedListings().length }}</span>
+          </div>
+          @if (savedListings().length === 0) {
+            <div class="empty-state">
+              <h3>No saved offers yet</h3>
+              <p>
+                Open a product and tap the heart on a seller’s individual offer to keep it here.
+              </p>
+              <a class="text-link" routerLink="/explore">Browse campus products →</a>
+            </div>
+          } @else {
+            <div class="saved-grid">
+              @for (favorite of savedListings(); track favorite.listingId) {
+                <article class="saved-product-card">
+                  <a class="saved-product-link" [routerLink]="['/products', favorite.listingId]">
+                    @if (favorite.photoUrl) {
+                      <img
+                        class="saved-product-photo"
+                        [src]="favorite.photoUrl"
+                        [alt]="favorite.title + ' product photo'"
+                        loading="lazy"
+                      />
+                    } @else {
+                      <span class="saved-product-photo saved-product-placeholder" aria-hidden="true"
+                        >✳</span
+                      >
+                    }
+                    <span class="saved-copy"
+                      ><strong>{{ favorite.title }}</strong
+                      ><small>{{ favorite.product.category.replaceAll('_', ' ') }}</small
+                      ><small>{{ favorite.description }}</small
+                      ><small
+                        >₹{{ favorite.price }} · Saved
+                        {{ favorite.savedAt | date: 'mediumDate' }}</small
+                      ></span
+                    >
+                  </a>
+                  <a class="text-link" [routerLink]="['/sellers', favorite.sellerId]">
+                    Seller: {{ favorite.sellerName }}
+                  </a>
+                  <button
+                    class="remove-saved-product"
+                    type="button"
+                    (click)="removeSavedListing(favorite.listingId)"
+                  >
+                    Remove
+                  </button>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      }
     }
   </main>
   @if (buyerChat(); as chat) {
@@ -495,10 +609,21 @@
         <header class="buyer-chat-header">
           <div>
             <p class="eyebrow">BUYER CHAT</p>
-            <h2><a [routerLink]="['/sellers', chat.otherUser.id]">{{ chat.otherUser.fullName }}</a></h2>
-            <a class="buyer-chat-listing" [routerLink]="['/products', chat.listing.id]">{{ chat.listing.title }}</a>
+            <h2>
+              <a [routerLink]="['/sellers', chat.otherUser.id]">{{ chat.otherUser.fullName }}</a>
+            </h2>
+            <a class="buyer-chat-listing" [routerLink]="['/products', chat.listing.id]">{{
+              chat.listing.title
+            }}</a>
           </div>
-          <button type="button" class="buyer-chat-close" aria-label="Close chat" (click)="closeBuyerChat()">×</button>
+          <button
+            type="button"
+            class="buyer-chat-close"
+            aria-label="Close chat"
+            (click)="closeBuyerChat()"
+          >
+            ×
+          </button>
         </header>
 
         @if (buyerChatLoading()) {
@@ -506,13 +631,22 @@
         } @else {
           <div class="buyer-chat-messages" aria-live="polite">
             @for (message of chat.messages; track message.id) {
-              <article class="buyer-chat-message" [class.own-message]="message.senderId === profile()?.id">
-                <strong>{{ message.senderId === profile()?.id ? 'You' : message.senderName }}</strong>
+              <article
+                class="buyer-chat-message"
+                [class.own-message]="message.senderId === profile()?.id"
+              >
+                <strong>{{
+                  message.senderId === profile()?.id ? 'You' : message.senderName
+                }}</strong>
                 <p>{{ message.body }}</p>
-                <time [attr.datetime]="message.createdAt">{{ message.createdAt | date: 'short' }}</time>
+                <time [attr.datetime]="message.createdAt">{{
+                  message.createdAt | date: 'short'
+                }}</time>
               </article>
             } @empty {
-              <p class="buyer-chat-state">No messages yet. Send a message to discuss this request.</p>
+              <p class="buyer-chat-state">
+                No messages yet. Send a message to discuss this request.
+              </p>
             }
           </div>
           <form class="buyer-chat-compose" (submit)="$event.preventDefault()">

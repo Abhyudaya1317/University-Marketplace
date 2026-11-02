@@ -6,7 +6,7 @@ These are persistent collaboration and implementation expectations for this repo
 
 1. Read CAMPUSX_MASTER_HANDOFF.md and the relevant feature/API/schema docs.
 2. Inspect actual current source and Git status. These docs are a snapshot; code may change.
-3. At handoff, main has one README-only commit (a05037d), while backend/, frontend/, and project-handover/ are untracked. Preserve them. Never clean/reset/rewrite the tree to make it look tidy.
+3. Inspect the current branch and worktree before edits. Preserve all tracked and untracked user changes. Never clean/reset/rewrite the tree to make it look tidy.
 4. Check whether local-only secrets/uploads exist, but never read or print secret values into output.
 5. Explain significant architectural decisions before substantial implementation.
 
@@ -15,7 +15,7 @@ These are persistent collaboration and implementation expectations for this repo
 - Work feature by feature; keep scope limited and code readable.
 - Reuse current Angular/Express/Prisma patterns; do not build duplicate systems.
 - Keep frontend and backend separated in frontend/ and backend/.
-- Preserve the CampusX cream/orange/charcoal visual identity.
+- Preserve the current CampusX retro Windows/Y2K visual identity: OS-gray panels, navy title bars, blue controls and pixel headings; keep the home page's teal grid and yellow/cyan/pink accents while product and account pages use the restrained gray/white/blue palette.
 - Explain important code in beginner-friendly terms; use clear comments for logical blocks, not noisy line-by-line narration.
 - Use Angular signals/reactive state for async updates where this codebase does.
 - Validate inputs on backend even if frontend validates them too.

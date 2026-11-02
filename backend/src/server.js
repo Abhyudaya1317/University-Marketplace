@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { listingUploadDirectory } from "./features/listings/listingPhotoUpload.js";
+import { profileUploadDirectory } from "./features/auth/profilePhotoUpload.js";
 import authRoutes from "./features/auth/authRoutes.js";
 import engagementRoutes from "./features/engagement/engagementRoutes.js";
 import reviewRoutes from "./features/engagement/reviewRoutes.js";
@@ -32,6 +33,14 @@ app.use("/api/uploads/listings", express.static(listingUploadDirectory, {
         response.setHeader("Cache-Control", "public, max-age=86400");
     }
 }));
+app.use("/api/uploads/profiles", express.static(profileUploadDirectory, {
+    dotfiles: "deny",
+    fallthrough: false,
+    setHeaders: (response) => {
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("Cache-Control", "public, max-age=86400, immutable");
+    }
+}));
 
 // Keep health, account, seller listings, and public product routes in feature modules.
 app.use("/api/health", healthRoutes);
@@ -44,7 +53,13 @@ app.use("/api/sellers", sellerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/messages", messagesRoutes);
 
-// Start the API without printing credentials or other environment values.
-app.listen(PORT, () => {
+// Bind on IPv4 and IPv6-capable interfaces so local proxies and hosted platforms can reach the API.
+const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
+});
+
+// Report safe listener errors, such as a port already being used by another process.
+server.on("error", (error) => {
+    console.error(`Backend could not listen on port ${PORT} (${error.code ?? "UNKNOWN"}).`);
+    process.exitCode = 1;
 });

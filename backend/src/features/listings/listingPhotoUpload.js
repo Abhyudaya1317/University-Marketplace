@@ -1,4 +1,4 @@
-// Save optional listing images under random names and reject oversized or non-image uploads.
+// Save listing images under random names and reject oversized or non-image uploads.
 import { mkdir, open, unlink } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -33,41 +33,49 @@ const storage = multer.diskStorage({
 
 const imageUpload = multer({
     storage,
-    limits: { fileSize: maxPhotoSize, files: 1, fields: 12, parts: 13 },
+    limits: { fileSize: maxPhotoSize, files: 2, fields: 16, parts: 18 },
     fileFilter: (_request, file, callback) => {
         if (!supportedTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_IMAGE_TYPE"));
         callback(null, true);
     }
-}).single("photo");
+}).array("photos", 2);
 
-// Check actual file bytes as well as the browser-provided MIME type before accepting an image.
+// Check each uploaded file's bytes as well as its browser-provided MIME type.
 export function uploadListingPhoto(request, response, next) {
     imageUpload(request, response, async (uploadError) => {
         if (uploadError) {
+            await removeListingPhotos(request.files);
             const message = uploadError.code === "LIMIT_FILE_SIZE"
                 ? "Product photos must be 5 MB or smaller."
-                : "Upload one JPG, PNG, or WebP product photo.";
+                : "Upload up to two JPG, PNG, or WebP product photos.";
             return response.status(400).json({ success: false, message });
         }
 
-        if (!request.file) return next();
+        if (!request.files?.length) return next();
 
-        try {
-            const file = await open(request.file.path, "r");
-            const header = Buffer.alloc(12);
-            await file.read(header, 0, header.length, 0);
-            await file.close();
-            const type = supportedTypes.get(request.file.mimetype);
-            if (!type?.signature(header)) {
-                await unlink(request.file.path);
-                return response.status(400).json({ success: false, message: "The uploaded file is not a valid JPG, PNG, or WebP image." });
+        for (const uploadedPhoto of request.files) {
+            try {
+                const file = await open(uploadedPhoto.path, "r");
+                const header = Buffer.alloc(12);
+                await file.read(header, 0, header.length, 0);
+                await file.close();
+                const type = supportedTypes.get(uploadedPhoto.mimetype);
+                if (!type?.signature(header)) {
+                    await removeListingPhotos(request.files);
+                    return response.status(400).json({ success: false, message: "A product photo is not a valid JPG, PNG, or WebP image." });
+                }
+            } catch {
+                await removeListingPhotos(request.files);
+                return response.status(400).json({ success: false, message: "The product photos could not be processed." });
             }
-            return next();
-        } catch {
-            await removeListingPhoto(request.file.path);
-            return response.status(400).json({ success: false, message: "The product photo could not be processed." });
         }
+        return next();
     });
+}
+
+// Clean up every file when validation or database saving rejects the upload.
+export async function removeListingPhotos(files = []) {
+    await Promise.all((files ?? []).map((file) => removeListingPhoto(file?.path)));
 }
 
 // Remove a temporary upload whenever its listing fails validation or cannot be saved.

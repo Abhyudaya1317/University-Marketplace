@@ -15,7 +15,9 @@ interface ExploreListing {
   price: string;
   quantityAvailable: number;
   photoUrl: string | null;
+  photoUrl2: string | null;
   condition: string;
+  customCondition: string | null;
 }
 
 interface ExploreResponse {
@@ -43,10 +45,11 @@ export class Explore {
   protected readonly searchText = signal('');
   protected readonly selectedCategory = signal('');
   protected readonly selectedGender = signal('');
-  protected readonly minimumProtein = signal('');
+  protected readonly proteinOnly = signal(false);
   protected readonly randomizedIds = signal<number[]>([]);
   protected readonly searchSubmitted = signal(false);
   protected readonly unavailablePhotoIds = signal<Set<number>>(new Set());
+  protected readonly photoIndexes = signal<Record<number, number>>({});
   protected readonly visibleListings = computed(() => {
     const results = this.listings();
     const order = this.randomizedIds();
@@ -84,7 +87,7 @@ export class Explore {
       this.searchText.set(search);
       if (categoryChanged) {
         this.selectedGender.set('');
-        this.minimumProtein.set('');
+        this.proteinOnly.set(false);
       }
       this.loadListings();
     });
@@ -114,7 +117,7 @@ export class Explore {
   protected onCategoryChange(value: string): void {
     this.selectedCategory.set(value);
     this.selectedGender.set('');
-    this.minimumProtein.set('');
+    this.proteinOnly.set(false);
     this.randomizedIds.set([]);
     this.loadListings();
   }
@@ -158,12 +161,29 @@ export class Explore {
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  protected markPhotoUnavailable(listingId: number): void {
-    this.unavailablePhotoIds.update((ids) => new Set(ids).add(listingId));
+  protected listingConditionLabel(listing: ExploreListing): string {
+    if (listing.condition === 'CUSTOM' && listing.customCondition) return listing.customCondition;
+    if (listing.condition === 'NEW') return 'Brand new';
+    if (listing.condition === 'OLD') return 'Old / used';
+    return this.conditionLabel(listing.condition);
   }
 
-  protected hasPhoto(listing: ExploreListing): boolean {
-    return Boolean(listing.photoUrl) && !this.unavailablePhotoIds().has(listing.id);
+  protected photoFor(listing: ExploreListing): string | null {
+    const photos = [listing.photoUrl, listing.photoUrl2].filter((url): url is string => Boolean(url));
+    if (!photos.length || this.unavailablePhotoIds().has(listing.id)) return null;
+    return photos[this.photoIndexes()[listing.id] ?? 0] ?? photos[0];
+  }
+
+  protected stepPhoto(listing: ExploreListing, direction: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const count = [listing.photoUrl, listing.photoUrl2].filter(Boolean).length;
+    if (count < 2) return;
+    this.photoIndexes.update((indexes) => ({ ...indexes, [listing.id]: ((indexes[listing.id] ?? 0) + direction + count) % count }));
+  }
+
+  protected markPhotoUnavailable(listingId: number): void {
+    this.unavailablePhotoIds.update((ids) => new Set(ids).add(listingId));
   }
 
   protected stockLabel(quantity: number): string {
@@ -186,7 +206,7 @@ export class Explore {
     if (search) params = params.set('search', search);
     if (this.selectedCategory()) params = params.set('category', this.selectedCategory());
     if (this.selectedGender()) params = params.set('gender', this.selectedGender());
-    if (this.minimumProtein()) params = params.set('minProtein', this.minimumProtein());
+    if (this.proteinOnly() && this.selectedCategory() === 'FOOD') params = params.set('proteinOnly', 'true');
     this.http.get<ExploreResponse>('/api/products', { params }).subscribe({
       next: (response) => {
         if (requestId !== this.latestRequest) return;

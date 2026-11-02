@@ -15,6 +15,8 @@ interface SellerProfileResponse {
     fullName: string;
     avatarUrl: string | null;
     activeListingCount: number;
+    followerCount: number;
+    followingCount: number;
     averageRating: number | null;
     reviewCount: number;
   };
@@ -27,6 +29,7 @@ interface SellerProfileResponse {
     price: string;
     quantityAvailable: number;
     photoUrl: string | null;
+    photoUrl2: string | null;
     location: string;
     clothingGender: string | null;
     proteinGrams: string | null;
@@ -269,6 +272,7 @@ export class SellerProfile {
   // Save or unsave this seller using the signed-in user's server-side relationship.
   protected toggleFavorite(): void {
     if (!this.isSignedIn() || this.isOwnProfile() || this.busy()) return;
+    const wasFavorite = this.isFavorite();
     this.busy.set(true);
     this.notice.set('');
     const request = this.isFavorite()
@@ -278,10 +282,16 @@ export class SellerProfile {
     request.subscribe({
       next: (response) => {
         this.isFavorite.set(response.isFavorite ?? false);
+        if (response.isFavorite !== wasFavorite) {
+          this.seller.update((seller) => seller ? {
+            ...seller,
+            followerCount: Math.max(0, seller.followerCount + (response.isFavorite ? 1 : -1)),
+          } : seller);
+        }
         this.notice.set(
           this.isFavorite()
-            ? 'Seller saved to your dashboard.'
-            : 'Seller removed from your saved list.',
+            ? 'You are now following this seller.'
+            : 'You unfollowed this seller.',
         );
         this.busy.set(false);
       },

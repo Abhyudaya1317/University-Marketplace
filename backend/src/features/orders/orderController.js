@@ -163,6 +163,18 @@ export async function getMyOrders(request, response) {
 }
 
 // Give the signed-in seller a private queue of pending requests grouped by their own products.
+export async function getSellerRequestCount(request, response) {
+    try {
+        const pendingCount = await prisma.order.count({
+            where: { sellerId: request.user.id, status: "PENDING" },
+        });
+        return response.json({ success: true, pendingCount });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not check pending buyer requests." });
+    }
+}
+
+// Return the seller's pending requests with details only on the dedicated requests page.
 export async function getSellerRequests(request, response) {
     try {
         const orders = await prisma.order.findMany({

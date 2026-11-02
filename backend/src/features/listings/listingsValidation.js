@@ -6,10 +6,10 @@ export const PRODUCT_CATEGORIES = new Set([
 
 // Use one stable set of clothing values in forms, storage, and filters.
 export const CLOTHING_GENDERS = new Set(["MEN", "WOMEN", "UNISEX", "OTHER"]);
-export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR"]);
+export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", "CUSTOM"]);
 
 // Validate the listing fields shared by create and edit without trusting browser checks.
-export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition }) {
+export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition }) {
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
@@ -24,6 +24,7 @@ export function validateListingDetails({ name, category, description, price, pho
     if (category === "CLOTHING" && !CLOTHING_GENDERS.has(clothingGender)) return "Choose a gender option for this clothing listing.";
     if (category === "FOOD" && !isValidProteinGrams(proteinGrams)) return "Enter protein per serving in grams, from 0 to 5,000.";
     if (!PRODUCT_CONDITIONS.has(condition)) return "Choose a valid product condition.";
+    if (condition === "CUSTOM" && (typeof customCondition !== "string" || customCondition.trim().length < 2 || customCondition.trim().length > 80)) return "Describe the custom item condition in 2 to 80 characters.";
     if (!normalizeProductName(trimmedName)) return "Product name must include letters or numbers.";
     return null;
 }

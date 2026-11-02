@@ -2,15 +2,13 @@
 
 This is a cautious snapshot, not a claim that every historical complaint remains open. Several older issues may have been fixed in current code; only verified outcomes should be marked closed.
 
-## P0 — local database state could not be verified
+## Resolved — local marketplace data connection (verified 2026-11-01)
 
-During handoff:
+The previous handoff could not reach PostgreSQL. This was resolved for local development: GET /api/health returned success, GET /api/products returned five real records, and /explore displayed them through the Angular proxy. Current local configuration uses backend PORT=5002 (private ignored backend/.env) and frontend/proxy.conf.json target http://127.0.0.1:5002. Keep both values matched. Prisma migrate status was not re-run, so migration bookkeeping still needs a read-only check when useful. Never expose .env values or reset/drop the database to fix connectivity.
 
-- npm run db:check returned “Database connection failed. Check that PostgreSQL is running and backend/.env is correct.”
-- npx prisma migrate status loaded backend/prisma.config.ts, identified campusx_dev at localhost:5432, then failed with a schema engine error and no actionable detail.
-- The config output identifies the database name but does not confirm connection/migration state.
-- Avoid printing .env or changing/resetting data. Check that PostgreSQL service is running, inspect private URL locally without sharing, confirm database name/user/port, then retry db:check and migrate status.
-- Migration 20261030180000_add_private_messaging is present. Earlier tool output reported it deployed, but current run cannot independently confirm. Do not claim verified.
+## P1 — local dev servers and port ownership
+
+At the time of repair, ports 5000 and 5001 were occupied by Node processes; their project ownership was not established. CampusX was moved to 5002 rather than terminating unknown processes. If the local page becomes blank again, check that the backend is listening on 5002 and restart Angular after proxy changes. Do not kill unrelated Node processes.
 
 ## P1 — messaging integration and authorization
 
@@ -34,7 +32,7 @@ Trace/retest exact flow: signed-in session → PUT /api/listings/:listingId/favo
 
 ## P1 — account data and seller profile consistency
 
-Historical complaints: generic Seller #1, blank/incomplete My Profile and Items I’m Selling. Current code has dashboard and seller queries using account identity, but no live DB test in this handoff. Verify user's fullName, correct sellerId on listing creation, dashboard active/archived counts, saved seller list, public seller catalog and identity consistency across cards, details, reviews, messages, and orders.
+Historical complaints: generic Seller #1, blank/incomplete My Profile and Items I’m Selling; user also reported that following a seller did not work. Current code has dashboard and seller queries using account identity, but these profile/follow flows were not checked in the latest runtime verification. Verify user's fullName, correct sellerId on listing creation, dashboard active/archived counts, saved seller list, public seller catalog and identity consistency across cards, details, reviews, messages, and orders. Re-test follow/unfollow through refresh and a second account.
 
 ## P1 — image persistence/display
 

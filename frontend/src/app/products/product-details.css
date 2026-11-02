@@ -90,85 +90,122 @@
   color: #000080;
   font-size: 48px;
 }
-.detail-copy h1 { text-shadow: none !important; }
-.eyebrow {
-  color: #b46b4c;
-  font-size: 11px;
-  font-weight: 750;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
+.detail-copy {
+  color: #080817;
+  font-family: var(--body);
 }
-.detail-copy h1 {
-  margin: 8px 0;
-  font-size: clamp(30px, 4vw, 42px);
-  letter-spacing: -1.5px;
+.product-category {
+  margin: 2px 0 8px;
+  padding: 0;
+  background: transparent !important;
+  color: #1148ff;
+  font-family: var(--pixel);
+  font-size: 9px;
+  line-height: 1.8;
 }
-.condition {
-  color: #77756e;
-}
-.price {
-  display: block;
-  margin: 20px 0 4px;
-  font-size: 30px;
-}
-.stock {
-  color: #557354;
-  font-weight: 650;
-}
-.description {
-  margin: 20px 0;
-  color: #57574f;
+.details-page .details-content .detail-copy h1 {
+  margin: 0 0 12px;
+  color: #080817;
+  font-family: var(--pixel);
+  font-size: clamp(25px, 3.3vw, 38px);
+  font-weight: 400;
+  letter-spacing: -1px;
   line-height: 1.7;
+  overflow-wrap: anywhere;
+  text-shadow: none !important;
+}
+.product-fields {
+  display: grid;
+  gap: 0;
+  margin: 0 0 16px;
+  padding: 0;
+}
+.product-field {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.32fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 6px 0;
+  border-bottom: 1px dotted #888;
+}
+.product-field dt {
+  color: #000080;
+  font-size: 14px;
+  font-weight: 700;
+}
+.product-field dd {
+  min-width: 0;
+  margin: 0;
+  color: #444;
+  font-size: 16px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
-.metadata {
-  display: flex;
-  gap: 28px;
-  margin: 20px 0;
+.product-field.description-field {
+  align-items: start;
 }
-.metadata div {
-  display: grid;
-  gap: 5px;
+.product-field.description-field dt,
+.product-field.description-field dd {
+  padding-top: 3px;
 }
-.metadata dt {
-  color: #8a877f;
-  font-size: 12px;
+.product-field .price-tag {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 2px solid #080817;
+  background: #fff;
+  box-shadow: 3px 3px 0 #080817;
+  color: #000080;
+  font-size: 25px;
+  line-height: 1.15;
 }
-.metadata dd {
-  margin: 0;
+.product-field .stock {
+  color: #557354;
+  font-size: 16px;
+  font-weight: 700;
+}
+.product-field:not(.description-field) dd {
   font-weight: 600;
 }
 .seller-link {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid #eae7df;
-  border-radius: 12px;
-  background: #fffefa;
-  color: inherit;
+  min-height: 68px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  border: 1px solid #777 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #000080 !important;
   text-decoration: none;
 }
 .seller-link img,
 .seller-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  border-radius: 0 !important;
   object-fit: cover;
 }
 .seller-avatar {
   display: grid;
   place-items: center;
-  background: #f8e9e0;
-  color: #aa5739;
+  background: #fff;
+  color: #000080;
   font-weight: 700;
 }
 .seller-link span:last-child {
   display: grid;
   gap: 4px;
 }
+.seller-link strong {
+  color: #000080;
+  font-size: 17px;
+}
 .seller-link small {
-  color: #77756e;
+  color: #000080;
+  font-size: 14px;
 }
 .detail-actions {
   display: flex;
@@ -182,21 +219,22 @@
   align-items: center;
   justify-content: center;
   padding: 0 16px;
-  border: 1px solid #e6cfc2;
-  border-radius: 9px;
-  background: #fffefa;
-  color: #a95638;
+  border: 2px outset #fff;
+  border-radius: 0 !important;
+  background: #fff;
+  color: #000080;
   font: inherit;
   font-weight: 700;
+  font-size: 17px;
   text-decoration: none;
   cursor: pointer;
 }
 .wishlist-button.is-saved {
-  background: #f9e8df;
+  background: #fff;
 }
 .primary-button {
-  border-color: #272923;
-  background: #272923;
+  border-color: #000080;
+  background: #000080;
   color: #fff;
 }
 .request-form {
@@ -210,16 +248,18 @@
 }
 .request-form h2 {
   margin: 0;
+  font-size: 23px;
 }
 .request-form p {
   margin: 0;
   color: #77756e;
+  font-size: 16px;
   line-height: 1.5;
 }
 .request-form label {
   display: grid;
   gap: 6px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 650;
 }
 .request-form input,
@@ -263,5 +303,9 @@
   }
   .photo-panel {
     min-height: 0;
+  }
+  .product-field {
+    grid-template-columns: minmax(92px, 0.35fr) minmax(0, 1fr);
+    gap: 9px;
   }
 }

@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { interval } from 'rxjs';
 import { AccountNavigation } from '../shared/account-navigation';
 
@@ -16,6 +16,8 @@ interface DashboardResponse {
     fullName: string;
     avatarUrl: string | null;
     activeListingCount: number;
+    followerCount: number;
+    followingCount: number;
     archivedListingCount: number;
     averageRating: number | null;
     reviewCount: number;
@@ -28,6 +30,7 @@ interface DashboardResponse {
     price: string;
     quantityAvailable: number;
     photoUrl: string | null;
+    photoUrl2: string | null;
     location: string;
     status: string;
     condition: string;
@@ -99,6 +102,8 @@ interface SellerChatThread {
 })
 export class Dashboard {
   private readonly http = inject(HttpClient);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly itemsRoute = this.route.snapshot.routeConfig?.path === 'items-selling';
 
   // These states let the page distinguish a sign-in requirement from a service issue.
   protected readonly loading = signal(true);
@@ -110,6 +115,10 @@ export class Dashboard {
   );
   protected readonly archivedListings = computed(() =>
     this.listings().filter((listing) => listing.status === 'ARCHIVED'),
+  );
+  // The profile photo grid shows only items currently visible to marketplace visitors.
+  protected readonly profileGridListings = computed(() =>
+    this.listings().filter((listing) => listing.status === 'ACTIVE'),
   );
   protected readonly profile = signal<DashboardResponse['profile'] | null>(null);
   protected readonly favoriteSellers = signal<DashboardResponse['favoriteSellers']>([]);
@@ -130,6 +139,8 @@ export class Dashboard {
   protected readonly profileNameDraft = signal('');
   protected readonly profileNotice = signal('');
   protected readonly profileSaving = signal(false);
+  protected readonly profilePhotoUploading = signal(false);
+  protected readonly profileEditOpen = signal(false);
   protected readonly buyerChat = signal<SellerChatThread | null>(null);
   protected readonly buyerChatLoading = signal(false);
   protected readonly buyerChatError = signal('');
@@ -150,7 +161,7 @@ export class Dashboard {
         this.favoriteSellers.set(response.favoriteSellers ?? []);
         this.savedListings.set(response.savedListings ?? []);
         this.loading.set(false);
-        this.loadSellerRequests();
+        if (this.itemsRoute) this.loadSellerRequests();
       },
       error: (response: HttpErrorResponse) => {
         this.signedIn.set(response.status !== 401);
@@ -186,6 +197,7 @@ export class Dashboard {
         );
         this.profileNameDraft.set(response.user.fullName);
         this.profileNotice.set('Profile name updated.');
+        this.profileEditOpen.set(false);
         this.profileSaving.set(false);
       },
       error: (response: HttpErrorResponse) => {
@@ -195,6 +207,47 @@ export class Dashboard {
         this.profileSaving.set(false);
       },
     });
+  }
+
+  // Upload a chosen profile image through the authenticated photo endpoint.
+  protected uploadProfilePhoto(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const photo = input.files?.[0];
+    if (!photo || this.profilePhotoUploading()) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(photo.type)) {
+      this.profileNotice.set('Choose a JPG, PNG, or WebP image.');
+      input.value = '';
+      return;
+    }
+    if (photo.size > 5 * 1024 * 1024) {
+      this.profileNotice.set('Profile photos must be 5 MB or smaller.');
+      input.value = '';
+      return;
+    }
+
+    const form = new FormData();
+    form.append('photo', photo);
+    this.profilePhotoUploading.set(true);
+    this.profileNotice.set('');
+    this.http.post<{ user: { avatarUrl: string | null } }>('/api/auth/profile/photo', form).subscribe({
+      next: (response) => {
+        this.profile.update((profile) => profile ? { ...profile, avatarUrl: response.user.avatarUrl } : profile);
+        this.profileNotice.set('Profile photo updated.');
+        this.profilePhotoUploading.set(false);
+        input.value = '';
+      },
+      error: (response: HttpErrorResponse) => {
+        this.profileNotice.set(response.error?.message ?? 'Your profile photo could not be updated.');
+        this.profilePhotoUploading.set(false);
+        input.value = '';
+      },
+    });
+  }
+
+  // Open or close the small editor behind the profile's Edit your profile button.
+  protected toggleProfileEdit(): void {
+    this.profileEditOpen.update((isOpen) => !isOpen);
+    this.profileNotice.set('');
   }
 
   // Display database status values as readable labels on the listing cards.

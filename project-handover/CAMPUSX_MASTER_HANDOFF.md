@@ -1,12 +1,12 @@
 # CampusX — Master Project Handoff
 
-**Prepared:** 2026-10-30  
+**Updated:** 2026-11-02
 **Repository inspected:** current working tree at handoff time  
-**Status:** documentation snapshot only; application code was not changed for this handoff.
+**Status:** handover notes refreshed; application source was not changed in this update.
 
 ## Purpose of this handoff
 
-This folder transfers product intent, actual architecture, current implementation evidence, known gaps, and practical development instructions to a new developer or Codex account. The repository is the source of truth when old notes conflict. Git currently contains only one commit, a README-only “first commit”; it does not provide application implementation history, so product decisions below are user-provided context rather than inferred from code history.
+This folder transfers product intent, actual architecture, current implementation evidence, known gaps, and practical development instructions to a new developer or Codex account. The repository is the source of truth when old notes conflict; product decisions below are user-provided context rather than inferred from code history.
 
 ## What CampusX is
 
@@ -29,8 +29,8 @@ Renting was considered and postponed. Theft, damage, and failure to return rente
 - Cash on delivery is the only payment method represented. No online payment, escrow, payment capture, refund, or payout is implemented.
 - Reviews are community reviews and are not transaction verified.
 - Listing questions and answers are scoped to a single listing, rather than shared across all similar items.
-- In-app buyer/seller messaging is the current in-progress addition in the working tree. It is plain text with a manual refresh experience; there is no push/WebSocket delivery.
-- CampusX UI language: cream/off-white background, charcoal text, orange accent, rounded cards, subtle borders/shadows, clean typography, responsive layout, clear loading/empty/error states.
+- In-app buyer/seller messaging is implemented with an inbox and thread UI. It is plain text with periodic/manual refresh; there is no push/WebSocket delivery. Integration still needs testing.
+- Current UI direction is a Windows 95/Y2K retro marketplace: OS gray panels, navy title bars, electric-blue controls, teal grid on the home page, pixel display headings with readable body text. Home retains yellow/cyan/pink accents; other pages use a restrained gray/white/blue palette.
 
 See BUSINESS_RULES.md for more nuance.
 
@@ -39,19 +39,19 @@ See BUSINESS_RULES.md for more nuance.
 - Frontend: Angular 21 standalone components, TypeScript 5.9, RxJS 7.8, Angular signals, Angular Router and HttpClient.
 - Backend: Node.js ES modules, Express 5.
 - Database: PostgreSQL, accessed through Prisma 7 with the PostgreSQL driver adapter.
-- Images: local disk uploads under backend/uploads/listings, served at /api/uploads/listings. This is development-friendly, not durable multi-instance production storage.
+- Images: two required listing photos stored locally under backend/uploads/listings and optional profile photos under backend/uploads/profiles, served under /api/uploads. This is development-friendly, not durable multi-instance production storage.
 - Auth: opaque random session token in an HttpOnly cookie; only the token hash is persisted in LoginSession.
-- Frontend development server: port 4200; its proxy maps /api to http://localhost:5000.
-- Backend default: port 5000, configurable by PORT.
-- Local database URL in configuration uses PostgreSQL on localhost:5432 and database name must be confirmed from private backend/.env. The checked-in backend/.env.example still names campusx, while prior setup context said campusx_dev; this discrepancy is unresolved.
+- Frontend development server: port 4200; current proxy maps /api to http://127.0.0.1:5002.
+- Backend default: port 5000, configurable by PORT; current private local backend/.env sets PORT=5002. Never copy this ignored file into Git or handoff output.
+- Local database URL uses PostgreSQL on localhost:5432. The checked-in backend/.env.example names campusx while prior setup context said campusx_dev; confirm the intended existing DB locally without exposing private environment values.
 
 The repo uses feature folders rather than a generic services/controllers/models directory. Details and current routes are in ARCHITECTURE.md and API_REFERENCE.md.
 
 ## Current status snapshot
 
-The initial handoff check on 2026-10-30 found backend unit tests 16/16 passing and Angular build passing with CSS budget warnings. During the following chat-integration continuation, Angular tests passed 9/9, backend tests passed 16/16, Angular production build passed, and Prisma schema validation passed. PostgreSQL health did **not** verify: db:check returned its safe generic connection failure and TCP localhost:5432 was unreachable. Prisma migration status could not complete (schema engine error). Therefore do not claim live database connectivity or live migration state. The repository contains migration 20261030180000_add_private_messaging; a prior tool report said deployment succeeded, but current verification could not independently confirm it.
+Earlier checks on 2026-10-30 found backend unit tests 16/16 passing, Angular tests 9/9 passing, Angular production build passing, and Prisma schema validation passing. On 2026-11-01 the Angular production build also passed after the component CSS error budget was increased to 10kB. Local GET /api/health returned success; GET /api/products returned five database-backed listings; and /explore rendered all five through the proxy. This confirms local read connectivity, not the migration table's exact applied state or any write workflow. Prisma migrate status was not re-run.
 
-At final inspection the current branch is main, HEAD is a05037d (“first commit”, 2026-10-30; README.md only), and Git status reports backend/, frontend/, and project-handover/ as untracked. The application source and this handover are not in that commit. Preserve all of them; do not reset, clean, overwrite, or assume untracked files are disposable.
+At this update the branch is angular-vercel with existing uncommitted application changes, including a new listing migration and profile photo upload. Preserve the current worktree; inspect git status before editing and do not reset, clean, or overwrite user changes.
 
 ## Feature overview
 
@@ -61,14 +61,14 @@ At final inspection the current branch is main, HEAD is a05037d (“first commit
 | Google OAuth | Implemented with state cookie and token verification; requires private Google settings. Provider flow not re-tested now. |
 | Password reset by email code | Implemented in code; requires SMTP; delivery not verified. |
 | Profile name | Implemented for current account; account page and seller pages read the actual user identity. |
-| Listing creation/editing | Implemented in Angular/API; local photo upload and category fields included. Not transaction-tested in this documentation run. |
-| Explore/search/filter/randomize | Implemented; current API returns individual active listings. Search includes keyword/fuzzy matching; see known limitations. |
+| Listing creation/editing | Implemented in Angular/API; listing creation requires two local photos. Full create/edit flow not transaction-tested in this documentation run. |
+| Explore/search/filter/randomize | Implemented; local API and browser path verified with five listings on 2026-11-01. Other filters remain unverified. Search includes keyword matching; see limitations. |
 | Listing details | Implemented at /products/:listingId; public identity/reputation, favorite, request, questions/reviews, message seller actions present. |
 | Wishlist | Individual listing IDs, persisted in ListingFavorite with unique user/listing constraint. Previous user-reported bug history remains a regression risk; no live DB test in this handoff. |
-| Seller dashboard/profile/catalog/archive | Implemented in feature code; database connectivity and UI regression not verified this run. |
+| Seller dashboard/profile/catalog/archive | Implemented in feature code; profile image upload is present. Upload, follow, archive, and dashboard write flows not verified this run. |
 | Orders | Cash-on-delivery purchase requests and state transitions implemented. These are not paid checkout transactions. |
 | Questions/reviews | Implemented per listing, but review eligibility is not tied to completed orders and is not verified-purchase feedback. |
-| Messaging | Present in current working tree with schema migration, routes, controllers, Angular inbox/thread and product-detail entry. Angular tests cover UI/API request behavior and backend tests cover body normalization; database persistence and participant isolation are not integration tested because PostgreSQL is unreachable. |
+| Messaging | Routes, controller, schema migration, Angular inbox/thread and product-detail entry are present. Database persistence and participant isolation are not integration tested. |
 | Listing fees | Not implemented. |
 | Online payments, protected holding, seller payouts, disputes | Not implemented and should remain blocked until provider/business/legal mechanics are confirmed. |
 | Leaderboard, Seller of the Week, AI image cleanup | Planned only. |
@@ -77,9 +77,9 @@ Full status and file references are in FEATURES_AND_STATUS.md and BUGS_AND_PENDI
 
 ## Current highest-priority work
 
-1. Confirm the PostgreSQL server and exact database URL in the local private settings; verify migrations without resetting or deleting data.
-2. Validate messaging against a real local database with two accounts: participant-only visibility, sender authorization, open/resume behavior, message persistence, and front-to-back flow. Decide whether manual refresh is adequate for the first release.
-3. Re-test listing creation, Explore display, detail images, wishlist persistence, seller identity, dashboard/my listings, archive/restore and COD order flow against actual DB data.
+1. Run a read-only Prisma migration status check against the confirmed local DB; do not reset or delete data.
+2. Validate messaging against a real local database with two accounts: participant-only visibility, sender authorization, open/resume behavior, message persistence, and front-to-back flow. Decide whether periodic refresh is adequate for the first release.
+3. Re-test listing creation with two photos, detail images, wishlist persistence, seller follow, profile-photo upload, dashboard/my listings, archive/restore and COD order flow against actual DB data.
 4. Resolve the README and .env.example database-name mismatch.
 5. Add meaningful backend integration tests and Angular tests for critical flows; the current 16 backend tests are unit tests around validators/matching, not end-to-end coverage.
 6. Consider production-grade image storage, rate limits, deployment, monitoring, and a reviewed threat model only after core behavior is reliable.
@@ -96,6 +96,6 @@ Full status and file references are in FEATURES_AND_STATUS.md and BUGS_AND_PENDI
 
 ## How a new Codex should work
 
-Read the handover documents, then verify current files and git status before changes. At handoff, main has one README-only commit; backend/, frontend/, and project-handover/ are untracked and the application code is not committed. Preserve every file and local setting. Never print private env values. Avoid destructive database operations; do not run reset/fresh/seed without explicit need and approval. Explain a change before doing substantial architectural work, keep implementation focused, and verify the full frontend → API → database path when possible. Do not mark a UI feature complete merely because it renders.
+Read the handover documents, then verify current files and git status before changes. The current workspace is dirty on branch angular-vercel. Preserve every file and local setting. Never print private env values. Avoid destructive database operations; do not run reset/fresh/seed without explicit need and approval. Explain substantial architectural changes, keep implementation focused, and verify the full frontend → API → database path when possible. Do not mark a UI feature complete merely because it renders.
 
 The exact actual API, schema, setup, feature statuses, and backlog are in the sibling documents.

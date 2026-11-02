@@ -103,10 +103,12 @@ model Listing {
   price          Decimal         @db.Decimal(10, 2)
   phoneNumber    String
   photoUrl       String?
+  photoUrl2      String?
   location       String          @default("LPU campus") @db.VarChar(120)
   clothingGender ClothingGender?
   proteinGrams   Decimal?        @db.Decimal(6, 2)
   condition      ProductCondition @default(GOOD)
+  customCondition String?        @db.VarChar(80)
   status         ListingStatus   @default(ACTIVE)
   archivedAt     DateTime?
   quantityAvailable Int          @default(1)
@@ -271,6 +273,8 @@ enum ProductCondition {
   LIKE_NEW
   GOOD
   FAIR
+  OLD
+  CUSTOM
 }
 
 // There is one payment choice until an online payment system is approved.

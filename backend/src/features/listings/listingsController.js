@@ -1,22 +1,27 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
-import { CLOTHING_GENDERS, isValidProteinGrams, isValidQuantity, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
+import { CLOTHING_GENDERS, isValidQuantity, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
 import { productNamesMatch } from "./productGrouping.js";
-import { listingPhotoUrl, removeListingPhoto } from "./listingPhotoUpload.js";
+import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
 export async function createListing(request, response) {
-    const { name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition } = request.body ?? {};
+    const { name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition } = request.body ?? {};
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
-    const photoUrl = request.file ? listingPhotoUrl(request.file.filename) : null;
+    const uploadedPhotos = request.files ?? [];
+    if (uploadedPhotos.length !== 2) {
+        await removeListingPhotos(uploadedPhotos);
+        return response.status(400).json({ success: false, message: "Choose exactly two product photos before publishing." });
+    }
+    const [photoUrl, photoUrl2] = uploadedPhotos.map((photo) => listingPhotoUrl(photo.filename));
 
     // Use the same server-side validation rules for creating and editing offers.
     const validationMessage = validateListingDetails(request.body ?? {});
     if (validationMessage) {
-        await removeListingPhoto(request.file?.path);
+        await removeListingPhotos(uploadedPhotos);
         return response.status(400).json({ success: false, message: validationMessage });
     }
 
@@ -40,8 +45,10 @@ export async function createListing(request, response) {
                     phoneNumber: phoneNumber.trim(),
                     quantityAvailable: Number(quantityAvailable),
                     photoUrl,
+                    photoUrl2,
                     location: trimmedLocation,
                     condition,
+                    customCondition: condition === "CUSTOM" ? customCondition.trim() : null,
                     clothingGender: category === "CLOTHING" ? clothingGender : null,
                     proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null
                 },
@@ -62,8 +69,10 @@ export async function createListing(request, response) {
                 description: listing.description,
                 price: listing.price.toFixed(2),
                 photoUrl: listing.photoUrl,
+                photoUrl2: listing.photoUrl2,
                 location: listing.location,
                 condition: listing.condition,
+                customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 status: listing.status,
@@ -72,7 +81,7 @@ export async function createListing(request, response) {
             }
         });
     } catch {
-        await removeListingPhoto(request.file?.path);
+        await removeListingPhotos(uploadedPhotos);
         return response.status(500).json({ success: false, message: "We could not create the listing. Please try again." });
     }
 }
@@ -107,7 +116,7 @@ export async function getExploreProducts(request, response) {
     const search = typeof request.query.search === "string" ? request.query.search.trim().slice(0, 100) : "";
     const category = typeof request.query.category === "string" ? request.query.category : "";
     const gender = typeof request.query.gender === "string" ? request.query.gender : "";
-    const minProtein = typeof request.query.minProtein === "string" ? request.query.minProtein : "";
+    const proteinOnly = request.query.proteinOnly === "true";
 
     // Reject unknown category values rather than silently returning confusing results.
     if (category && !PRODUCT_CATEGORIES.has(category)) {
@@ -116,8 +125,8 @@ export async function getExploreProducts(request, response) {
     if (gender && (!CLOTHING_GENDERS.has(gender) || category !== "CLOTHING")) {
         return response.status(400).json({ success: false, message: "Choose a valid clothing gender filter." });
     }
-    if (minProtein && (!isValidProteinGrams(minProtein) || category !== "FOOD")) {
-        return response.status(400).json({ success: false, message: "Choose a valid minimum protein filter for food." });
+    if (proteinOnly && category !== "FOOD") {
+        return response.status(400).json({ success: false, message: "The protein-only filter is available for food listings." });
     }
 
     try {
@@ -129,7 +138,7 @@ export async function getExploreProducts(request, response) {
                 quantityAvailable: { gt: 0 },
                 ...(browsingCategory ? { product: { category: browsingCategory } } : {}),
                 ...(!search && gender ? { clothingGender: gender } : {}),
-                ...(!search && minProtein ? { proteinGrams: { gte: minProtein } } : {})
+                ...(!search && proteinOnly ? { proteinGrams: { gt: 0 } } : {})
             },
             orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
             select: {
@@ -140,8 +149,10 @@ export async function getExploreProducts(request, response) {
                 price: true,
                 quantityAvailable: true,
                 photoUrl: true,
+                photoUrl2: true,
                 location: true,
                 condition: true,
+                customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
                 createdAt: true,
@@ -165,8 +176,10 @@ export async function getExploreProducts(request, response) {
             price: listing.price.toFixed(2),
             quantityAvailable: listing.quantityAvailable,
             photoUrl: listing.photoUrl,
+            photoUrl2: listing.photoUrl2,
             location: listing.location,
             condition: listing.condition,
+            customCondition: listing.customCondition,
             clothingGender: listing.clothingGender,
             proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
             createdAt: listing.createdAt
@@ -209,8 +222,10 @@ export async function getPublicListingDetails(request, response) {
                 price: true,
                 quantityAvailable: true,
                 photoUrl: true,
+                photoUrl2: true,
                 location: true,
                 condition: true,
+                customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
                 createdAt: true,
@@ -235,8 +250,10 @@ export async function getPublicListingDetails(request, response) {
                 price: listing.price.toFixed(2),
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
+                photoUrl2: listing.photoUrl2,
                 location: listing.location,
                 condition: listing.condition,
+                customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 category: listing.product.category,

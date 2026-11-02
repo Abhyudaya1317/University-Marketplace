@@ -20,37 +20,64 @@
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
             <img class="paint-frame-image" src="/images/untitled-paint.jpg" alt="Untitled Paint window" />
-            @if (item.photoUrl && !imageUnavailable()) {
+            @if (activePhotoUrl(); as photoUrl) {
+              @if (isPhotoAvailable(photoUrl)) {
               <img
                 class="paint-product-image"
-                [src]="item.photoUrl"
-                [alt]="item.title + ' product photo'"
-                (error)="imageUnavailable.set(true)"
+                [src]="photoUrl"
+                [alt]="item.title + ' product photo ' + (activePhotoIndex() + 1)"
+                (error)="markPhotoUnavailable(photoUrl)"
               />
+              } @else {
+                <div class="paint-placeholder" aria-label="No product photo available">✳</div>
+              }
             } @else {
               <div class="paint-placeholder" aria-label="No product photo available">✳</div>
+            }
+            @if (productPhotos().length > 1) {
+              <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>
+              <button class="paint-photo-arrow paint-photo-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1)">›</button>
+              <span class="paint-photo-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
             }
           </div>
         </div>
         <div class="detail-copy">
-          <p class="eyebrow">{{ categoryLabel(item.category) }}</p>
+          <p class="product-category">{{ categoryLabel(item.category) }}</p>
           <h1>{{ item.title }}</h1>
-          <p class="condition">{{ categoryLabel(item.condition) }}</p>
-          <strong class="price">₹{{ item.price }}</strong>
-          <p class="stock">{{ stockLabel(item.quantityAvailable) }}</p>
-          <p class="description">{{ item.description }}</p>
-          @if (item.category === 'CLOTHING' && item.clothingGender) {
-            <p><strong>Gender:</strong> {{ categoryLabel(item.clothingGender) }}</p>
-          }
-          @if (item.category === 'FOOD' && item.proteinGrams) {
-            <p><strong>Protein:</strong> {{ item.proteinGrams }} g per serving</p>
-          }
-          <dl class="metadata">
-            <div>
-              <dt>Pickup area</dt>
+          <dl class="product-fields">
+            <div class="product-field">
+              <dt>Condition</dt>
+              <dd>{{ conditionLabel(item) }}</dd>
+            </div>
+            <div class="product-field">
+              <dt>Price</dt>
+              <dd><strong class="price-tag">₹{{ item.price }}</strong></dd>
+            </div>
+            <div class="product-field">
+              <dt>Availability</dt>
+              <dd class="stock">{{ stockLabel(item.quantityAvailable) }}</dd>
+            </div>
+            @if (item.category === 'CLOTHING' && item.clothingGender) {
+              <div class="product-field">
+                <dt>Gender</dt>
+                <dd>{{ categoryLabel(item.clothingGender) }}</dd>
+              </div>
+            }
+            @if (item.category === 'FOOD' && item.proteinGrams) {
+              <div class="product-field">
+                <dt>Protein</dt>
+                <dd>{{ item.proteinGrams }} g per serving</dd>
+              </div>
+            }
+            <div class="product-field description-field">
+              <dt>Description</dt>
+              <dd>{{ item.description || 'No description provided by the seller.' }}</dd>
+            </div>
+            <div class="product-field">
+              <dt>Pickup location</dt>
               <dd>{{ item.location }}</dd>
             </div>
-            <div>
+            <div class="product-field">
               <dt>Listed</dt>
               <dd>{{ item.createdAt | date: 'mediumDate' }}</dd>
             </div>

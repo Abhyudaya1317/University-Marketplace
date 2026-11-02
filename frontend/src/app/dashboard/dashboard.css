@@ -67,6 +67,9 @@
   border-radius: 50%;
   object-fit: cover;
 }
+.profile-name-form { display: grid; gap: 8px; }
+.profile-name-form .profile-photo-input { min-height: 42px; padding: 8px; }
+.profile-name-form > small { margin-bottom: 8px; color: #555; }
 .profile-details span + span {
   padding-left: 12px;
   border-left: 1px solid #ebe5da;
@@ -118,6 +121,32 @@
 }
 .dashboard-section {
   margin-top: 34px;
+}
+.items-page-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 2px solid #777;
+  background: #c0c0c0;
+  box-shadow: 5px 5px 0 #080817;
+}
+.items-page-heading h1 {
+  margin: 0;
+  color: #080817;
+  font: 700 clamp(24px, 4vw, 34px)/1.2 var(--pixel, monospace);
+}
+.items-page-heading p:not(.eyebrow) {
+  margin: 10px 0 0;
+  color: #444;
+  font-size: 15px;
+}
+.items-page-heading > .text-link {
+  flex: 0 0 auto;
+  color: #000080;
+  font-weight: 700;
 }
 .section-heading {
   display: flex;
@@ -311,6 +340,23 @@
   border-radius: 16px;
   background: #fffefa;
 }
+.listing-card.has-buyer-request {
+  border-color: #9dbde8;
+  background: #eef5ff;
+}
+.listing-card.has-buyer-request .listing-owner-tools {
+  border-top-color: #cbdcf2;
+}
+.pending-request-notice {
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 3px solid #174bff;
+  background: #dceaff;
+  color: #102c66;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
 .listing-main {
   display: flex;
   align-items: flex-start;
@@ -428,11 +474,17 @@
 .request-details {
   grid-column: 1 / -1;
   color: #77503e;
-  font-size: 13px;
+  font-size: 16px;
 }
 .request-details summary {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #9dbde8;
+  background: #dceaff;
+  color: #102c66;
   cursor: pointer;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 800;
 }
 .no-requests,
 .dashboard-notice {
@@ -443,22 +495,24 @@
   display: grid;
   gap: 8px;
   margin-top: 10px;
-  padding: 12px;
-  border: 1px solid #ebe5da;
-  border-radius: 10px;
-  background: #faf8f3;
+  padding: 16px;
+  border: 1px solid #b7cce9;
+  background: #f7faff;
   color: #34352f;
+  font-size: 15px;
 }
 .request-card p {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 12px;
+  font-size: 14px;
 }
 .request-card small {
   color: #817b73;
+  font-size: 13px;
 }
 .request-card input {
   width: 100%;
+  min-height: 42px;
 }
 .request-actions {
   display: flex;
@@ -549,6 +603,11 @@
   .dashboard-content {
     width: calc(100% - 28px);
     padding-top: 36px;
+  }
+  .items-page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px;
   }
   .saved-grid {
     grid-template-columns: 1fr;

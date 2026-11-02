@@ -11,7 +11,7 @@ import { AccountNavigation } from '../shared/account-navigation';
 interface ConversationSummary {
   id: number;
   updatedAt: string;
-  otherUser: { id: number; fullName: string };
+  otherUser: { id: number; fullName: string; avatarUrl: string | null };
   listing: { id: number; title: string; price: string; photoUrl: string | null; status: string };
   lastMessage: { body: string; createdAt: string; senderId: number } | null;
   unreadCount: number;
@@ -35,7 +35,7 @@ interface ChatMessage {
 
 interface ConversationThread {
   id: number;
-  otherUser: { id: number; fullName: string };
+  otherUser: { id: number; fullName: string; avatarUrl: string | null };
   listing: { id: number; title: string; price: string; photoUrl: string | null; status: string };
   messages: ChatMessage[];
 }

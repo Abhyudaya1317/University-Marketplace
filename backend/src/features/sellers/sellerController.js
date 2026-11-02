@@ -14,10 +14,12 @@ const activeListingSelection = {
         price: true,
         quantityAvailable: true,
         photoUrl: true,
+        photoUrl2: true,
         location: true,
         clothingGender: true,
         proteinGrams: true,
         condition: true,
+        customCondition: true,
         createdAt: true,
         product: { select: { id: true, name: true, category: true } }
     }
@@ -34,7 +36,13 @@ export async function getSellerProfile(request, response) {
         const [seller, reviewSummary] = await Promise.all([
             prisma.user.findUnique({
                 where: { id: sellerId },
-                select: { id: true, fullName: true, avatarUrl: true, listings: activeListingSelection }
+                select: {
+                    id: true,
+                    fullName: true,
+                    avatarUrl: true,
+                    listings: activeListingSelection,
+                    _count: { select: { savedBy: true, savedSellers: true } }
+                }
             }),
             prisma.listingReview.aggregate({
                 where: { listing: { sellerId, status: "ACTIVE" } },
@@ -54,6 +62,8 @@ export async function getSellerProfile(request, response) {
                 fullName: seller.fullName || "CampusX Member",
                 avatarUrl: seller.avatarUrl,
                 activeListingCount: seller.listings.length,
+                followerCount: seller._count.savedBy,
+                followingCount: seller._count.savedSellers,
                 averageRating: reviewSummary._avg.rating === null ? null : Number(reviewSummary._avg.rating.toFixed(1)),
                 reviewCount: reviewSummary._count._all
             },
@@ -66,10 +76,12 @@ export async function getSellerProfile(request, response) {
                 price: listing.price.toFixed(2),
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
+                photoUrl2: listing.photoUrl2,
                 location: listing.location,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 condition: listing.condition,
+                customCondition: listing.customCondition,
                 createdAt: listing.createdAt
             }))
         });
@@ -88,6 +100,7 @@ export async function getSellerDashboard(request, response) {
                 email: true,
                 fullName: true,
                 avatarUrl: true,
+                _count: { select: { savedBy: true } },
                 listings: {
                     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
                     select: {
@@ -97,10 +110,12 @@ export async function getSellerDashboard(request, response) {
                         price: true,
                         quantityAvailable: true,
                         photoUrl: true,
+                        photoUrl2: true,
                         location: true,
                         status: true,
                         archivedAt: true,
                         condition: true,
+                        customCondition: true,
                         createdAt: true,
                         product: { select: { id: true, name: true, category: true } }
                     }
@@ -132,6 +147,7 @@ export async function getSellerDashboard(request, response) {
                                 description: true,
                                 price: true,
                                 photoUrl: true,
+                                photoUrl2: true,
                                 sellerId: true,
                                 title: true,
                                 seller: { select: { fullName: true, avatarUrl: true } },
@@ -162,6 +178,8 @@ export async function getSellerDashboard(request, response) {
                 fullName: account.fullName || "CampusX Member",
                 avatarUrl: account.avatarUrl,
                 activeListingCount: account.listings.filter((listing) => listing.status === "ACTIVE").length,
+                followerCount: account._count.savedBy,
+                followingCount: account.savedSellers.length,
                 archivedListingCount: account.listings.filter((listing) => listing.status === "ARCHIVED").length,
                 averageRating: reviewSummary._avg.rating === null ? null : Number(reviewSummary._avg.rating.toFixed(1)),
                 reviewCount: reviewSummary._count._all
@@ -174,10 +192,12 @@ export async function getSellerDashboard(request, response) {
                 price: listing.price.toFixed(2),
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
+                photoUrl2: listing.photoUrl2,
                 location: listing.location,
                 status: listing.status,
                 archivedAt: listing.archivedAt,
                 condition: listing.condition,
+                customCondition: listing.customCondition,
                 createdAt: listing.createdAt
             })),
             favoriteSellers: account.savedSellers.map((favorite) => ({
@@ -200,7 +220,8 @@ export async function getSellerDashboard(request, response) {
                 product: favorite.listing.product,
                 description: favorite.listing.description,
                 price: favorite.listing.price.toFixed(2),
-                photoUrl: favorite.listing.photoUrl
+                photoUrl: favorite.listing.photoUrl,
+                photoUrl2: favorite.listing.photoUrl2
             }))
         });
     } catch {
@@ -241,12 +262,12 @@ export async function saveFavoriteSeller(request, response) {
     }
 
     try {
-        const seller = await prisma.user.findFirst({
-            where: { id: sellerId, listings: { some: { status: "ACTIVE" } } },
+        const seller = await prisma.user.findUnique({
+            where: { id: sellerId },
             select: { id: true }
         });
         if (!seller) {
-            return response.status(404).json({ success: false, message: "This seller has no active listings to save." });
+            return response.status(404).json({ success: false, message: "This seller profile was not found." });
         }
 
         await prisma.sellerFavorite.upsert({

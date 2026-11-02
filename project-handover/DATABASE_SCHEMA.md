@@ -1,6 +1,6 @@
 # CampusX Database Schema
 
-Source: backend/prisma/schema.prisma. The database is PostgreSQL. Table and enum state below describes the current schema source, not a live database introspection. Live DB/migration verification failed in the handoff run; see the master handoff.
+Source: backend/prisma/schema.prisma. The database is PostgreSQL. Table and enum state below describes the current schema source, not a live schema introspection. Local runtime reads succeeded on 2026-11-01; Prisma migration bookkeeping was not checked then.
 
 ## Entity map
 
@@ -112,10 +112,12 @@ id Int primary key autoincrement; fanId Int and sellerId Int both User foreign k
 | price | Decimal(10,2) | Offer price. |
 | phoneNumber | String required | Seller contact, kept private in public APIs. |
 | photoUrl | String? | Local upload URL or null. |
+| photoUrl2 | String? | Second local upload URL; new listing creation requires two photos. |
 | location | String VarChar(120), default “LPU campus” | Pickup point. |
 | clothingGender | ClothingGender? | Clothing-only detail. |
 | proteinGrams | Decimal(6,2)? | Food-only nutrition detail. |
 | condition | ProductCondition default GOOD | Item condition. |
+| customCondition | String? VarChar(80) | Seller-defined condition text when condition is CUSTOM. |
 | status | ListingStatus default ACTIVE | Active/sold/hidden/archived. |
 | archivedAt | DateTime? | Archive timestamp. |
 | quantityAvailable | Int default 1 | Stock; zero means unavailable. |
@@ -168,7 +170,7 @@ id Int primary key; listingId Int FK Listing; reviewerId Int FK User; rating Int
 
 - ProductCategory: CLOTHING, ACCESSORIES, SHOES, FOOD, ELECTRONICS, BEAUTY, ARTWORK, SPORTS_EQUIPMENT, MUSICAL_INSTRUMENTS, ROOM_DECOR, KITCHEN_ITEMS, DAILY_USE, OTHER.
 - ListingStatus: ACTIVE, SOLD, HIDDEN, ARCHIVED.
-- ProductCondition: NEW, LIKE_NEW, GOOD, FAIR.
+- ProductCondition: NEW, OLD, LIKE_NEW, GOOD, FAIR, CUSTOM.
 - PaymentMethod: CASH_ON_DELIVERY.
 - OrderStatus: PENDING, ACCEPTED, SELLER_CONFIRMED, COMPLETED, DECLINED, CANCELLED.
 - ClothingGender: MEN, WOMEN, UNISEX, OTHER.
@@ -195,5 +197,6 @@ Current checked-in migration directories:
 12. 20261030150000_add_listing_management
 13. 20261030160000_add_user_profile_details
 14. 20261030180000_add_private_messaging
+15. 20261101120000_add_second_listing_photo_custom_condition
 
-These are timestamped additive migrations. Current live status is NOT VERIFIED: Prisma migrate status failed with a schema engine error in this documentation run. The earlier same-session operation reported migration 14 as deployed, but it could not be confirmed now. Never reset the database to reconcile this; inspect database URL and server first.
+These are timestamped additive migrations. The latest migration adds photoUrl2 and customCondition and extends ProductCondition with OLD and CUSTOM. Runtime API reads worked on 2026-11-01, but `prisma migrate status` was not run; confirm migration bookkeeping read-only before schema changes. Never reset the database to reconcile this; inspect database URL and server first.

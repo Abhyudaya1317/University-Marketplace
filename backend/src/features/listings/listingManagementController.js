@@ -1,7 +1,7 @@
 // Handle seller-owned listing edits, archival, restoration, and guarded deletion.
 import { prisma } from "../../lib/prisma.js";
 import { normalizeProductName, validateListingDetails } from "./listingsValidation.js";
-import { listingPhotoUrl, removeListingPhoto, removeListingPhotoByUrl } from "./listingPhotoUpload.js";
+import { listingPhotoUrl, removeListingPhotos, removeListingPhotoByUrl } from "./listingPhotoUpload.js";
 
 // Return only the owner's active listing data needed to prefill the existing sell form.
 export async function getListingForEdit(request, response) {
@@ -15,7 +15,7 @@ export async function getListingForEdit(request, response) {
             where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
             select: {
                 id: true, title: true, description: true, price: true, quantityAvailable: true,
-                phoneNumber: true, location: true, photoUrl: true, condition: true,
+                phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, condition: true, customCondition: true,
                 clothingGender: true, proteinGrams: true,
                 product: { select: { category: true } }
             }
@@ -34,7 +34,9 @@ export async function getListingForEdit(request, response) {
                 phoneNumber: listing.phoneNumber,
                 location: listing.location,
                 photoUrl: listing.photoUrl,
+                photoUrl2: listing.photoUrl2,
                 condition: listing.condition,
+                customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null
             }
@@ -48,14 +50,20 @@ export async function getListingForEdit(request, response) {
 // Update the owner's active offer and its shared catalog link in one transaction.
 export async function updateListing(request, response) {
     const listingId = Number(request.params.listingId);
+    const uploadedPhotos = request.files ?? [];
     if (!Number.isSafeInteger(listingId) || listingId < 1) {
-        await removeListingPhoto(request.file?.path);
+        await removeListingPhotos(uploadedPhotos);
         return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
+    }
+
+    if (uploadedPhotos.length !== 0 && uploadedPhotos.length !== 2) {
+        await removeListingPhotos(uploadedPhotos);
+        return response.status(400).json({ success: false, message: "Choose either no new photos or exactly two replacement photos." });
     }
 
     const validationMessage = validateListingDetails(request.body ?? {});
     if (validationMessage) {
-        await removeListingPhoto(request.file?.path);
+        await removeListingPhotos(uploadedPhotos);
         return response.status(400).json({ success: false, message: validationMessage });
     }
 
@@ -64,13 +72,11 @@ export async function updateListing(request, response) {
     const location = request.body.location.trim();
     const price = String(request.body.price).trim();
     const normalizedName = normalizeProductName(name);
-    const removeCurrentPhoto = request.body.removePhoto === "true";
-
     try {
         const updatedListing = await prisma.$transaction(async (transaction) => {
             const current = await transaction.listing.findFirst({
                 where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
-                select: { photoUrl: true }
+                select: { photoUrl: true, photoUrl2: true }
             });
             if (!current) return { error: "NOT_FOUND" };
 
@@ -79,9 +85,8 @@ export async function updateListing(request, response) {
                 create: { name, normalizedName, category: request.body.category },
                 update: {}
             });
-            const photoUrl = request.file
-                ? listingPhotoUrl(request.file.filename)
-                : removeCurrentPhoto ? null : current.photoUrl;
+            const photoUrl = uploadedPhotos.length === 2 ? listingPhotoUrl(uploadedPhotos[0].filename) : current.photoUrl;
+            const photoUrl2 = uploadedPhotos.length === 2 ? listingPhotoUrl(uploadedPhotos[1].filename) : current.photoUrl2;
             const changed = await transaction.listing.updateMany({
                 where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
                 data: {
@@ -93,7 +98,9 @@ export async function updateListing(request, response) {
                     quantityAvailable: Number(request.body.quantityAvailable),
                     location,
                     photoUrl,
+                    photoUrl2,
                     condition: request.body.condition,
+                    customCondition: request.body.condition === "CUSTOM" ? request.body.customCondition.trim() : null,
                     clothingGender: request.body.category === "CLOTHING" ? request.body.clothingGender : null,
                     proteinGrams: request.body.category === "FOOD" ? String(request.body.proteinGrams).trim() : null
                 }
@@ -104,20 +111,23 @@ export async function updateListing(request, response) {
                 where: { id: listingId },
                 select: {
                     id: true, title: true, description: true, price: true, quantityAvailable: true,
-                    photoUrl: true, location: true, condition: true, clothingGender: true,
+                    photoUrl: true, photoUrl2: true, location: true, condition: true, customCondition: true, clothingGender: true,
                     proteinGrams: true, product: { select: { id: true, name: true, category: true } }
                 }
             });
-            return { listing, previousPhotoUrl: current.photoUrl };
+            return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2] };
         });
 
         if (updatedListing.error === "NOT_FOUND") {
-            await removeListingPhoto(request.file?.path);
+            await removeListingPhotos(uploadedPhotos);
             return response.status(404).json({ success: false, message: "This active listing was not found on your account." });
         }
 
-        if (updatedListing.previousPhotoUrl && updatedListing.previousPhotoUrl !== updatedListing.listing.photoUrl) {
-            await removeListingPhotoByUrl(updatedListing.previousPhotoUrl).catch((error) => logListingFailure("remove replaced photo", error));
+        const updatedPhotoUrls = [updatedListing.listing.photoUrl, updatedListing.listing.photoUrl2];
+        for (const oldPhotoUrl of updatedListing.previousPhotoUrls) {
+            if (oldPhotoUrl && !updatedPhotoUrls.includes(oldPhotoUrl)) {
+                await removeListingPhotoByUrl(oldPhotoUrl).catch((error) => logListingFailure("remove replaced photo", error));
+            }
         }
 
         return response.json({
@@ -130,14 +140,16 @@ export async function updateListing(request, response) {
                 price: updatedListing.listing.price.toFixed(2),
                 quantityAvailable: updatedListing.listing.quantityAvailable,
                 photoUrl: updatedListing.listing.photoUrl,
+                photoUrl2: updatedListing.listing.photoUrl2,
                 location: updatedListing.listing.location,
                 condition: updatedListing.listing.condition,
+                customCondition: updatedListing.listing.customCondition,
                 clothingGender: updatedListing.listing.clothingGender,
                 proteinGrams: updatedListing.listing.proteinGrams?.toFixed(2) ?? null
             }
         });
     } catch (error) {
-        await removeListingPhoto(request.file?.path);
+        await removeListingPhotos(uploadedPhotos);
         logListingFailure("update listing", error);
         return response.status(500).json({ success: false, message: "We could not update this listing. Please try again." });
     }
@@ -220,7 +232,7 @@ export async function permanentlyDeleteListing(request, response) {
     try {
         const archivedListing = await prisma.listing.findFirst({
             where: { id: listingId, sellerId: request.user.id, status: "ARCHIVED" },
-            select: { id: true, photoUrl: true, _count: { select: { orders: true } } }
+            select: { id: true, photoUrl: true, photoUrl2: true, _count: { select: { orders: true } } }
         });
         if (!archivedListing) return response.status(404).json({ success: false, message: "This archived listing was not found on your account." });
         if (archivedListing._count.orders > 0) {
@@ -232,8 +244,8 @@ export async function permanentlyDeleteListing(request, response) {
         });
         if (deleted.count !== 1) return response.status(409).json({ success: false, message: "This listing gained order history and must remain archived." });
 
-        if (archivedListing.photoUrl) {
-            await removeListingPhotoByUrl(archivedListing.photoUrl).catch((error) => logListingFailure("remove deleted listing photo", error));
+        for (const photoUrl of [archivedListing.photoUrl, archivedListing.photoUrl2]) {
+            if (photoUrl) await removeListingPhotoByUrl(photoUrl).catch((error) => logListingFailure("remove deleted listing photo", error));
         }
         return response.json({ success: true, deleted: true });
     } catch (error) {
