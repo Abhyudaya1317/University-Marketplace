@@ -197,7 +197,9 @@ export async function getExploreProducts(request, response) {
             : [];
 
         return response.json({ success: true, listings: results, suggestions });
-    } catch {
+    } catch (error) {
+        // Log only Prisma's safe error code/name; never expose database details to clients or logs.
+        console.error("Product feed query failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not load products right now." });
     }
 }
