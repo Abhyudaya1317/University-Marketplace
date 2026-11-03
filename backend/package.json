@@ -7,7 +7,7 @@
     "test": "node --test",
     "start": "node src/server.js",
     "predev": "node src/scripts/checkDevPort.js",
-    "build":"ng build --configuration production",
+    "build": "prisma generate",
     "watch":"ng build --watch --configuration development",
     "dev": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
