@@ -46,7 +46,9 @@
       <p class="signin-note">You cannot review your own offers.</p>
     }
 
-    @if (listingReviews().length > 0) {
+    @if (loading()) {
+      <p class="empty-note" role="status">Loading seller reviews…</p>
+    } @else if (listingReviews().length > 0) {
       <div class="review-list">
         @for (review of listingReviews(); track review.id) {
           <article class="review-card">

@@ -6,34 +6,34 @@ import { RouterLink } from '@angular/router';
 
 // Keep only public seller-offer details needed for choosing which listing to review.
 export interface EngagementOffer {
-  id: number;
-  sellerId: number;
+  id: string;
+  sellerId: string;
   price: string;
 }
 
 interface EngagementResponse {
   success: boolean;
-  eligibleSellerIds: number[];
+  eligibleSellerIds: string[];
   questions: Array<{
-    id: number;
-    askerId: number;
+    id: string;
+    askerId: string;
     askerName: string;
     question: string;
     createdAt: string;
     answers: Array<{
-      id: number;
-      sellerId: number;
+      id: string;
+      sellerId: string;
       sellerName: string;
       answer: string;
       createdAt: string;
     }>;
   }>;
   reviews: Array<{
-    id: number;
-    listingId: number;
-    reviewerId: number;
+    id: string;
+    listingId: string;
+    reviewerId: string;
     reviewerName: string;
-    sellerId: number;
+    sellerId: string;
     sellerName: string;
     rating: number;
     comment: string;
@@ -43,7 +43,7 @@ interface EngagementResponse {
 
 interface CurrentUserResponse {
   success: boolean;
-  user?: { id: number; email: string };
+  user?: { id: string; email: string };
 }
 
 // Keep public product discussion and seller feedback in their own feature component.
@@ -58,20 +58,20 @@ export class ProductEngagement {
 
   // The parent passes the exact seller listing this discussion belongs to.
   readonly offers = input<EngagementOffer[]>([]);
-  readonly listingId = input.required<number>();
+  readonly listingId = input.required<string>();
 
   // Signals drive loading, sign-in permissions, feedback, and form state.
   protected readonly loading = signal(true);
-  protected readonly currentUserId = signal<number | null>(null);
-  protected readonly eligibleSellerIds = signal<number[]>([]);
+  protected readonly currentUserId = signal<string | null>(null);
+  protected readonly eligibleSellerIds = signal<string[]>([]);
   protected readonly questions = signal<EngagementResponse['questions']>([]);
   protected readonly reviews = signal<EngagementResponse['reviews']>([]);
   protected readonly questionDraft = signal('');
-  protected readonly answerDrafts = signal<Record<number, string>>({});
+  protected readonly answerDrafts = signal<Record<string, string>>({});
   protected readonly selectedRating = signal(5);
   protected readonly reviewComment = signal('');
   protected readonly savingQuestion = signal(false);
-  protected readonly savingAnswerId = signal<number | null>(null);
+  protected readonly savingAnswerId = signal<string | null>(null);
   protected readonly savingReview = signal(false);
   protected readonly error = signal('');
   protected readonly success = signal('');
@@ -136,7 +136,7 @@ export class ProductEngagement {
   }
 
   // Submit or update the current seller's single answer for a question.
-  protected submitAnswer(questionId: number): void {
+  protected submitAnswer(questionId: string): void {
     this.error.set('');
     this.success.set('');
     this.savingAnswerId.set(questionId);
@@ -190,7 +190,7 @@ export class ProductEngagement {
 
   // Return an existing seller reply as the input hint so that seller can update it.
   protected answerDraft(
-    questionId: number,
+    questionId: string,
     answers: EngagementResponse['questions'][number]['answers'] = [],
   ): string {
     const draft = this.answerDrafts()[questionId];
@@ -199,7 +199,7 @@ export class ProductEngagement {
   }
 
   // Update one question's editable reply without disturbing other sellers' drafts.
-  protected setAnswerDraft(questionId: number, value: string): void {
+  protected setAnswerDraft(questionId: string, value: string): void {
     this.answerDrafts.update((drafts) => ({ ...drafts, [questionId]: value }));
   }
 

@@ -29,10 +29,16 @@
                 (error)="markPhotoUnavailable(photoUrl)"
               />
               } @else {
-                <div class="paint-placeholder" aria-label="No product photo available">✳</div>
+                <div class="paint-placeholder" aria-label="No product photo available">
+                  <span aria-hidden="true">✳</span>
+                  <small>Product photo unavailable</small>
+                </div>
               }
             } @else {
-              <div class="paint-placeholder" aria-label="No product photo available">✳</div>
+              <div class="paint-placeholder" aria-label="No product photo available">
+                <span aria-hidden="true">✳</span>
+                <small>No product photo uploaded</small>
+              </div>
             }
             @if (productPhotos().length > 1) {
               <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>

@@ -10,7 +10,7 @@
     <a class="back-link" routerLink="/explore">← Back to Explore</a>
     @if (conversationId()) {
       <a class="inbox-link" routerLink="/messages">← All messages</a>
-      @if (loading()) {
+      @if (conversationLoading()) {
         <p class="page-state" role="status">Loading conversation…</p>
       } @else if (error()) {
         <section class="state-card" role="alert">
@@ -26,38 +26,74 @@
             } @else {
               <span class="thread-person-avatar avatar-fallback" aria-hidden="true">{{ thread.otherUser.fullName.charAt(0) }}</span>
             }
-            <div>
+            <div class="thread-person-details">
               <p class="eyebrow">PRIVATE CHAT</p>
               <h1>
                 <a class="person-link" [routerLink]="['/sellers', thread.otherUser.id]">
                   {{ thread.otherUser.fullName }}
                 </a>
               </h1>
-              <a [routerLink]="['/products', thread.listing.id]"
-                >{{ thread.listing.title }} · ₹{{ thread.listing.price }}</a
-              >
-              <small class="live-updates">New messages check automatically every 3 seconds.</small>
+              @if (thread.listing) {
+                <a [routerLink]="['/products', thread.listing.id]">{{ thread.listing.title }} · ₹{{ thread.listing.price }}</a>
+              } @else {
+                <span class="general-chat-label">General seller chat</span>
+              }
             </div>
           </header>
+          @if (messageSelectionMode()) {
+            <div class="bulk-message-toolbar" role="toolbar" aria-label="Selected message actions">
+              <span>{{ selectedMessageIds().size }} selected</span>
+              <button type="button" (click)="deleteSelectedMessages()" [disabled]="deletingSelectedMessages()">
+                {{ deletingSelectedMessages() ? 'Deleting…' : 'Delete selected' }}
+              </button>
+              <button type="button" (click)="clearMessageSelection()" [disabled]="deletingSelectedMessages()">Cancel</button>
+            </div>
+          }
           <div #messageList class="message-list" aria-live="polite">
-            @for (message of thread.messages; track message.id) {
-              <article
-                class="message-bubble"
+            @for (message of thread.messages; track message.id; let messageIndex = $index) {
+              @if (isNewMessageDate(thread.messages, messageIndex)) {
+                <div class="message-date-divider" aria-label="Messages from this date">
+                  {{ message.createdAt | date: 'fullDate' }}
+                </div>
+              }
+              <div
+                class="chat-message"
                 [class.own-message]="isOwnMessage(message.senderId)"
                 [class.other-message]="!isOwnMessage(message.senderId)"
+                [class.selected-for-delete]="selectedMessageIds().has(message.id)"
+                [class.selection-active]="messageSelectionMode() && isOwnMessage(message.senderId) && !message.deletedAt"
               >
-                @if (isOwnMessage(message.senderId)) {
-                  <strong>You</strong>
-                } @else {
-                  <a class="sender-profile-link" [routerLink]="['/sellers', message.senderId]">{{
-                    message.senderName
-                  }}</a>
-                }
-                @if (message.type === 'IMAGE' && message.attachmentUrl) {
-                  <img class="shared-image" [src]="message.attachmentUrl" [alt]="'Image shared by ' + message.senderName" />
+                <article
+                  class="message-bubble"
+                  [class.own-message]="isOwnMessage(message.senderId)"
+                  [class.other-message]="!isOwnMessage(message.senderId)"
+                  (click)="handleMessageSelection(message, $event)"
+                >
+                @if (message.deletedAt) {
+                  <p class="deleted-message"><em>This message was deleted.</em></p>
+                } @else if (message.type === 'IMAGE' && message.attachmentUrl) {
+                  <img class="shared-image" [src]="message.attachmentUrl" alt="Image shared in this conversation" />
                   @if (message.body !== 'Shared a photo') {
                     <p>{{ message.body }}</p>
                   }
+                } @else if (message.type === 'FILE' && message.attachmentUrl) {
+                  <a class="shared-file" [href]="message.attachmentUrl" [attr.download]="message.attachmentName || null">
+                    <span aria-hidden="true">▤</span>
+                    <span><strong>{{ message.attachmentName || 'Download file' }}</strong><small>Download attachment</small></span>
+                  </a>
+                  @if (message.body.startsWith('Shared a file:') === false) { <p>{{ message.body }}</p> }
+                } @else if (message.type === 'STICKER') {
+                  <div class="campus-sticker" [class.sticker-star]="message.stickerKey === 'campus-star'" [class.sticker-heart]="message.stickerKey === 'tiny-heart'" [class.sticker-ghost]="message.stickerKey === 'party-ghost'" [class.sticker-frog]="message.stickerKey === 'cool-frog'" role="img" [attr.aria-label]="message.body">
+                    <img [src]="'/stickers/' + message.stickerKey + '.svg'" [alt]="message.body" />
+                    <small>{{ message.body }}</small>
+                  </div>
+                } @else if (message.type === 'MEETUP' && message.meetupAt && message.meetupLocation) {
+                  <div class="meetup-message">
+                    <small>MEETUP REQUEST</small>
+                    <strong>{{ message.meetupAt | date: 'EEE, d MMM · h:mm a' }}</strong>
+                    <span>⌖ {{ message.meetupLocation }}</span>
+                    <small class="meetup-status">Proposed · please confirm in chat</small>
+                  </div>
                 } @else if (message.type === 'CONTACT') {
                   <div class="shared-contact">
                     <small>Shared contact</small>
@@ -70,12 +106,37 @@
                     <small>Open map</small>
                   </a>
                 } @else {
-                  <p>{{ message.body }}</p>
+                  @if (editingMessageId() === message.id) {
+                    <div class="message-edit-form" (click)="$event.stopPropagation()">
+                      <textarea [ngModel]="editDraft()" (ngModelChange)="editDraft.set($event)" [ngModelOptions]="{standalone: true}" maxlength="2000" rows="2" aria-label="Edit message"></textarea>
+                      <div><button type="button" (click)="saveEditedMessage()" [disabled]="sending() || !editDraft().trim()">Save</button><button type="button" (click)="cancelEditing()">Cancel</button></div>
+                    </div>
+                  } @else {
+                    <p>{{ message.body }}</p>
+                  }
                 }
-                <time [attr.datetime]="message.createdAt">{{
-                  message.createdAt | date: 'short'
+                </article>
+                @if (message.editedAt && !message.deletedAt) { <small class="edited-note">edited</small> }
+                <time class="message-time" [attr.datetime]="message.createdAt">{{
+                  message.createdAt | date: 'shortTime'
                 }}</time>
-              </article>
+                @if (isOwnMessage(message.senderId) && !message.deletedAt) {
+                  <details class="message-actions-menu">
+                    <summary aria-label="Message options" title="Message options">⋮</summary>
+                    <div class="message-actions-popover">
+                      @if (message.type === 'TEXT') {
+                        <button type="button" (click)="startEditing(message)">Edit</button>
+                      }
+                      <button type="button" [disabled]="deletingMessageId() !== null || deletingSelectedMessages()" (click)="deleteMessage(message)">
+                        {{ deletingMessageId() === message.id ? 'Deleting…' : 'Delete' }}
+                      </button>
+                      <button type="button" (click)="toggleMessageSelection(message.id)">
+                        {{ selectedMessageIds().has(message.id) ? 'Unselect' : 'Select' }}
+                      </button>
+                    </div>
+                  </details>
+                }
+              </div>
             } @empty {
               <p class="empty-note">No messages yet. Say hello to start the conversation.</p>
             }
@@ -84,76 +145,57 @@
             class="refresh-button"
             type="button"
             (click)="loadConversation()"
-            [disabled]="loading()"
+            [disabled]="conversationLoading()"
           >
-            {{ loading() ? 'Refreshing…' : 'Refresh messages' }}
+            {{ conversationLoading() ? 'Refreshing…' : 'Refresh messages' }}
           </button>
           <form class="message-form" (ngSubmit)="sendMessage()">
-            <label for="message-draft">Your message</label>
-            <textarea
-              id="message-draft"
-              name="message"
-              required
-              maxlength="2000"
-              rows="3"
-              [ngModel]="draft()"
-              (ngModelChange)="draft.set($event)"
-              (keydown.enter)="handleEnterKey($event)"
-              placeholder="Write a message about this listing"
-            ></textarea>
-            <div class="attachment-tools" aria-label="Message attachments">
-              <input
-                #imageInput
-                class="visually-hidden"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                (change)="sendImage($event)"
-              />
-              <button type="button" (click)="imageInput.click()" [disabled]="sending()">
-                {{ uploadingImage() ? 'Uploading image…' : 'Photo' }}
-              </button>
-              <button type="button" (click)="toggleContactForm()" [disabled]="sending()">
-                Share contact
-              </button>
-              <button type="button" (click)="shareLocation()" [disabled]="sending() || sharingLocation()">
-                {{ sharingLocation() ? 'Getting location…' : 'Share location' }}
-              </button>
+            <div class="composer-row">
+              <div class="composer-tools">
+                <button class="composer-plus" type="button" aria-label="Open attachment menu" [attr.aria-expanded]="attachmentMenuOpen()" (click)="attachmentMenuOpen.update(open => !open)">+</button>
+                @if (attachmentMenuOpen()) {
+                  <div class="retro-attachment-menu">
+                    <input #fileInput class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,text/csv" (change)="sendFile($event)" />
+                    <button type="button" (click)="fileInput.click()" [disabled]="sending()">{{ uploadingFile() ? 'Sending file…' : '▤ Send file' }}</button>
+                    <button type="button" (click)="stickerPickerOpen.update(open => !open)">✦ Send sticker</button>
+                    @if (stickerPickerOpen()) {
+                      <div class="sticker-picker" aria-label="CampusX sticker pack">
+                        <button type="button" class="sticker-choice sticker-star" (click)="sendSticker('campus-star')" aria-label="Campus star sticker"><img src="/stickers/campus-star.svg" alt="" /><small>star</small></button>
+                        <button type="button" class="sticker-choice sticker-heart" (click)="sendSticker('tiny-heart')" aria-label="Tiny heart sticker"><img src="/stickers/tiny-heart.svg" alt="" /><small>heart</small></button>
+                        <button type="button" class="sticker-choice sticker-ghost" (click)="sendSticker('party-ghost')" aria-label="Party ghost sticker"><img src="/stickers/party-ghost.svg" alt="" /><small>ghost</small></button>
+                        <button type="button" class="sticker-choice sticker-frog" (click)="sendSticker('cool-frog')" aria-label="Cool frog sticker"><img src="/stickers/cool-frog.svg" alt="" /><small>frog</small></button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+              <textarea
+                id="message-draft"
+                name="message"
+                required
+                maxlength="2000"
+                rows="1"
+                [ngModel]="draft()"
+                (ngModelChange)="draft.set($event)"
+                (keydown.enter)="handleEnterKey($event)"
+                placeholder="Write a message…"
+                aria-label="Your message"
+              ></textarea>
+              <button class="meetup-button" type="button" (click)="meetupFormOpen.update(open => !open)">Schedule Meet</button>
+              <button class="send-button" type="submit" [disabled]="sending() || !draft().trim()" aria-label="Send message">{{ sending() ? '…' : '➤' }}</button>
             </div>
-            @if (contactFormOpen()) {
-              <div class="contact-share-form">
-                <label for="shared-contact-name">Contact name</label>
-                <input
-                  id="shared-contact-name"
-                  name="contactName"
-                  type="text"
-                  minlength="2"
-                  maxlength="100"
-                  [ngModelOptions]="{ standalone: true }"
-                  [ngModel]="contactName()"
-                  (ngModelChange)="contactName.set($event)"
-                />
-                <label for="shared-contact-phone">Phone number</label>
-                <input
-                  id="shared-contact-phone"
-                  name="contactPhone"
-                  type="tel"
-                  minlength="7"
-                  maxlength="30"
-                  [ngModelOptions]="{ standalone: true }"
-                  [ngModel]="contactPhone()"
-                  (ngModelChange)="contactPhone.set($event)"
-                />
-                <button type="button" (click)="shareContact()" [disabled]="sending()">
-                  {{ sending() ? 'Sharing…' : 'Send contact' }}
-                </button>
+            <div class="composer-meta"><small>{{ draft().trim().length }}/2,000 · Enter to send</small></div>
+            @if (meetupFormOpen()) {
+              <div class="meetup-form">
+                <strong>Schedule a meetup</strong>
+                <label for="meetup-at">Date and time</label>
+                <input id="meetup-at" type="datetime-local" [min]="minimumMeetupTime()" [ngModel]="meetupAt()" (ngModelChange)="meetupAt.set($event)" [ngModelOptions]="{standalone: true}" />
+                <label for="meetup-location">Meeting place</label>
+                <input id="meetup-location" type="text" maxlength="120" placeholder="e.g. Library entrance" [ngModel]="meetupLocation()" (ngModelChange)="meetupLocation.set($event)" [ngModelOptions]="{standalone: true}" />
+                <div><button type="button" class="meetup-send" (click)="scheduleMeetup()" [disabled]="sending() || !meetupAt() || !meetupLocation().trim()">Send request</button><button type="button" class="meetup-cancel" (click)="meetupFormOpen.set(false)">Cancel</button></div>
+                <small>Confirm the plan together in chat.</small>
               </div>
             }
-            <div class="form-footer">
-              <small>{{ draft().trim().length }} / 2,000 characters</small
-              ><button type="submit" [disabled]="sending() || !draft().trim()">
-                {{ sending() ? 'Sending…' : 'Send message' }}
-              </button>
-            </div>
           </form>
           @if (error()) {
             <p class="error-note" role="alert">{{ error() }}</p>
@@ -169,7 +211,7 @@
         <h1>Messages</h1>
         <p>Private conversations about campus listings. New conversations appear automatically.</p>
       </section>
-      @if (loading()) {
+      @if (inboxLoading()) {
         <p class="page-state" role="status">Loading your inbox…</p>
       } @else if (error()) {
         <section class="state-card" role="alert">
@@ -188,35 +230,49 @@
           <a routerLink="/explore">Explore listings</a>
         </section>
       } @else {
-        <section class="inbox-list" aria-label="Your conversations">
-          @for (item of conversations(); track item.id) {
-            <article class="inbox-row" [class.has-unread]="item.unreadCount > 0">
-              @if (item.otherUser.avatarUrl) {
-                <img class="inbox-avatar" [src]="item.otherUser.avatarUrl" [alt]="item.otherUser.fullName + ' profile photo'" />
-              } @else {
-                <span class="listing-placeholder inbox-avatar" aria-hidden="true">{{ item.otherUser.fullName.charAt(0) }}</span>
-              }
-              <span class="inbox-copy"
-                ><strong class="person-name">{{
-                  item.otherUser.fullName
-                }}</strong
-                ><a class="conversation-link" [routerLink]="['/messages', item.id]"
-                  >{{ item.listing.title }} · ₹{{ item.listing.price }}</a
-                ><small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span
+        <div class="inbox-window">
+          <div class="inbox-window-titlebar">
+            <strong>INBOX.EXE</strong>
+            <span aria-hidden="true"><i>_</i><i>□</i><i>×</i></span>
+          </div>
+          <section class="inbox-list" aria-label="Your conversations">
+            @for (item of conversations(); track item.id) {
+              <a
+                class="inbox-row"
+                [class.has-unread]="item.unreadCount > 0"
+                [routerLink]="['/messages', item.id]"
+                [attr.aria-label]="'Open conversation with ' + item.otherUser.fullName"
               >
-              @if (item.unreadCount > 0) {
-                <span class="conversation-unread-badge" [attr.aria-label]="item.unreadCount + ' unread messages'">
-                  {{ item.unreadCount > 99 ? '99+' : item.unreadCount }}
-                </span>
-              }
-              @if (item.lastMessage) {
-                <time [attr.datetime]="item.lastMessage.createdAt">{{
-                  item.lastMessage.createdAt | date: 'short'
-                }}</time>
-              }
-            </article>
-          }
-        </section>
+                @if (item.otherUser.avatarUrl) {
+                  <img class="inbox-avatar" [src]="item.otherUser.avatarUrl" [alt]="item.otherUser.fullName + ' profile photo'" />
+                } @else {
+                  <span class="listing-placeholder inbox-avatar" aria-hidden="true">{{ item.otherUser.fullName.charAt(0) }}</span>
+                }
+                <span class="inbox-copy"
+                  ><strong class="person-name">{{
+                    item.otherUser.fullName
+                  }}</strong
+                  >@if (item.listing) {
+                    <span class="conversation-link">{{ item.listing.title }} · ₹{{ item.listing.price }}</span>
+                  } @else {
+                    <span class="conversation-link">General seller chat</span>
+                  }
+                  <small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span
+                >
+                @if (item.unreadCount > 0) {
+                  <span class="conversation-unread-badge" [attr.aria-label]="item.unreadCount + ' unread messages'">
+                    {{ item.unreadCount > 99 ? '99+' : item.unreadCount }}
+                  </span>
+                }
+                @if (item.lastMessage) {
+                  <time [attr.datetime]="item.lastMessage.createdAt">{{
+                    item.lastMessage.createdAt | date: 'short'
+                  }}</time>
+                }
+              </a>
+            }
+          </section>
+        </div>
       }
     }
   </main>

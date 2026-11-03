@@ -9,6 +9,13 @@ import {
     removeMessageImage,
 } from "./messageImageUpload.js";
 
+// Reserve a database-stored tombstone so deleting a message needs no new database column.
+const DELETED_MESSAGE_BODY = "[[CAMPUSX_MESSAGE_DELETED]]";
+
+function isDeletedMessage(message) {
+    return message.type === "TEXT" && message.body === DELETED_MESSAGE_BODY;
+}
+
 // Match the current account to either allowed participant role in a conversation.
 function participantFilter(userId) {
     return { OR: [{ buyerId: userId }, { sellerId: userId }] };
@@ -21,16 +28,23 @@ function presentMessage(message) {
         senderId: message.senderId,
         senderName: message.sender.fullName || "CampusX Member",
         type: message.type,
-        body: message.body,
+        body: isDeletedMessage(message) ? "This message was deleted." : message.body,
+        attachmentName: message.attachmentOriginalName,
+        stickerKey: message.stickerKey,
+        meetupAt: message.meetupAt,
+        meetupLocation: message.meetupLocation,
         contactName: message.contactName,
         contactPhone: message.contactPhone,
         locationLabel: message.locationLabel,
         latitude: message.latitude,
         longitude: message.longitude,
-        attachmentUrl: message.type === "IMAGE"
-            ? `/api/messages/${message.conversationId}/images/${message.id}`
+        attachmentUrl: message.type === "IMAGE" || message.type === "FILE"
+            ? `/api/messages/${message.conversationId}/files/${message.id}`
             : null,
+        editedAt: message.editedAt,
         readAt: message.readAt,
+        // A synthetic timestamp lets the existing UI show the deleted state without a schema migration.
+        deletedAt: isDeletedMessage(message) ? message.createdAt : null,
         createdAt: message.createdAt,
     };
 }
@@ -138,6 +152,47 @@ export async function startListingConversation(request, response) {
     }
 }
 
+// Open one seller conversation even when the seller has no active listing.
+export async function startSellerConversation(request, response) {
+    const sellerId = Number(request.params.sellerId);
+    if (!Number.isSafeInteger(sellerId) || sellerId < 1) {
+        return response.status(400).json({ success: false, message: "Seller ID must be a positive integer." });
+    }
+    if (sellerId === request.user.id) {
+        return response.status(400).json({ success: false, message: "You cannot message yourself." });
+    }
+
+    try {
+        const seller = await prisma.user.findUnique({ where: { id: sellerId }, select: { id: true } });
+        if (!seller) return response.status(404).json({ success: false, message: "This seller was not found." });
+
+        let conversation = await prisma.conversation.findFirst({
+            where: { sellerId, buyerId: request.user.id, listingId: null },
+            select: { id: true },
+        });
+        if (!conversation) {
+            try {
+                conversation = await prisma.conversation.create({
+                    data: { sellerId, buyerId: request.user.id, listingId: null },
+                    select: { id: true },
+                });
+            } catch (error) {
+                // If two clicks arrive together, the partial unique index lets both reuse one thread.
+                if (error?.code !== "P2002") throw error;
+                conversation = await prisma.conversation.findFirst({
+                    where: { sellerId, buyerId: request.user.id, listingId: null },
+                    select: { id: true },
+                });
+                if (!conversation) throw error;
+            }
+        }
+        return response.status(200).json({ success: true, conversation });
+    } catch (error) {
+        console.error("Seller conversation start failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not open this conversation." });
+    }
+}
+
 // Return only the signed-in user's threads, newest activity first.
 export async function getMyConversations(request, response) {
     try {
@@ -176,6 +231,7 @@ export async function getMyConversations(request, response) {
                     conversationId: { in: conversationIds },
                     senderId: { not: request.user.id },
                     readAt: null,
+                    body: { not: DELETED_MESSAGE_BODY },
                 },
                 _count: { _all: true },
             })
@@ -198,16 +254,16 @@ export async function getMyConversations(request, response) {
                         fullName: otherUser.fullName || "CampusX Member",
                         avatarUrl: otherUser.avatarUrl,
                     },
-                    listing: {
+                    listing: conversation.listing ? {
                         id: conversation.listing.id,
                         title: conversation.listing.title,
                         price: conversation.listing.price.toFixed(2),
                         photoUrl: conversation.listing.photoUrl,
                         status: conversation.listing.status,
-                    },
+                    } : null,
                     lastMessage: lastMessage ? {
                         ...lastMessage,
-                        body: lastMessage.type === "IMAGE" ? "Photo" : lastMessage.type === "CONTACT" ? "Shared a contact" : lastMessage.type === "LOCATION" ? "Shared a location" : lastMessage.body,
+                        body: isDeletedMessage(lastMessage) ? "This message was deleted." : lastMessage.type === "IMAGE" ? "Photo" : lastMessage.type === "CONTACT" ? "Shared a contact" : lastMessage.type === "LOCATION" ? "Shared a location" : lastMessage.body,
                     } : null,
                     unreadCount: unreadByConversation.get(conversation.id) ?? 0,
                 };
@@ -241,6 +297,7 @@ export async function getUnreadMessageCount(request, response) {
                     conversationId: { in: conversationIds },
                     senderId: { not: request.user.id },
                     readAt: null,
+                    body: { not: DELETED_MESSAGE_BODY },
                 },
             })
             : 0;
@@ -271,7 +328,7 @@ export async function getConversation(request, response) {
 
         // Opening a thread marks only messages from the other participant as read.
         await prisma.message.updateMany({
-            where: { conversationId, senderId: { not: request.user.id }, readAt: null },
+            where: { conversationId, senderId: { not: request.user.id }, readAt: null, body: { not: DELETED_MESSAGE_BODY } },
             data: { readAt: new Date() },
         });
 
@@ -312,6 +369,11 @@ export async function getConversation(request, response) {
                         longitude: true,
                         readAt: true,
                         attachmentName: true,
+                        attachmentOriginalName: true,
+                        stickerKey: true,
+                        meetupAt: true,
+                        meetupLocation: true,
+                        editedAt: true,
                         sender: { select: { fullName: true } },
                     },
                 },
@@ -340,13 +402,13 @@ export async function getConversation(request, response) {
                     fullName: otherUser.fullName || "CampusX Member",
                     avatarUrl: otherUser.avatarUrl,
                 },
-                listing: {
+                listing: conversation.listing ? {
                     id: conversation.listing.id,
                     title: conversation.listing.title,
                     price: conversation.listing.price.toFixed(2),
                     photoUrl: conversation.listing.photoUrl,
                     status: conversation.listing.status,
-                },
+                } : null,
                 messages: messages.map(presentMessage),
             },
         });
@@ -367,10 +429,200 @@ export async function getConversation(request, response) {
 // Save a plain-text message only when the sender belongs to the thread.
 export async function sendConversationMessage(request, response) {
     const body = normalizeMessageBody(request.body?.body);
-    if (!body) {
+    if (!body || body === DELETED_MESSAGE_BODY) {
         return response.status(400).json({ success: false, message: "Write a message up to 2,000 characters." });
     }
     return createConversationMessage(request, response, { type: "TEXT", body });
+}
+
+// Edit only your own regular text; structured messages and deleted messages stay immutable.
+export async function editConversationMessage(request, response) {
+    const conversationId = Number(request.params.conversationId);
+    const messageId = Number(request.params.messageId);
+    const body = normalizeMessageBody(request.body?.body);
+    if (!Number.isSafeInteger(conversationId) || conversationId < 1 || !Number.isSafeInteger(messageId) || messageId < 1) {
+        return response.status(400).json({ success: false, message: "Conversation and message IDs must be positive integers." });
+    }
+    if (!body || body === DELETED_MESSAGE_BODY) {
+        return response.status(400).json({ success: false, message: "Write a message up to 2,000 characters." });
+    }
+    try {
+        const updated = await prisma.message.updateMany({
+            where: {
+                id: messageId,
+                conversationId,
+                senderId: request.user.id,
+                type: "TEXT",
+                body: { not: DELETED_MESSAGE_BODY },
+                conversation: { is: participantFilter(request.user.id) },
+            },
+            data: { body, editedAt: new Date() },
+        });
+        if (updated.count !== 1) return response.status(404).json({ success: false, message: "This text could not be edited." });
+        await prisma.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
+        return response.json({ success: true });
+    } catch (error) {
+        console.error("Message edit failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not edit this message." });
+    }
+}
+
+// Send one of CampusX's built-in sticker designs by its allowlisted key.
+export async function sendStickerMessage(request, response) {
+    const stickerKey = request.body?.stickerKey;
+    const stickerNames = new Map([
+        ["campus-star", "Campus star"], ["tiny-heart", "Tiny heart"],
+        ["party-ghost", "Party ghost"], ["cool-frog", "Cool frog"],
+    ]);
+    const name = stickerNames.get(stickerKey);
+    if (!name) return response.status(400).json({ success: false, message: "Choose a sticker from the CampusX pack." });
+    return createConversationMessage(request, response, { type: "STICKER", body: name, stickerKey });
+}
+
+// Send a meetup proposal; the other participant must still agree to it.
+export async function sendMeetupMessage(request, response) {
+    const meetupLocation = typeof request.body?.meetupLocation === "string" ? request.body.meetupLocation.trim() : "";
+    const meetupAt = new Date(request.body?.meetupAt);
+    const maximumDate = Date.now() + 365 * 24 * 60 * 60 * 1000;
+    if (!meetupLocation || meetupLocation.length > 120 || !Number.isFinite(meetupAt.getTime())
+        || meetupAt.getTime() <= Date.now() || meetupAt.getTime() > maximumDate) {
+        return response.status(400).json({ success: false, message: "Choose a future date and time within a year, and a location up to 120 characters." });
+    }
+    return createConversationMessage(request, response, {
+        type: "MEETUP", body: "Meetup request", meetupAt, meetupLocation,
+    });
+}
+
+// Soft-delete only the sender's message while preserving the conversation record.
+export async function deleteConversationMessage(request, response) {
+    const conversationId = Number(request.params.conversationId);
+    const messageId = Number(request.params.messageId);
+    if (!Number.isSafeInteger(conversationId) || conversationId < 1
+        || !Number.isSafeInteger(messageId) || messageId < 1) {
+        return response.status(400).json({ success: false, message: "Conversation and message IDs must be positive integers." });
+    }
+
+    try {
+        const message = await prisma.message.findFirst({
+            where: {
+                id: messageId,
+                conversationId,
+                senderId: request.user.id,
+                conversation: { is: participantFilter(request.user.id) },
+            },
+            select: { id: true, body: true, type: true, attachmentName: true },
+        });
+        if (!message) {
+            return response.status(404).json({ success: false, message: "This message was not found or cannot be deleted by your account." });
+        }
+        if (isDeletedMessage(message)) {
+            return response.json({ success: true, message: { id: message.id, deletedAt: new Date().toISOString() } });
+        }
+
+        const deletedAt = new Date();
+        const updated = await prisma.$transaction(async (transaction) => {
+            const result = await transaction.message.updateMany({
+                where: { id: messageId, conversationId, senderId: request.user.id, body: { not: DELETED_MESSAGE_BODY } },
+                data: {
+                    body: DELETED_MESSAGE_BODY,
+                    type: "TEXT",
+                    attachmentName: null,
+                    contactName: null,
+                    contactPhone: null,
+                    locationLabel: null,
+                    latitude: null,
+                    longitude: null,
+                    attachmentOriginalName: null,
+                    attachmentMimeType: null,
+                    stickerKey: null,
+                    meetupAt: null,
+                    meetupLocation: null,
+                },
+            });
+            if (result.count !== 1) return false;
+            await transaction.conversation.update({ where: { id: conversationId }, data: { updatedAt: deletedAt } });
+            return true;
+        });
+        if (!updated) {
+            return response.status(409).json({ success: false, message: "This message has already changed. Refresh the conversation and try again." });
+        }
+
+        if (message.attachmentName) {
+            try {
+                await removeMessageImage(message.attachmentName);
+            } catch (error) {
+                console.error("Deleted chat image cleanup failed:", error?.code ?? error?.name ?? "UNKNOWN");
+            }
+        }
+        return response.json({ success: true, message: { id: message.id, deletedAt } });
+    } catch (error) {
+        console.error("Message delete failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not delete this message." });
+    }
+}
+
+// Soft-delete selected messages authored by the current user, keeping the thread history intact.
+export async function deleteConversationMessages(request, response) {
+    const conversationId = Number(request.params.conversationId);
+    const suppliedIds = request.body?.messageIds;
+    if (!Number.isSafeInteger(conversationId) || conversationId < 1
+        || !Array.isArray(suppliedIds) || suppliedIds.length < 1 || suppliedIds.length > 100
+        || suppliedIds.some((id) => !Number.isSafeInteger(id) || id < 1)) {
+        return response.status(400).json({ success: false, message: "Choose between 1 and 100 valid messages to delete." });
+    }
+
+    try {
+        const conversation = await findParticipantConversation(conversationId, request.user.id);
+        if (!conversation) return response.status(404).json({ success: false, message: "This conversation was not found." });
+
+        const messageIds = [...new Set(suppliedIds)];
+        const messages = await prisma.message.findMany({
+            where: {
+                id: { in: messageIds },
+                conversationId,
+                senderId: request.user.id,
+                body: { not: DELETED_MESSAGE_BODY },
+            },
+            select: { id: true, attachmentName: true },
+        });
+        if (!messages.length) return response.status(404).json({ success: false, message: "No selected messages can be deleted by your account." });
+
+        const deletedAt = new Date();
+        const deletedIds = messages.map((message) => message.id);
+        await prisma.$transaction(async (transaction) => {
+            await transaction.message.updateMany({
+                where: { id: { in: deletedIds }, conversationId, senderId: request.user.id, body: { not: DELETED_MESSAGE_BODY } },
+                data: {
+                    body: DELETED_MESSAGE_BODY,
+                    type: "TEXT",
+                    attachmentName: null,
+                    contactName: null,
+                    contactPhone: null,
+                    locationLabel: null,
+                    latitude: null,
+                    longitude: null,
+                    attachmentOriginalName: null,
+                    attachmentMimeType: null,
+                    stickerKey: null,
+                    meetupAt: null,
+                    meetupLocation: null,
+                },
+            });
+            await transaction.conversation.update({ where: { id: conversationId }, data: { updatedAt: deletedAt } });
+        });
+
+        await Promise.all(messages.filter((message) => message.attachmentName).map(async (message) => {
+            try {
+                await removeMessageImage(message.attachmentName);
+            } catch (error) {
+                console.error("Deleted chat image cleanup failed:", error?.code ?? error?.name ?? "UNKNOWN");
+            }
+        }));
+        return response.json({ success: true, deletedIds, deletedCount: deletedIds.length });
+    } catch (error) {
+        console.error("Bulk message delete failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not delete the selected messages." });
+    }
 }
 
 // Share a contact only after the sender types the details they intend to reveal.
@@ -409,16 +661,24 @@ export async function sendLocationMessage(request, response) {
 
 // Store the uploaded image as a private message and remove it if the save fails.
 export async function sendImageMessage(request, response) {
-    if (!request.file) return response.status(400).json({ success: false, message: "Choose an image to send." });
+    return sendAttachmentMessage(request, response);
+}
+
+// Store an image or document as a private conversation attachment.
+export async function sendAttachmentMessage(request, response) {
+    if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
     const caption = normalizeMessageBody(request.body?.caption);
+    const isImage = request.file.mimetype.startsWith("image/");
     return createConversationMessage(request, response, {
-        type: "IMAGE",
-        body: caption || "Shared a photo",
+        type: isImage ? "IMAGE" : "FILE",
+        body: caption || (isImage ? "Shared a photo" : `Shared a file: ${request.file.originalname.slice(0, 120)}`),
         attachmentName: request.file.filename,
+        attachmentOriginalName: request.file.originalname.slice(0, 180),
+        attachmentMimeType: request.file.mimetype,
     });
 }
 
-// Serve a chat image only after checking the requester belongs to its conversation.
+// Serve an attachment only to participants in its conversation, with safe content headers.
 export async function getMessageImage(request, response) {
     const conversationId = Number(request.params.conversationId);
     const messageId = Number(request.params.messageId);
@@ -432,23 +692,24 @@ export async function getMessageImage(request, response) {
             where: {
                 id: messageId,
                 conversationId,
-                type: "IMAGE",
+                type: { in: ["IMAGE", "FILE"] },
+                body: { not: DELETED_MESSAGE_BODY },
                 conversation: { is: participantFilter(request.user.id) },
             },
             select: { attachmentName: true },
         });
-        if (!message?.attachmentName) return response.status(404).json({ success: false, message: "This image was not found." });
+        if (!message?.attachmentName) return response.status(404).json({ success: false, message: "This file was not found." });
         const contentType = messageImageContentType(message.attachmentName);
-        if (!contentType) return response.status(404).json({ success: false, message: "This image was not found." });
+        if (!contentType) return response.status(404).json({ success: false, message: "This file was not found." });
 
         const image = await readFile(path.join(messageImageDirectory, message.attachmentName));
         response.setHeader("Content-Type", contentType);
-        response.setHeader("Content-Disposition", "inline");
+        response.setHeader("Content-Disposition", message.type === "IMAGE" ? "inline" : "attachment");
         response.setHeader("Cache-Control", "private, no-store");
         response.setHeader("X-Content-Type-Options", "nosniff");
         return response.send(image);
     } catch (error) {
         if (error?.code !== "ENOENT") console.error("Private image read failed:", error?.code ?? error?.name ?? "UNKNOWN");
-        return response.status(404).json({ success: false, message: "This image was not found." });
+        return response.status(404).json({ success: false, message: "This file was not found." });
     }
 }

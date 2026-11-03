@@ -40,7 +40,6 @@
           </div>
         }
         <div class="profile-copy">
-          <p class="eyebrow profile-handle">@CAMPUSX_{{ currentSeller.id }}</p>
           <div class="profile-stats">
             <div><strong>{{ currentSeller.activeListingCount }}</strong><span>listings</span></div>
             <div><strong>{{ currentSeller.followerCount }}</strong><span>followers</span></div>
@@ -55,12 +54,24 @@
         </div>
         @if (isOwnProfile()) {
           <a class="save-button secondary" routerLink="/dashboard">EDIT YOUR PROFILE</a>
-        } @else if (isSignedIn()) {
-          <button class="save-button" type="button" [disabled]="busy()" (click)="toggleFavorite()">
-            {{ busy() ? 'UPDATING…' : isFavorite() ? '✓ FOLLOWING' : '+ FOLLOW SELLER' }}
-          </button>
         } @else {
-          <a class="save-button" routerLink="/auth">SIGN IN TO FOLLOW</a>
+          <div class="profile-actions">
+            <button
+              class="save-button secondary"
+              type="button"
+              [disabled]="messaging()"
+              (click)="messageSeller()"
+            >
+              {{ messaging() ? 'OPENING CHAT…' : 'MESSAGE SELLER' }}
+            </button>
+            @if (isSignedIn()) {
+              <button class="save-button" type="button" [disabled]="busy()" (click)="toggleFavorite()">
+                {{ busy() ? 'UPDATING…' : isFavorite() ? '✓ FOLLOWING' : '+ FOLLOW SELLER' }}
+              </button>
+            } @else {
+              <a class="save-button" routerLink="/auth">SIGN IN TO FOLLOW</a>
+            }
+          </div>
         }
       </div>
       </section>

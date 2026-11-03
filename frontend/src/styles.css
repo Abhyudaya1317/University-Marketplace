@@ -762,6 +762,14 @@ body .details-page .paint-placeholder {
   width: 69.7%;
   height: 65.5%;
   background: #fff;
+    gap: 8px;
+    align-content: center;
+    text-align: center;
+  }
+body .details-page .paint-placeholder small {
+    max-width: 90%;
+    color: #555;
+    font: 600 14px/1.3 Arial, sans-serif;
 }
 body .details-page .detail-copy h1 { text-shadow: none !important; }
 

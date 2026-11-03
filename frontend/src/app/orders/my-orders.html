@@ -9,11 +9,13 @@
 
   <main class="orders-content">
     <a class="back-link" routerLink="/explore">← Back to Explore</a>
-    <p class="eyebrow">YOUR UNITRADE</p>
-    <h1>My orders</h1>
-    <p class="intro">
-      Coordinate the exchange with the other person and pay cash in person when you both agree.
-    </p>
+    <section class="orders-title-panel" aria-labelledby="orders-title">
+      <p class="eyebrow">YOUR UNITRADE</p>
+      <h1 id="orders-title">My orders</h1>
+      <p class="intro">
+        Coordinate the exchange with the other person and pay cash in person when you both agree.
+      </p>
+    </section>
 
     @if (loading()) {
       <p class="state-message" role="status">Loading your orders…</p>

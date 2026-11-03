@@ -6,7 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 // Match the minimal signed-in account returned by the backend.
 interface AccountResponse {
   success: boolean;
-  user?: { id: number; email: string };
+  user?: { id: string; email: string };
 }
 
 // Match the public part of a successfully created listing.
@@ -14,8 +14,8 @@ interface CreateListingResponse {
   success: boolean;
   message?: string;
   listing?: {
-    id: number;
-    product: { id: number; name: string; category: string };
+    id: string;
+    product: { id: string; name: string; category: string };
     price: string;
     quantityAvailable: number;
   };
@@ -59,7 +59,7 @@ export class CreateListing implements OnDestroy {
   protected readonly busy = signal(false);
   protected readonly error = signal('');
   protected readonly success = signal('');
-  protected readonly createdListingId = signal<number | null>(null);
+  protected readonly createdListingId = signal<string | null>(null);
   protected readonly photoPreviews = signal<string[]>([]);
   protected readonly photoError = signal('');
   protected readonly isEditing = signal(false);
@@ -257,8 +257,8 @@ export class CreateListing implements OnDestroy {
 
   // Reuse the same listing form for edit mode and load only the signed-in owner's offer.
   private loadListingForEdit(): void {
-    const listingId = Number(this.route.snapshot.queryParamMap.get('edit'));
-    if (!Number.isSafeInteger(listingId) || listingId < 1) return;
+    const listingId = this.route.snapshot.queryParamMap.get('edit');
+    if (!listingId || !/^\d+$/.test(listingId) || !Number.isSafeInteger(Number(listingId)) || Number(listingId) < 1) return;
     this.isEditing.set(true);
     this.loadingListing.set(true);
     this.http.get<EditListingResponse>(`/api/listings/${listingId}`).subscribe({

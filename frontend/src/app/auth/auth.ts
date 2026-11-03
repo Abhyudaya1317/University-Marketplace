@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 interface AccountResponse {
   success: boolean;
   message?: string;
-  user?: { id: number; email: string; fullName?: string | null; avatarUrl?: string | null };
+  user?: { id: string; email: string; fullName?: string | null; avatarUrl?: string | null };
 }
 
 type AuthMode = 'login' | 'signup' | 'reset';

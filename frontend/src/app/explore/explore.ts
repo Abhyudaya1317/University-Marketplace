@@ -6,8 +6,8 @@ import { AccountNavigation } from '../shared/account-navigation';
 
 // One Explore card represents one seller's listing, with its own ID and price.
 interface ExploreListing {
-  id: number;
-  sellerId: number;
+  id: string;
+  sellerId: string;
   sellerName: string;
   title: string;
   category: string;
@@ -18,12 +18,13 @@ interface ExploreListing {
   photoUrl2: string | null;
   condition: string;
   customCondition: string | null;
+  clothingGender: string | null;
 }
 
 interface ExploreResponse {
   success: boolean;
   listings: ExploreListing[];
-  suggestions?: Array<{ id: number; name: string; category: string }>;
+  suggestions?: Array<{ id: string; name: string; category: string }>;
   message?: string;
 }
 
@@ -46,12 +47,16 @@ export class Explore {
   protected readonly selectedCategory = signal('');
   protected readonly selectedGender = signal('');
   protected readonly proteinOnly = signal(false);
-  protected readonly randomizedIds = signal<number[]>([]);
+  protected readonly randomizedIds = signal<string[]>([]);
   protected readonly searchSubmitted = signal(false);
-  protected readonly unavailablePhotoIds = signal<Set<number>>(new Set());
-  protected readonly photoIndexes = signal<Record<number, number>>({});
+  protected readonly unavailablePhotoIds = signal<Set<string>>(new Set());
+  protected readonly photoIndexes = signal<Record<string, number>>({});
   protected readonly visibleListings = computed(() => {
-    const results = this.listings();
+    // Keep the gender filter enforced in the UI as well as by the API response.
+    const gender = this.selectedGender();
+    const results = this.listings().filter(
+      (listing) => !gender || listing.clothingGender === gender,
+    );
     const order = this.randomizedIds();
     if (!order.length) return results;
     const byId = new Map(results.map((listing) => [listing.id, listing]));
@@ -182,7 +187,7 @@ export class Explore {
     this.photoIndexes.update((indexes) => ({ ...indexes, [listing.id]: ((indexes[listing.id] ?? 0) + direction + count) % count }));
   }
 
-  protected markPhotoUnavailable(listingId: number): void {
+  protected markPhotoUnavailable(listingId: string): void {
     this.unavailablePhotoIds.update((ids) => new Set(ids).add(listingId));
   }
 

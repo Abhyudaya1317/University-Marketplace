@@ -11,7 +11,7 @@ import { AccountNavigation } from '../shared/account-navigation';
 interface SellerProfileResponse {
   success: boolean;
   seller: {
-    id: number;
+    id: string;
     fullName: string;
     avatarUrl: string | null;
     activeListingCount: number;
@@ -21,10 +21,10 @@ interface SellerProfileResponse {
     reviewCount: number;
   };
   listings: Array<{
-    id: number;
-    productId: number;
+    id: string;
+    productId: string;
     title: string;
-    product: { id: number; name: string; category: string };
+    product: { id: string; name: string; category: string };
     description: string;
     price: string;
     quantityAvailable: number;
@@ -41,13 +41,13 @@ interface SellerProfileResponse {
 interface FavoriteResponse {
   success: boolean;
   isFavorite?: boolean;
-  user?: { id: number };
+  user?: { id: string };
 }
 
 // Keep private buyer details only on the authenticated seller's own profile.
 interface SellerRequest {
-  id: number;
-  listingId: number;
+  id: string;
+  listingId: string;
   productName: string;
   buyerPhone: string;
   quantity: number;
@@ -71,6 +71,7 @@ export class SellerProfile {
   // Page state keeps loading, errors, seller details, and favorite status distinct.
   protected readonly loading = signal(true);
   protected readonly busy = signal(false);
+  protected readonly messaging = signal(false);
   protected readonly error = signal('');
   protected readonly notice = signal('');
   protected readonly seller = signal<SellerProfileResponse['seller'] | null>(null);
@@ -79,14 +80,14 @@ export class SellerProfile {
   protected readonly isFavorite = signal(false);
   protected readonly isOwnProfile = signal(false);
   protected readonly requests = signal<SellerRequest[]>([]);
-  protected readonly stockDrafts = signal<Record<number, number>>({});
-  protected readonly meetingTimes = signal<Record<number, string>>({});
-  protected readonly meetingLocations = signal<Record<number, string>>({});
-  protected readonly stockBusyId = signal<number | null>(null);
-  protected readonly requestBusyId = signal<number | null>(null);
+  protected readonly stockDrafts = signal<Record<string, number>>({});
+  protected readonly meetingTimes = signal<Record<string, string>>({});
+  protected readonly meetingLocations = signal<Record<string, string>>({});
+  protected readonly stockBusyId = signal<string | null>(null);
+  protected readonly requestBusyId = signal<string | null>(null);
   protected readonly stockNotice = signal('');
   protected readonly requestNotice = signal('');
-  private sellerId = 0;
+  private sellerId = '';
 
   // Load the public page and check the viewer's own session independently.
   constructor() {
@@ -97,7 +98,7 @@ export class SellerProfile {
         this.loading.set(false);
         return;
       }
-      this.sellerId = Number(value);
+      this.sellerId = value;
       this.loadProfile();
       this.loadViewerState();
     });
@@ -158,12 +159,12 @@ export class SellerProfile {
     return this.stockDrafts()[listing.id] ?? listing.quantityAvailable;
   }
 
-  protected setStockDraft(listingId: number, quantity: number): void {
+  protected setStockDraft(listingId: string, quantity: number): void {
     this.stockDrafts.update((drafts) => ({ ...drafts, [listingId]: quantity }));
   }
 
   // Save inventory only through the authenticated owner-only endpoint.
-  protected updateStock(listingId: number): void {
+  protected updateStock(listingId: string): void {
     const currentListing = this.listings().find((listing) => listing.id === listingId);
     const quantityAvailable = this.stockDrafts()[listingId] ?? currentListing?.quantityAvailable;
     if (!Number.isInteger(quantityAvailable) || quantityAvailable < 0 || quantityAvailable > 9999) {
@@ -207,24 +208,55 @@ export class SellerProfile {
     return quantity <= 2 ? `Few left · ${quantity} available` : `In stock · ${quantity} available`;
   }
 
-  protected listingRequests(listingId: number): SellerRequest[] {
+  protected listingRequests(listingId: string): SellerRequest[] {
     return this.requests().filter((request) => request.listingId === listingId);
   }
 
-  protected setMeetingTime(requestId: number, value: string): void {
+  protected setMeetingTime(requestId: string, value: string): void {
     this.meetingTimes.update((times) => ({ ...times, [requestId]: value }));
   }
 
-  protected meetingTimeFor(requestId: number): string {
+  protected meetingTimeFor(requestId: string): string {
     return this.meetingTimes()[requestId] || '';
   }
 
-  protected setMeetingLocation(requestId: number, value: string): void {
+  protected setMeetingLocation(requestId: string, value: string): void {
     this.meetingLocations.update((locations) => ({ ...locations, [requestId]: value }));
   }
 
-  protected meetingLocationFor(requestId: number): string {
+  protected meetingLocationFor(requestId: string): string {
     return this.meetingLocations()[requestId] || '';
+  }
+
+  // Open a seller chat independently of listings, so buyers can still contact the seller.
+  protected messageSeller(): void {
+    if (!this.isSignedIn()) {
+      void this.router.navigate(['/auth'], { queryParams: { returnUrl: `/sellers/${this.sellerId}` } });
+      return;
+    }
+    if (!this.sellerId || this.messaging()) return;
+
+    this.messaging.set(true);
+    this.notice.set('');
+    this.http
+      .post<{ success: boolean; conversation: { id: string } }>(
+        `/api/messages/sellers/${this.sellerId}`,
+        {},
+      )
+      .subscribe({
+        next: (response) => {
+          this.messaging.set(false);
+          void this.router.navigate(['/messages', response.conversation.id]);
+        },
+        error: (response: HttpErrorResponse) => {
+          this.messaging.set(false);
+          if (response.status === 401) {
+            void this.router.navigate(['/auth'], { queryParams: { returnUrl: `/sellers/${this.sellerId}` } });
+            return;
+          }
+          this.notice.set(response.error?.message ?? 'We could not open a chat with this seller.');
+        },
+      });
   }
 
   // Accept only after a seller gives a future meeting time and campus location.

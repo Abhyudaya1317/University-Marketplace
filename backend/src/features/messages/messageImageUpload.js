@@ -1,4 +1,4 @@
-// Keep chat images private on disk; the only download path checks chat membership.
+// Keep chat attachments private; downloads are served only after checking conversation membership.
 import { mkdir, open, unlink } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -7,15 +7,20 @@ import multer from "multer";
 
 const backendDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const messageImageDirectory = path.join(backendDirectory, "uploads", "messages");
-const maxImageSize = 5 * 1024 * 1024;
-const imageTypes = new Map([
+export const maxMessageFileSize = 10 * 1024 * 1024;
+
+// Accept common image and document formats, with a byte signature for each binary format.
+const supportedTypes = new Map([
     ["image/jpeg", { extension: ".jpg", signature: (bytes) => bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff }],
     ["image/png", { extension: ".png", signature: (bytes) => bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) }],
-    ["image/webp", { extension: ".webp", signature: (bytes) => bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP" }]
+    ["image/webp", { extension: ".webp", signature: (bytes) => bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP" }],
+    ["application/pdf", { extension: ".pdf", signature: (bytes) => bytes.toString("ascii", 0, 5) === "%PDF-" }],
+    ["text/plain", { extension: ".txt", text: true }],
+    ["text/csv", { extension: ".csv", text: true }],
 ]);
 
-// Replace the original name with a random one and cap uploads at five megabytes.
-const imageUpload = multer({
+// Generate opaque filenames so the sender's original path/name is never used on disk.
+const messageFileUpload = multer({
     storage: multer.diskStorage({
         destination: async (_request, _file, callback) => {
             try {
@@ -26,50 +31,51 @@ const imageUpload = multer({
             }
         },
         filename: (_request, file, callback) => {
-            const type = imageTypes.get(file.mimetype);
-            if (!type) return callback(new Error("UNSUPPORTED_IMAGE_TYPE"));
+            const type = supportedTypes.get(file.mimetype);
+            if (!type) return callback(new Error("UNSUPPORTED_MESSAGE_FILE_TYPE"));
             callback(null, `${randomUUID()}${type.extension}`);
-        }
+        },
     }),
-    limits: { fileSize: maxImageSize, files: 1, fields: 1, parts: 2 },
+    limits: { fileSize: maxMessageFileSize, files: 1, fields: 1, parts: 2 },
     fileFilter: (_request, file, callback) => {
-        if (!imageTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_IMAGE_TYPE"));
+        if (!supportedTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_MESSAGE_FILE_TYPE"));
         callback(null, true);
-    }
-}).single("image");
+    },
+}).single("file");
 
-// Check file bytes as well as the browser MIME type before saving an image message.
-export function uploadMessageImage(request, response, next) {
-    imageUpload(request, response, async (uploadError) => {
+// Check the actual file bytes before a message is allowed to reference the upload.
+export function uploadMessageFile(request, response, next) {
+    messageFileUpload(request, response, async (uploadError) => {
         if (uploadError) {
             const message = uploadError.code === "LIMIT_FILE_SIZE"
-                ? "Chat images must be 5 MB or smaller."
-                : "Choose one JPG, PNG, or WebP image.";
+                ? "Chat files must be 10 MB or smaller."
+                : "Choose a JPG, PNG, WebP, PDF, TXT, or CSV file.";
             return response.status(400).json({ success: false, message });
         }
-        if (!request.file) return response.status(400).json({ success: false, message: "Choose an image to send." });
+        if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
 
         try {
             const file = await open(request.file.path, "r");
-            const header = Buffer.alloc(12);
-            await file.read(header, 0, header.length, 0);
+            const header = Buffer.alloc(16);
+            const { bytesRead } = await file.read(header, 0, header.length, 0);
             await file.close();
-            const type = imageTypes.get(request.file.mimetype);
-            if (!type?.signature(header)) {
+            const type = supportedTypes.get(request.file.mimetype);
+            const validText = type?.text && !header.subarray(0, bytesRead).includes(0);
+            if (!type || !(type.text ? validText : type.signature(header))) {
                 await unlink(request.file.path);
-                return response.status(400).json({ success: false, message: "The file is not a valid supported image." });
+                return response.status(400).json({ success: false, message: "The file contents do not match its file type." });
             }
             return next();
         } catch {
             await removeMessageImage(request.file.filename);
-            return response.status(400).json({ success: false, message: "The image could not be processed." });
+            return response.status(400).json({ success: false, message: "The file could not be processed." });
         }
     });
 }
 
-// Delete only an opaque generated filename from the private chat image folder.
+// Remove only generated filenames with a supported extension from the private upload folder.
 export async function removeMessageImage(fileName) {
-    if (typeof fileName !== "string" || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(fileName)) return;
+    if (typeof fileName !== "string" || !/^[0-9a-f-]{36}\.(jpg|png|webp|pdf|txt|csv)$/i.test(fileName)) return;
     try {
         await unlink(path.join(messageImageDirectory, fileName));
     } catch (error) {
@@ -77,8 +83,10 @@ export async function removeMessageImage(fileName) {
     }
 }
 
-// Return the content type only for extensions assigned by the upload validator.
-export function messageImageContentType(fileName) {
+// The stored MIME type is selected from the allowlist and extension, never user input.
+export function messageFileContentType(fileName) {
     const extension = path.extname(fileName).toLowerCase();
-    return extension === ".jpg" ? "image/jpeg" : extension === ".png" ? "image/png" : extension === ".webp" ? "image/webp" : null;
+    return ({ ".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".pdf": "application/pdf", ".txt": "text/plain; charset=utf-8", ".csv": "text/csv; charset=utf-8" })[extension] ?? null;
 }
+
+export const messageImageContentType = messageFileContentType;

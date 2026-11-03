@@ -89,6 +89,15 @@
   background: #fff;
   color: #000080;
   font-size: 48px;
+    gap: 8px;
+    align-content: center;
+    text-align: center;
+  }
+
+  .paint-placeholder small {
+    max-width: 90%;
+    color: #555;
+    font: 600 14px/1.3 Arial, sans-serif;
 }
 .detail-copy {
   color: #080817;

@@ -5,13 +5,19 @@ import {
     getMessageImage,
     getMyConversations,
     getUnreadMessageCount,
+    deleteConversationMessages,
+    deleteConversationMessage,
+    editConversationMessage,
     sendContactMessage,
     sendConversationMessage,
-    sendImageMessage,
+    sendAttachmentMessage,
+    sendStickerMessage,
+    sendMeetupMessage,
     sendLocationMessage,
     startListingConversation,
+    startSellerConversation,
 } from "./messagesController.js";
-import { uploadMessageImage } from "./messageImageUpload.js";
+import { uploadMessageFile } from "./messageImageUpload.js";
 
 // Keep every messaging endpoint behind the existing cookie-backed session check.
 const router = express.Router();
@@ -24,13 +30,21 @@ router.use(requireAuth);
 
 // Let a buyer open a private conversation from one seller listing.
 router.post("/listings/:listingId", startListingConversation);
+router.post("/sellers/:sellerId", startSellerConversation);
 router.get("/unread-count", getUnreadMessageCount);
 router.get("/", getMyConversations);
+router.get("/:conversationId/files/:messageId", getMessageImage);
+// Keep old image URLs alive for messages already stored in the database.
 router.get("/:conversationId/images/:messageId", getMessageImage);
-router.post("/:conversationId/images", uploadMessageImage, sendImageMessage);
+router.post("/:conversationId/files", uploadMessageFile, sendAttachmentMessage);
+router.post("/:conversationId/stickers", sendStickerMessage);
+router.post("/:conversationId/meetups", sendMeetupMessage);
 router.post("/:conversationId/contacts", sendContactMessage);
 router.post("/:conversationId/location", sendLocationMessage);
 router.get("/:conversationId", getConversation);
+router.post("/:conversationId/bulk-delete", deleteConversationMessages);
+router.delete("/:conversationId/:messageId", deleteConversationMessage);
+router.patch("/:conversationId/:messageId", editConversationMessage);
 router.post("/:conversationId", sendConversationMessage);
 
 export default router;

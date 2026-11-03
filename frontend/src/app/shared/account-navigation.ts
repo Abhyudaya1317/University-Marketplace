@@ -7,7 +7,7 @@ import { interval } from 'rxjs';
 // Keep the account navigation in sync with the cookie-backed login session.
 interface AccountResponse {
   success: boolean;
-  user?: { id: number; email: string };
+  user?: { id: string; email: string };
 }
 
 // Keep the seller's pending request total separate from their message unread total.

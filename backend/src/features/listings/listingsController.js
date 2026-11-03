@@ -1,6 +1,6 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
-import { CLOTHING_GENDERS, isValidQuantity, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
+import { CLOTHING_GENDERS, isValidQuantity, matchesExploreFilters, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
 import { productNamesMatch } from "./productGrouping.js";
 import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
@@ -114,8 +114,8 @@ export async function updateListingStock(request, response) {
 // Return every in-stock seller listing separately so Explore cards use listing IDs.
 export async function getExploreProducts(request, response) {
     const search = typeof request.query.search === "string" ? request.query.search.trim().slice(0, 100) : "";
-    const category = typeof request.query.category === "string" ? request.query.category : "";
-    const gender = typeof request.query.gender === "string" ? request.query.gender : "";
+    const category = typeof request.query.category === "string" ? request.query.category.trim().toUpperCase() : "";
+    const gender = typeof request.query.gender === "string" ? request.query.gender.trim().toUpperCase() : "";
     const proteinOnly = request.query.proteinOnly === "true";
 
     // Reject unknown category values rather than silently returning confusing results.
@@ -130,15 +130,15 @@ export async function getExploreProducts(request, response) {
     }
 
     try {
-        // Search is universal; category-specific filters apply when browsing without search text.
-        const browsingCategory = search ? "" : category;
+        // Search text narrows the selected filters; gender remains enforced during search too.
+        const browsingCategory = category;
         const listings = await prisma.listing.findMany({
             where: {
                 status: "ACTIVE",
                 quantityAvailable: { gt: 0 },
                 ...(browsingCategory ? { product: { category: browsingCategory } } : {}),
-                ...(!search && gender ? { clothingGender: gender } : {}),
-                ...(!search && proteinOnly ? { proteinGrams: { gt: 0 } } : {})
+                ...(gender ? { clothingGender: gender } : {}),
+                ...(proteinOnly ? { proteinGrams: { gt: 0 } } : {})
             },
             orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
             select: {
@@ -161,9 +161,13 @@ export async function getExploreProducts(request, response) {
             }
         });
 
+        // Re-check category-specific filters in memory as a safety net as well as in SQL.
+        const filteredListings = listings.filter((listing) =>
+            matchesExploreFilters(listing, { category, gender, proteinOnly })
+        );
         const matchingListings = search
-            ? listings.filter((listing) => productSearchMatches(search, listing.title))
-            : listings;
+            ? filteredListings.filter((listing) => productSearchMatches(search, listing.title))
+            : filteredListings;
         const results = matchingListings.map((listing) => ({
             id: listing.id,
             sellerId: listing.sellerId,

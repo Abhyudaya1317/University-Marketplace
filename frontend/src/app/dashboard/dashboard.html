@@ -676,7 +676,7 @@
         @if (buyerChatNotice()) {
           <p class="buyer-chat-notice" role="status">{{ buyerChatNotice() }}</p>
         }
-        @if (chat.id > 0) {
+        @if (chat.id) {
           <a class="buyer-chat-full-link" [routerLink]="['/messages', chat.id]">Open full chat →</a>
         }
       </aside>

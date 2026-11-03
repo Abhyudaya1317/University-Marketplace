@@ -9,19 +9,19 @@ import { AccountNavigation } from '../shared/account-navigation';
 
 // Keep inbox rows small while each thread contains only the latest 100 messages.
 interface ConversationSummary {
-  id: number;
+  id: string;
   updatedAt: string;
-  otherUser: { id: number; fullName: string; avatarUrl: string | null };
-  listing: { id: number; title: string; price: string; photoUrl: string | null; status: string };
-  lastMessage: { body: string; createdAt: string; senderId: number } | null;
+  otherUser: { id: string; fullName: string; avatarUrl: string | null };
+  listing: { id: string; title: string; price: string; photoUrl: string | null; status: string } | null;
+  lastMessage: { body: string; createdAt: string; senderId: string } | null;
   unreadCount: number;
 }
 
 interface ChatMessage {
-  id: number;
-  senderId: number;
+  id: string;
+  senderId: string;
   senderName: string;
-  type: 'TEXT' | 'IMAGE' | 'CONTACT' | 'LOCATION';
+  type: 'TEXT' | 'IMAGE' | 'FILE' | 'STICKER' | 'MEETUP' | 'CONTACT' | 'LOCATION';
   body: string;
   contactName: string | null;
   contactPhone: string | null;
@@ -29,14 +29,20 @@ interface ChatMessage {
   latitude: number | null;
   longitude: number | null;
   attachmentUrl: string | null;
+  attachmentName?: string | null;
+  stickerKey?: string | null;
+  meetupAt?: string | null;
+  meetupLocation?: string | null;
+  editedAt?: string | null;
   readAt: string | null;
+  deletedAt: string | null;
   createdAt: string;
 }
 
 interface ConversationThread {
-  id: number;
-  otherUser: { id: number; fullName: string; avatarUrl: string | null };
-  listing: { id: number; title: string; price: string; photoUrl: string | null; status: string };
+  id: string;
+  otherUser: { id: string; fullName: string; avatarUrl: string | null };
+  listing: { id: string; title: string; price: string; photoUrl: string | null; status: string } | null;
   messages: ChatMessage[];
 }
 
@@ -52,34 +58,43 @@ export class Messages {
   private readonly route = inject(ActivatedRoute);
   protected readonly conversations = signal<ConversationSummary[]>([]);
   protected readonly conversation = signal<ConversationThread | null>(null);
-  protected readonly currentUserId = signal<number | null>(null);
-  protected readonly loading = signal(true);
+  protected readonly currentUserId = signal<string | null>(null);
+  // Keep inbox and thread loading independent because both requests start on page entry.
+  protected readonly inboxLoading = signal(true);
+  protected readonly conversationLoading = signal(true);
   protected readonly sending = signal(false);
   protected readonly draft = signal('');
+  protected readonly editingMessageId = signal<string | null>(null);
+  protected readonly editDraft = signal('');
+  protected readonly attachmentMenuOpen = signal(false);
+  protected readonly stickerPickerOpen = signal(false);
+  protected readonly meetupFormOpen = signal(false);
+  protected readonly meetupAt = signal('');
+  protected readonly meetupLocation = signal('');
   protected readonly error = signal('');
   protected readonly signInRequired = signal(false);
   protected readonly notice = signal('');
-  protected readonly conversationId = signal<number | null>(null);
-  protected readonly contactFormOpen = signal(false);
-  protected readonly contactName = signal('');
-  protected readonly contactPhone = signal('');
-  protected readonly sharingLocation = signal(false);
-  protected readonly uploadingImage = signal(false);
+  protected readonly conversationId = signal<string | null>(null);
+  protected readonly uploadingFile = signal(false);
+  protected readonly deletingMessageId = signal<string | null>(null);
+  protected readonly selectedMessageIds = signal<Set<string>>(new Set());
+  protected readonly messageSelectionMode = signal(false);
+  protected readonly deletingSelectedMessages = signal(false);
   @ViewChild('messageList') private messageList?: ElementRef<HTMLDivElement>;
 
   private inboxRequestInFlight = false;
   private conversationRequestInFlight = false;
 
   constructor() {
-    this.http.get<{ user?: { id: number } }>('/api/auth/me').subscribe({
+    this.http.get<{ user?: { id: string } }>('/api/auth/me').subscribe({
       next: (response) => this.currentUserId.set(response.user?.id ?? null),
       error: () => this.currentUserId.set(null),
     });
     this.loadInbox();
     this.route.paramMap.subscribe((params) => {
       const value = params.get('conversationId');
-      const id = value && /^\d+$/.test(value) ? Number(value) : null;
-      this.conversationId.set(Number.isSafeInteger(id) ? id : null);
+      const id = value && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0 ? value : null;
+      this.conversationId.set(id);
       this.conversation.set(null);
       if (id) this.loadConversation(id);
     });
@@ -111,13 +126,13 @@ export class Messages {
   private fetchInbox(showLoading: boolean): void {
     if (this.inboxRequestInFlight) return;
     this.inboxRequestInFlight = true;
-    if (showLoading) this.loading.set(true);
+    if (showLoading) this.inboxLoading.set(true);
 
     this.http.get<{ conversations: ConversationSummary[] }>('/api/messages').subscribe({
       next: (response) => {
         this.conversations.set(response.conversations ?? []);
         this.inboxRequestInFlight = false;
-        this.loading.set(false);
+        this.inboxLoading.set(false);
         this.error.set('');
         this.signInRequired.set(false);
       },
@@ -125,7 +140,7 @@ export class Messages {
         this.inboxRequestInFlight = false;
         this.signInRequired.set(response.status === 401);
         this.error.set(this.messageError(response, 'inbox'));
-        this.loading.set(false);
+        this.inboxLoading.set(false);
       },
     });
   }
@@ -136,14 +151,14 @@ export class Messages {
     this.fetchConversation(id, true);
   }
 
-  private refreshConversation(id: number): void {
+  private refreshConversation(id: string): void {
     this.fetchConversation(id, false);
   }
 
-  private fetchConversation(id: number, showLoading: boolean): void {
+  private fetchConversation(id: string, showLoading: boolean): void {
     if (this.conversationRequestInFlight) return;
     this.conversationRequestInFlight = true;
-    if (showLoading) this.loading.set(true);
+    if (showLoading) this.conversationLoading.set(true);
 
     this.http.get<{ conversation: ConversationThread }>(`/api/messages/${id}`).subscribe({
       next: (response) => {
@@ -152,9 +167,15 @@ export class Messages {
         const hasNewMessages =
           !currentConversation ||
           currentConversation.messages.length !== nextConversation.messages.length ||
-          currentConversation.messages.at(-1)?.id !== nextConversation.messages.at(-1)?.id;
+          currentConversation.messages.at(-1)?.id !== nextConversation.messages.at(-1)?.id ||
+          nextConversation.messages.some((message, index) => {
+            const previous = currentConversation.messages[index];
+            return previous?.deletedAt !== message.deletedAt
+              || previous?.body !== message.body
+              || previous?.editedAt !== message.editedAt;
+          });
         this.conversationRequestInFlight = false;
-        this.loading.set(false);
+        this.conversationLoading.set(false);
         this.error.set('');
         if (hasNewMessages) {
           const wasNearBottom = this.isMessageListNearBottom();
@@ -165,7 +186,7 @@ export class Messages {
       error: (response: HttpErrorResponse) => {
         this.conversationRequestInFlight = false;
         this.error.set(this.messageError(response, 'conversation'));
-        this.loading.set(false);
+        this.conversationLoading.set(false);
       },
     });
   }
@@ -200,85 +221,96 @@ export class Messages {
     this.sendMessage();
   }
 
-  // Upload one validated image; the server keeps it private to chat participants.
-  protected sendImage(event: Event): void {
+  // Upload one supported image or document; it remains private to chat participants.
+  protected sendFile(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const image = input.files?.[0];
+    const file = input.files?.[0];
     const id = this.conversationId();
-    if (!image || !id || this.uploadingImage()) return;
-    if (image.size > 5 * 1024 * 1024) {
-      this.error.set('Chat images must be 5 MB or smaller.');
+    if (!file || !id || this.uploadingFile()) return;
+    if (file.size > 10 * 1024 * 1024) {
+      this.error.set('Chat files must be 10 MB or smaller.');
       input.value = '';
       return;
     }
 
     const form = new FormData();
-    form.append('image', image);
+    form.append('file', file);
     form.append('caption', this.draft().trim());
-    this.uploadingImage.set(true);
-    this.sendMessageRequest(`/api/messages/${id}/images`, form, 'Image sent.', () => {
+    this.uploadingFile.set(true);
+    this.sendMessageRequest(`/api/messages/${id}/files`, form, 'File sent.', () => {
       this.draft.set('');
-      this.uploadingImage.set(false);
+      this.uploadingFile.set(false);
+      this.attachmentMenuOpen.set(false);
       input.value = '';
     }, () => {
-      this.uploadingImage.set(false);
+      this.uploadingFile.set(false);
       input.value = '';
     });
   }
 
-  // Share a name and phone number the user explicitly enters.
-  protected shareContact(): void {
+  // Send one selected sticker from the small built-in CampusX sticker pack.
+  protected sendSticker(stickerKey: string): void {
     const id = this.conversationId();
     if (!id) return;
-    if (this.contactName().trim().length < 2 || this.contactPhone().trim().length < 7) {
-      this.error.set('Enter a contact name and a phone number with at least 7 characters.');
-      return;
-    }
-    this.sendMessageRequest(
-      `/api/messages/${id}/contacts`,
-      { contactName: this.contactName(), contactPhone: this.contactPhone() },
-      'Contact shared.',
-      () => {
-        this.contactName.set('');
-        this.contactPhone.set('');
-        this.contactFormOpen.set(false);
-      },
-    );
+    this.sendMessageRequest(`/api/messages/${id}/stickers`, { stickerKey }, 'Sticker sent.', () => {
+      this.stickerPickerOpen.set(false);
+      this.attachmentMenuOpen.set(false);
+    });
   }
 
-  protected toggleContactForm(): void {
-    this.contactFormOpen.update((open) => !open);
+  // Keep the date field from offering past meetup times.
+  protected minimumMeetupTime(): string {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
   }
 
-  // Ask the browser for location only after the user presses Share location.
-  protected shareLocation(): void {
+  // Send a proposed campus meetup time and place; the other person still needs to agree.
+  protected scheduleMeetup(): void {
     const id = this.conversationId();
-    if (!id || this.sharingLocation()) return;
-    if (!navigator.geolocation) {
-      this.error.set('Location sharing is not supported by this browser.');
-      return;
-    }
-    this.sharingLocation.set(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        this.sendMessageRequest(
-          `/api/messages/${id}/location`,
-          {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            locationLabel: 'Shared location',
-          },
-          'Location shared.',
-          () => this.sharingLocation.set(false),
-          () => this.sharingLocation.set(false),
-        );
+    if (!id || !this.meetupAt() || !this.meetupLocation().trim()) return;
+    this.sendMessageRequest(`/api/messages/${id}/meetups`, {
+      meetupAt: new Date(this.meetupAt()).toISOString(),
+      meetupLocation: this.meetupLocation().trim(),
+    }, 'Meetup request sent.', () => {
+      this.meetupAt.set('');
+      this.meetupLocation.set('');
+      this.meetupFormOpen.set(false);
+    });
+  }
+
+  // Open a compact inline editor only for your own regular text messages.
+  protected startEditing(message: ChatMessage): void {
+    if (!this.isOwnMessage(message.senderId) || message.type !== 'TEXT' || message.deletedAt) return;
+    this.editingMessageId.set(message.id);
+    this.editDraft.set(message.body);
+  }
+
+  protected cancelEditing(): void {
+    this.editingMessageId.set(null);
+    this.editDraft.set('');
+  }
+
+  protected saveEditedMessage(): void {
+    const id = this.conversationId();
+    const messageId = this.editingMessageId();
+    const body = this.editDraft().trim();
+    if (!id || !messageId || !body || body.length > 2000 || this.sending()) return;
+    this.sending.set(true);
+    this.http.patch(`/api/messages/${id}/${messageId}`, { body }).subscribe({
+      next: () => {
+        this.sending.set(false);
+        this.cancelEditing();
+        this.notice.set('Message updated.');
+        // Refresh without entering a loading state, so the thread stays mounted and keeps its scroll.
+        this.refreshConversation(id);
+        this.refreshInbox();
       },
-      () => {
-        this.error.set('CampusX could not get your location. Allow location access and try again.');
-        this.sharingLocation.set(false);
+      error: (response: HttpErrorResponse) => {
+        this.sending.set(false);
+        this.error.set(response.error?.message ?? 'We could not edit this message.');
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
-    );
+    });
   }
 
   // Send all supported message types through the same success and error flow.
@@ -300,8 +332,9 @@ export class Messages {
         this.notice.set(successMessage);
         this.sending.set(false);
         onSuccess?.();
-        this.loadConversation(id);
-        this.loadInbox();
+        // A quiet refresh updates the bubble in place instead of rebuilding the chat view.
+        this.refreshConversation(id);
+        this.refreshInbox();
       },
       error: (response: HttpErrorResponse) => {
         this.error.set(this.messageError(response, 'send'));
@@ -337,7 +370,86 @@ export class Messages {
     );
   }
 
-  protected isOwnMessage(senderId: number): boolean {
+  protected isOwnMessage(senderId: string): boolean {
     return senderId === this.currentUserId();
+  }
+
+  // Delete only a message authored by the current account; both participants see the tombstone.
+  protected deleteMessage(message: ChatMessage): void {
+    const conversationId = this.conversationId();
+    if (!conversationId || !this.isOwnMessage(message.senderId) || message.deletedAt || this.deletingMessageId()) return;
+    this.deletingMessageId.set(message.id);
+    this.error.set('');
+    this.notice.set('');
+    this.http.delete(`/api/messages/${conversationId}/${message.id}`).subscribe({
+      next: () => {
+        this.deletingMessageId.set(null);
+        this.notice.set('Message deleted.');
+        this.refreshConversation(conversationId);
+        this.refreshInbox();
+      },
+      error: (response: HttpErrorResponse) => {
+        this.deletingMessageId.set(null);
+        this.error.set(response.error?.message ?? 'We could not delete this message.');
+      },
+    });
+  }
+
+  // Toggle one of the current user's messages in the bulk-selection set.
+  protected toggleMessageSelection(messageId: string): void {
+    this.messageSelectionMode.set(true);
+    this.selectedMessageIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(messageId)) next.delete(messageId);
+      else next.add(messageId);
+      return next;
+    });
+  }
+
+  protected clearMessageSelection(): void {
+    this.selectedMessageIds.set(new Set());
+    this.messageSelectionMode.set(false);
+  }
+
+  // In selection mode, tapping any of your undeleted messages toggles it in the selection.
+  protected handleMessageSelection(message: ChatMessage, event: MouseEvent): void {
+    if (!this.messageSelectionMode() || !this.isOwnMessage(message.senderId) || message.deletedAt) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleMessageSelection(message.id);
+  }
+
+  // Ask the server to tombstone the selected messages, preserving the conversation and its history.
+  protected deleteSelectedMessages(): void {
+    const conversationId = this.conversationId();
+    const messageIds = [...this.selectedMessageIds()];
+    if (!conversationId || !messageIds.length || this.deletingSelectedMessages()) return;
+    this.deletingSelectedMessages.set(true);
+    this.error.set('');
+    this.notice.set('');
+    this.http.post<{ success: boolean; deletedCount: number }>(
+      `/api/messages/${conversationId}/bulk-delete`,
+      { messageIds },
+    ).subscribe({
+      next: (response) => {
+        this.deletingSelectedMessages.set(false);
+        this.clearMessageSelection();
+        this.notice.set(`${response.deletedCount} message${response.deletedCount === 1 ? '' : 's'} deleted.`);
+        this.refreshConversation(conversationId);
+        this.refreshInbox();
+      },
+      error: (response: HttpErrorResponse) => {
+        this.deletingSelectedMessages.set(false);
+        this.error.set(response.error?.message ?? 'We could not delete the selected messages.');
+      },
+    });
+  }
+
+  // Start a new visible date section when the calendar day changes in this thread.
+  protected isNewMessageDate(messages: ChatMessage[], index: number): boolean {
+    if (index === 0) return true;
+    const previousDate = new Date(messages[index - 1].createdAt).toDateString();
+    const currentDate = new Date(messages[index].createdAt).toDateString();
+    return previousDate !== currentDate;
   }
 }

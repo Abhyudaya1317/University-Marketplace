@@ -74,7 +74,11 @@ nav {
   margin: 0 auto;
 }
 .page-intro {
-  padding: 48px 0 24px;
+  margin: 48px 0 24px;
+  padding: 22px;
+  border: 2px solid #777;
+  background: #c0c0c0;
+  box-shadow: 5px 5px 0 #080817;
 }
 .eyebrow,
 .category-label {
@@ -92,7 +96,7 @@ nav {
 }
 .page-intro > p:last-child {
   margin: 0;
-  color: #77756e;
+  color: #444;
   font-size: 14px;
   line-height: 1.6;
 }
@@ -466,7 +470,8 @@ nav {
     height: 30px;
   }
   .page-intro {
-    padding-top: 34px;
+    margin-top: 34px;
+    padding: 16px;
   }
   .filters {
     grid-template-columns: 1fr;

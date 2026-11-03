@@ -11,7 +11,7 @@ import { AccountNavigation } from '../shared/account-navigation';
 interface DashboardResponse {
   success: boolean;
   profile: {
-    id: number;
+    id: string;
     email: string;
     fullName: string;
     avatarUrl: string | null;
@@ -23,9 +23,9 @@ interface DashboardResponse {
     reviewCount: number;
   };
   myListings: Array<{
-    id: number;
+    id: string;
     title: string;
-    product: { id: number; name: string; category: string };
+    product: { id: string; name: string; category: string };
     description: string;
     price: string;
     quantityAvailable: number;
@@ -38,23 +38,23 @@ interface DashboardResponse {
     createdAt: string;
   }>;
   favoriteSellers: Array<{
-    sellerId: number;
+    sellerId: string;
     sellerName: string;
     sellerAvatarUrl: string | null;
     savedAt: string;
     latestListing: {
-      product: { id: number; name: string; category: string };
+      product: { id: string; name: string; category: string };
       price: string;
     } | null;
   }>;
   savedListings: Array<{
     savedAt: string;
-    listingId: number;
-    sellerId: number;
+    listingId: string;
+    sellerId: string;
     sellerName: string;
     title: string;
     sellerAvatarUrl: string | null;
-    product: { id: number; name: string; category: string };
+    product: { id: string; name: string; category: string };
     description: string;
     price: string;
     photoUrl: string | null;
@@ -64,9 +64,9 @@ interface DashboardResponse {
 
 // Describe only pending order fields that the seller needs to arrange a campus handoff.
 interface SellerRequest {
-  id: number;
-  buyerId: number;
-  listingId: number;
+  id: string;
+  buyerId: string;
+  listingId: string;
   productName: string;
   listingTitle: string;
   buyerName: string;
@@ -79,12 +79,12 @@ interface SellerRequest {
 
 // Keep the side chat limited to information returned for this private conversation.
 interface SellerChatThread {
-  id: number;
-  otherUser: { id: number; fullName: string };
-  listing: { id: number; title: string; price: string };
+  id: string;
+  otherUser: { id: string; fullName: string };
+  listing: { id: string; title: string; price: string };
   messages: Array<{
-    id: number;
-    senderId: number;
+    id: string;
+    senderId: string;
     senderName: string;
     type: string;
     body: string;
@@ -124,18 +124,18 @@ export class Dashboard {
   protected readonly favoriteSellers = signal<DashboardResponse['favoriteSellers']>([]);
   protected readonly savedListings = signal<DashboardResponse['savedListings']>([]);
   protected readonly requests = signal<SellerRequest[]>([]);
-  protected readonly stockDrafts = signal<Record<number, number>>({});
-  protected readonly meetingTimes = signal<Record<number, string>>({});
-  protected readonly meetingLocations = signal<Record<number, string>>({});
-  protected readonly stockBusyId = signal<number | null>(null);
-  protected readonly requestBusyId = signal<number | null>(null);
-  protected readonly messageBusyId = signal<number | null>(null);
+  protected readonly stockDrafts = signal<Record<string, number>>({});
+  protected readonly meetingTimes = signal<Record<string, string>>({});
+  protected readonly meetingLocations = signal<Record<string, string>>({});
+  protected readonly stockBusyId = signal<string | null>(null);
+  protected readonly requestBusyId = signal<string | null>(null);
+  protected readonly messageBusyId = signal<string | null>(null);
   protected readonly stockNotice = signal('');
   protected readonly requestNotice = signal('');
   protected readonly managementNotice = signal('');
-  protected readonly archiveDialogListingId = signal<number | null>(null);
-  protected readonly deleteDialogListingId = signal<number | null>(null);
-  protected readonly managementBusyId = signal<number | null>(null);
+  protected readonly archiveDialogListingId = signal<string | null>(null);
+  protected readonly deleteDialogListingId = signal<string | null>(null);
+  protected readonly managementBusyId = signal<string | null>(null);
   protected readonly profileNameDraft = signal('');
   protected readonly profileNotice = signal('');
   protected readonly profileSaving = signal(false);
@@ -148,7 +148,7 @@ export class Dashboard {
   protected readonly buyerChatDraft = signal('');
   protected readonly buyerChatSending = signal(false);
   private buyerChatFetchInFlight = false;
-  private buyerChatRefreshPendingId: number | null = null;
+  private buyerChatRefreshPendingId: string | null = null;
 
   // Load account-owned records through the session-protected dashboard endpoint.
   constructor() {
@@ -177,7 +177,7 @@ export class Dashboard {
     // Refresh an open side chat so new buyer messages arrive without leaving the dashboard.
     interval(3000).pipe(takeUntilDestroyed()).subscribe(() => {
       const conversationId = this.buyerChat()?.id;
-      if (conversationId && conversationId > 0) this.refreshBuyerChat(conversationId);
+      if (conversationId) this.refreshBuyerChat(conversationId);
     });
   }
 
@@ -268,7 +268,7 @@ export class Dashboard {
   }
 
   // Remove one saved seller offer without changing other offers in the same product group.
-  protected removeSavedListing(listingId: number): void {
+  protected removeSavedListing(listingId: string): void {
     this.http.delete(`/api/listings/${listingId}/favorite`).subscribe({
       next: () =>
         this.savedListings.update((items) => items.filter((item) => item.listingId !== listingId)),
@@ -278,7 +278,7 @@ export class Dashboard {
   }
 
   // Open the archive confirmation instead of changing listing state immediately.
-  protected askToArchive(listingId: number): void {
+  protected askToArchive(listingId: string): void {
     this.managementNotice.set('');
     this.archiveDialogListingId.set(listingId);
   }
@@ -318,7 +318,7 @@ export class Dashboard {
   }
 
   // Restore only this seller's archived listing and keep all saved item details intact.
-  protected restoreListing(listingId: number): void {
+  protected restoreListing(listingId: string): void {
     this.managementBusyId.set(listingId);
     this.managementNotice.set('');
     this.http.patch<{ status: string }>(`/api/listings/${listingId}/restore`, {}).subscribe({
@@ -339,7 +339,7 @@ export class Dashboard {
   }
 
   // Open the explicit irreversible-delete confirmation for one archived listing.
-  protected askToDelete(listingId: number): void {
+  protected askToDelete(listingId: string): void {
     this.managementNotice.set('');
     this.deleteDialogListingId.set(listingId);
   }
@@ -370,12 +370,12 @@ export class Dashboard {
     });
   }
 
-  protected setStockDraft(listingId: number, quantity: number): void {
+  protected setStockDraft(listingId: string, quantity: number): void {
     this.stockDrafts.update((drafts) => ({ ...drafts, [listingId]: quantity }));
   }
 
   // Save a new quantity using the owner-only inventory endpoint.
-  protected updateStock(listingId: number): void {
+  protected updateStock(listingId: string): void {
     const listing = this.listings().find((item) => item.id === listingId);
     const quantityAvailable = this.stockDrafts()[listingId] ?? listing?.quantityAvailable;
     if (!Number.isInteger(quantityAvailable) || quantityAvailable < 0 || quantityAvailable > 9999) {
@@ -420,15 +420,15 @@ export class Dashboard {
     });
   }
 
-  protected listingRequests(listingId: number): SellerRequest[] {
+  protected listingRequests(listingId: string): SellerRequest[] {
     return this.requests().filter((request) => request.listingId === listingId);
   }
 
-  protected setMeetingTime(requestId: number, value: string): void {
+  protected setMeetingTime(requestId: string, value: string): void {
     this.meetingTimes.update((times) => ({ ...times, [requestId]: value }));
   }
 
-  protected setMeetingLocation(requestId: number, value: string): void {
+  protected setMeetingLocation(requestId: string, value: string): void {
     this.meetingLocations.update((locations) => ({ ...locations, [requestId]: value }));
   }
 
@@ -442,13 +442,13 @@ export class Dashboard {
     this.buyerChatDraft.set('');
     this.buyerChatLoading.set(true);
     this.buyerChat.set({
-      id: 0,
+      id: '',
       otherUser: { id: request.buyerId, fullName: request.buyerName },
       listing: { id: request.listingId, title: request.listingTitle || request.productName, price: request.price },
       messages: [],
     });
     this.http
-      .post<{ success: boolean; conversation: { id: number }; message?: string }>(
+      .post<{ success: boolean; conversation: { id: string }; message?: string }>(
         `/api/orders/${request.id}/conversation`,
         {},
       )
@@ -476,7 +476,7 @@ export class Dashboard {
   protected sendBuyerChatMessage(): void {
     const conversationId = this.buyerChat()?.id;
     const body = this.buyerChatDraft().trim();
-    if (!conversationId || conversationId < 1 || !body || body.length > 2000 || this.buyerChatSending()) return;
+    if (!conversationId || !body || body.length > 2000 || this.buyerChatSending()) return;
 
     this.buyerChatSending.set(true);
     this.buyerChatError.set('');
@@ -508,13 +508,13 @@ export class Dashboard {
   }
 
   // Fetch the thread using the existing participant-checked messages endpoint.
-  private loadBuyerChat(conversationId: number): void {
+  private loadBuyerChat(conversationId: string): void {
     this.buyerChat.update((chat) => chat ? { ...chat, id: conversationId } : chat);
     this.buyerChatLoading.set(true);
     this.fetchBuyerChat(conversationId);
   }
 
-  private refreshBuyerChat(conversationId: number): void {
+  private refreshBuyerChat(conversationId: string): void {
     if (this.buyerChatFetchInFlight) {
       this.buyerChatRefreshPendingId = conversationId;
       return;
@@ -522,7 +522,7 @@ export class Dashboard {
     this.fetchBuyerChat(conversationId);
   }
 
-  private fetchBuyerChat(conversationId: number): void {
+  private fetchBuyerChat(conversationId: string): void {
     if (this.buyerChatFetchInFlight) return;
     this.buyerChatFetchInFlight = true;
     this.http.get<{ conversation: SellerChatThread }>(`/api/messages/${conversationId}`).subscribe({

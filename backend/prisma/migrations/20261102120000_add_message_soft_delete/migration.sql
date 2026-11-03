@@ -1,0 +1,2 @@
+-- Message deletion uses the existing Message.body/type columns as a tombstone.
+-- No database structure change is required for this application behavior.

@@ -15,8 +15,8 @@ interface HealthResponse {
 
 // Use real marketplace listings for the featured window, directory, and homepage feed.
 interface HomeListing {
-  id: number;
-  sellerId: number;
+  id: string;
+  sellerId: string;
   sellerName: string;
   title: string;
   category: string;

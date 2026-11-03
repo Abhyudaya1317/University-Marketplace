@@ -8,7 +8,7 @@ import { AccountNavigation } from '../shared/account-navigation';
 
 // Match the public listing detail response; the listing ID identifies one seller's offer.
 interface ListingDetails {
-  id: number;
+  id: string;
   title: string;
   description: string;
   price: string;
@@ -23,7 +23,7 @@ interface ListingDetails {
   category: string;
   createdAt: string;
   seller: {
-    id: number;
+    id: string;
     fullName: string;
     avatarUrl: string | null;
     averageRating: number | null;
@@ -45,7 +45,7 @@ export class ProductDetails {
   protected readonly listing = signal<ListingDetails | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
-  protected readonly currentUserId = signal<number | null>(null);
+  protected readonly currentUserId = signal<string | null>(null);
   protected readonly sessionCheckComplete = signal(false);
   protected readonly sessionError = signal('');
   protected readonly saved = signal(false);
@@ -71,7 +71,7 @@ export class ProductDetails {
   });
 
   constructor() {
-    this.http.get<{ user?: { id: number } }>('/api/auth/me').subscribe({
+    this.http.get<{ user?: { id: string } }>('/api/auth/me').subscribe({
       next: (response) => {
         this.currentUserId.set(response.user?.id ?? null);
         this.sessionCheckComplete.set(true);
@@ -89,8 +89,8 @@ export class ProductDetails {
       },
     });
     this.route.paramMap.subscribe((params) => {
-      const listingId = Number(params.get('listingId'));
-      if (!Number.isSafeInteger(listingId) || listingId < 1) {
+      const listingId = params.get('listingId');
+      if (!listingId || !/^\d+$/.test(listingId) || !Number.isSafeInteger(Number(listingId)) || Number(listingId) < 1) {
         this.error.set('This listing link is invalid.');
         this.loading.set(false);
         return;
@@ -99,7 +99,7 @@ export class ProductDetails {
     });
   }
 
-  private loadListing(listingId: number): void {
+  private loadListing(listingId: string): void {
     this.loading.set(true);
     this.error.set('');
     this.activePhotoIndex.set(0);
@@ -124,8 +124,8 @@ export class ProductDetails {
   }
 
   // Read saved listing IDs from the signed-in account; guest browsing remains public.
-  private loadSavedState(listingId: number): void {
-    this.http.get<{ listingIds: number[] }>('/api/listings/favorites').subscribe({
+  private loadSavedState(listingId: string): void {
+    this.http.get<{ listingIds: string[] }>('/api/listings/favorites').subscribe({
       next: (response) => this.saved.set((response.listingIds ?? []).includes(listingId)),
       error: () => this.saved.set(false),
     });
@@ -200,7 +200,7 @@ export class ProductDetails {
     this.startingConversation.set(true);
     this.feedback.set('');
     this.http
-      .post<{ success: boolean; conversation: { id: number }; message?: string }>(
+      .post<{ success: boolean; conversation: { id: string }; message?: string }>(
         `/api/messages/listings/${listing.id}`,
         {},
       )
@@ -250,6 +250,15 @@ export class ProductDetails {
 
   protected markPhotoUnavailable(url: string): void {
     this.unavailablePhotoUrls.update((urls) => new Set(urls).add(url));
+
+      // If one photo URL is broken, automatically show the other uploaded photo when possible.
+      const photos = this.productPhotos();
+      if (photos.length > 1 && photos[this.activePhotoIndex()] === url) {
+        const otherIndex = this.activePhotoIndex() === 0 ? 1 : 0;
+        if (!this.unavailablePhotoUrls().has(photos[otherIndex])) {
+          this.activePhotoIndex.set(otherIndex);
+        }
+      }
   }
 
   protected conditionLabel(item: ListingDetails): string {

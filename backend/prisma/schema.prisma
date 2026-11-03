@@ -2,6 +2,7 @@
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 // Keep the database provider here and the private connection URL in prisma.config.ts.
@@ -129,17 +130,18 @@ model Listing {
 // Keep one private buyer-seller conversation per buyer and listing.
 model Conversation {
   id        Int       @id @default(autoincrement())
-  listingId Int
+  listingId Int?
   buyerId   Int
   sellerId  Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing   Listing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   buyer     User      @relation("ConversationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
   seller    User      @relation("ConversationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
   messages  Message[]
 
   @@unique([listingId, buyerId])
+  @@unique([sellerId, buyerId], map: "Conversation_general_seller_buyer_key", where: raw("\"listingId\" IS NULL"))
   @@index([buyerId, updatedAt])
   @@index([sellerId, updatedAt])
 }
@@ -152,6 +154,12 @@ model Message {
   body           String       @db.VarChar(2000)
   type           MessageType  @default(TEXT)
   attachmentName String?      @db.VarChar(100)
+  attachmentOriginalName String? @db.VarChar(180)
+  attachmentMimeType String?   @db.VarChar(100)
+  stickerKey     String?      @db.VarChar(40)
+  meetupAt       DateTime?
+  meetupLocation String?      @db.VarChar(120)
+  editedAt       DateTime?
   contactName    String?      @db.VarChar(100)
   contactPhone   String?      @db.VarChar(30)
   locationLabel  String?      @db.VarChar(120)
@@ -304,6 +312,9 @@ enum ClothingGender {
 enum MessageType {
   TEXT
   IMAGE
+  FILE
+  STICKER
+  MEETUP
   CONTACT
   LOCATION
 }

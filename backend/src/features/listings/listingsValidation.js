@@ -8,6 +8,14 @@ export const PRODUCT_CATEGORIES = new Set([
 export const CLOTHING_GENDERS = new Set(["MEN", "WOMEN", "UNISEX", "OTHER"]);
 export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", "CUSTOM"]);
 
+// Re-check category-specific filters against each listing returned from storage.
+export function matchesExploreFilters(listing, { category = "", gender = "", proteinOnly = false } = {}) {
+    if (category && listing.product.category !== category) return false;
+    if (gender && (listing.product.category !== "CLOTHING" || listing.clothingGender !== gender)) return false;
+    if (proteinOnly && (listing.product.category !== "FOOD" || Number(listing.proteinGrams) <= 0)) return false;
+    return true;
+}
+
 // Validate the listing fields shared by create and edit without trusting browser checks.
 export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition }) {
     const trimmedName = typeof name === "string" ? name.trim() : "";

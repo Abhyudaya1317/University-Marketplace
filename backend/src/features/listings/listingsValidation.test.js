@@ -5,10 +5,22 @@ import {
     isValidPhoneNumber,
     isValidPrice,
     isValidProteinGrams,
+    matchesExploreFilters,
     normalizeProductName,
     PRODUCT_CATEGORIES
 } from "./listingsValidation.js";
 import { buildProductGroups, filterProductGroups, productNamesMatch } from "./productGrouping.js";
+
+// The final Explore response check must exclude mismatched clothing even if a query slips through.
+test("applies category and exact clothing gender to individual Explore listings", () => {
+    const mensListing = { product: { category: "CLOTHING" }, clothingGender: "MEN", proteinGrams: null };
+    const womensListing = { product: { category: "CLOTHING" }, clothingGender: "WOMEN", proteinGrams: null };
+    const electronicsListing = { product: { category: "ELECTRONICS" }, clothingGender: null, proteinGrams: null };
+
+    assert.equal(matchesExploreFilters(mensListing, { category: "CLOTHING", gender: "MEN" }), true);
+    assert.equal(matchesExploreFilters(womensListing, { category: "CLOTHING", gender: "MEN" }), false);
+    assert.equal(matchesExploreFilters(electronicsListing, { gender: "MEN" }), false);
+});
 
 // Similar capitalization and punctuation should group under the same product key.
 test("normalizes product names for shared-offer grouping", () => {

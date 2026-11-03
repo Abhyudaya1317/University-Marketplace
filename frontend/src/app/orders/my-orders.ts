@@ -6,7 +6,7 @@ import { AccountNavigation } from '../shared/account-navigation';
 
 // Keep the API fields needed to understand an order and arrange its campus handoff.
 interface CampusOrder {
-  id: number;
+  id: string;
   role: 'BUYER' | 'SELLER';
   status: string;
   paymentMethod: string;
@@ -15,20 +15,20 @@ interface CampusOrder {
   createdAt: string;
   buyerPhone: string | null;
   sellerPhone: string | null;
-  sellerId: number;
-  buyerId: number;
+  sellerId: string;
+  buyerId: string;
   sellerName: string;
   buyerName: string;
   buyerMessage: string | null;
   meetingAt: string | null;
   meetingLocation: string | null;
   listing: {
-    id: number;
+    id: string;
     title: string;
     description: string;
     photoUrl: string | null;
     location: string;
-    product: { id: number; name: string; category: string };
+    product: { id: string; name: string; category: string };
   };
 }
 
@@ -53,7 +53,7 @@ export class MyOrders {
   protected readonly signedIn = signal(false);
   protected readonly error = signal('');
   protected readonly orders = signal<CampusOrder[]>([]);
-  protected readonly updatingOrderId = signal<number | null>(null);
+  protected readonly updatingOrderId = signal<string | null>(null);
 
   constructor() {
     this.loadOrders();
