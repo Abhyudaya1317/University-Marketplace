@@ -263,9 +263,20 @@ export class ProductDetails {
 
   protected conditionLabel(item: ListingDetails): string {
     if (item.condition === 'CUSTOM' && item.customCondition) return item.customCondition;
-    if (item.condition === 'NEW') return 'Brand new';
-    if (item.condition === 'OLD') return 'Old / used';
-    return this.categoryLabel(item.condition);
+    const labels: Record<string, string> = {
+      NEW: 'Brand new', LIKE_NEW: 'Like new', GOOD: 'Good', FAIR: 'Fair', OLD: 'Old / used',
+      FRESH: 'Fresh', PACKAGED: 'Packaged and sealed', OPENED: 'Opened / partially used',
+      PREPARED: 'Prepared fresh', FROZEN: 'Frozen'
+    };
+    return labels[item.condition] ?? item.condition;
+  }
+
+  // Keep food protein information with its description and use 0/null for a non-protein food.
+  protected foodProteinDescription(item: ListingDetails): string {
+    const grams = Number(item.proteinGrams ?? 0);
+    return grams > 0
+      ? `Protein-rich food: Yes · ${grams.toFixed(2)} g per serving`
+      : 'Protein-rich food: No';
   }
 
   protected stockLabel(quantity: number): string {

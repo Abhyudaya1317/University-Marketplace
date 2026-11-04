@@ -37,4 +37,17 @@
 .form-feedback { margin: 0; padding: 10px 12px; border-radius: 8px; font-size: 11px; }
 .form-feedback.error { background: #f9e8e5; color: #a33f34; }
 .form-feedback.success { background: #eaf2e9; color: #34754b; }
+.engagement-entry-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; width: 100%; min-width: 0; margin-top: 8px; }
+.answer-entry-actions { margin: 6px 0 0 47px; width: calc(100% - 47px); }
+.delete-confirmation { margin-right: auto; color: #55554e; font-size: 10px; line-height: 1.4; }
+.delete-entry-button, .cancel-delete-button { min-height: 30px; max-width: 100%; padding: 4px 9px; border: 2px outset #fff; border-radius: 2px; background: #fff; color: #000080; cursor: pointer; font: inherit; font-size: 9px; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+.delete-entry-button:disabled { cursor: wait; opacity: .65; }
+.cancel-delete-button { border-style: solid; border-color: #777; }
+.delete-entry-button:focus-visible, .cancel-delete-button:focus-visible { outline: 2px solid #000080; outline-offset: 2px; }
 @media (max-width: 560px) { .engagement-section { padding: 18px 14px; } .section-heading h2 { font-size: 18px; } .answer-copy, .answer-form { margin-left: 12px; } .review-topline { align-items: flex-start; flex-direction: column; gap: 4px; } }
+@media (max-width: 560px) {
+  .engagement-entry-actions { justify-content: flex-start; gap: 5px; }
+  .answer-entry-actions { margin-left: 24px; width: calc(100% - 24px); }
+  .delete-confirmation { flex: 1 1 100%; margin-right: 0; }
+  .delete-entry-button, .cancel-delete-button { min-height: 32px; padding-inline: 8px; font-size: 9px; }
+}

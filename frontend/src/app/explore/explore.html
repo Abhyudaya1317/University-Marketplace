@@ -1,7 +1,7 @@
 <div class="market-page">
   <header class="market-header">
-    <a class="brand" routerLink="/" aria-label="UniTrade home"
-      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
+    <a class="brand" routerLink="/" aria-label="UniBee home"
+      ><span class="brand-mark">✦</span><span>UNIBEE<sup>’26</sup></span></a
     >
     <app-account-navigation />
   </header>
@@ -26,7 +26,7 @@
             (ngModelChange)="onSearchTextChange($event)"
             (focus)="openSuggestions()"
             (blur)="closeSuggestionsSoon()"
-            placeholder="Search UniTrade"
+            placeholder="Search UniBee"
             maxlength="100"
             autocomplete="off"
             aria-autocomplete="list"
@@ -82,9 +82,10 @@
         <label class="detail-filter-field"
           ><span>Gender</span>
           <select
+            name="gender"
             aria-label="Filter clothing by gender"
             [ngModel]="selectedGender()"
-            (ngModelChange)="selectedGender.set($event); loadDetailFilter()"
+            (ngModelChange)="onGenderChange($event)"
           >
             <option value="">All clothing</option>
             <option value="MEN">Men</option>
@@ -134,6 +135,12 @@
       <section class="product-grid" aria-label="Marketplace listings">
         @for (listing of visibleListings(); track listing.id) {
           <article class="product-card">
+            <div class="listing-window-titlebar" aria-hidden="true">
+              <strong>{{ listingWindowTitle(listing.id) }}</strong>
+              <span class="listing-window-controls">
+                <span>_</span><span>□</span><span>×</span>
+              </span>
+            </div>
             <div class="catalog-media">
               <a class="catalog-photo-link" [routerLink]="['/products', listing.id]" [attr.aria-label]="'Open ' + listing.title">
                 @if (photoFor(listing); as photo) {

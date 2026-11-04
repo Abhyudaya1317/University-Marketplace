@@ -7,7 +7,8 @@ import {
     isValidProteinGrams,
     matchesExploreFilters,
     normalizeProductName,
-    PRODUCT_CATEGORIES
+    PRODUCT_CATEGORIES,
+    validateListingDetails
 } from "./listingsValidation.js";
 import { buildProductGroups, filterProductGroups, productNamesMatch } from "./productGrouping.js";
 
@@ -132,4 +133,17 @@ test("validates protein amounts per serving", () => {
     assert.equal(isValidProteinGrams("5001"), false);
     assert.equal(isValidProteinGrams("-1"), false);
     assert.equal(isValidProteinGrams("12.555"), false);
+});
+
+// Food listings use food-specific conditions and require grams only when protein is declared.
+test("accepts food conditions and rejects general clothing conditions for food", () => {
+    const details = {
+        name: "Granola bar", category: "FOOD", description: "Sealed snack bar", price: "25",
+        phoneNumber: "9876543210", location: "Campus shop", quantityAvailable: 2,
+        proteinGrams: "0", condition: "PACKAGED"
+    };
+
+    assert.equal(validateListingDetails(details), null);
+    assert.equal(validateListingDetails({ ...details, condition: "GOOD" }), "Choose a valid food condition.");
+    assert.equal(validateListingDetails({ ...details, proteinGrams: "12.5", condition: "FRESH" }), null);
 });

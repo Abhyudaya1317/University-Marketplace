@@ -79,6 +79,7 @@ export class CreateListing implements OnDestroy {
   protected location = '';
   protected clothingGender = '';
   protected proteinGrams: number | string = '';
+  protected proteinRich = false;
   protected condition = 'GOOD';
   protected customCondition = '';
   private selectedPhotos: File[] = [];
@@ -140,8 +141,8 @@ export class CreateListing implements OnDestroy {
       this.error.set('Choose the clothing gender option.');
       return;
     }
-    if (this.category === 'FOOD' && this.proteinGrams === '') {
-      this.error.set('Enter protein per serving in grams.');
+    if (this.category === 'FOOD' && this.proteinRich && (!this.proteinGrams || Number(this.proteinGrams) <= 0)) {
+      this.error.set('Enter a positive protein amount per serving.');
       return;
     }
     if (this.location.trim().length < 2) {
@@ -165,7 +166,7 @@ export class CreateListing implements OnDestroy {
     formData.append('condition', this.condition);
     formData.append('customCondition', this.condition === 'CUSTOM' ? this.customCondition.trim() : '');
     if (this.category === 'CLOTHING') formData.append('clothingGender', this.clothingGender);
-    if (this.category === 'FOOD') formData.append('proteinGrams', String(this.proteinGrams));
+    if (this.category === 'FOOD') formData.append('proteinGrams', this.proteinRich ? String(this.proteinGrams) : '0');
     for (const photo of this.selectedPhotos) formData.append('photos', photo);
 
     this.busy.set(true);
@@ -193,6 +194,7 @@ export class CreateListing implements OnDestroy {
         this.location = '';
         this.clothingGender = '';
         this.proteinGrams = '';
+        this.proteinRich = false;
         this.condition = 'GOOD';
         this.clearSelectedPhotos();
         this.currentPhotoUrl.set(null);
@@ -253,6 +255,14 @@ export class CreateListing implements OnDestroy {
     this.category = value;
     this.clothingGender = '';
     this.proteinGrams = '';
+    this.proteinRich = false;
+    this.condition = value === 'FOOD' ? 'FRESH' : 'GOOD';
+  }
+
+  // Only ask for protein grams when the seller marks the food as protein-rich.
+  protected onProteinRichChange(value: boolean): void {
+    this.proteinRich = value;
+    if (!value) this.proteinGrams = '';
   }
 
   // Reuse the same listing form for edit mode and load only the signed-in owner's offer.
@@ -272,9 +282,13 @@ export class CreateListing implements OnDestroy {
           this.quantityAvailable = listing.quantityAvailable;
           this.phoneNumber = listing.phoneNumber;
           this.location = listing.location;
-          this.condition = listing.condition;
+          const foodConditions = ['FRESH', 'PACKAGED', 'OPENED', 'PREPARED', 'FROZEN', 'CUSTOM'];
+          this.condition = listing.category === 'FOOD' && !foodConditions.includes(listing.condition)
+            ? 'FRESH'
+            : listing.condition;
           this.clothingGender = listing.clothingGender ?? '';
           this.proteinGrams = listing.proteinGrams ?? '';
+          this.proteinRich = Number(listing.proteinGrams ?? 0) > 0;
           this.currentPhotoUrl.set(listing.photoUrl);
           this.currentPhotoUrl2.set(listing.photoUrl2);
           this.customCondition = listing.customCondition ?? '';

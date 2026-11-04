@@ -72,19 +72,19 @@
 .paint-frame-image { display: block; width: 100%; height: auto; }
 .paint-product-image {
   position: absolute;
-  top: 11%;
-  left: 22.4%;
-  width: 69.7%;
-  height: 65.5%;
+  top: 12.3%;
+  left: 23%;
+  width: 70%;
+  height: 69.5%;
   object-fit: contain !important;
 }
 .paint-placeholder {
   position: absolute;
-  top: 11%;
-  left: 22.4%;
+  top: 12.3%;
+  left: 23%;
   display: grid;
-  width: 69.7%;
-  height: 65.5%;
+  width: 70%;
+  height: 69.5%;
   place-items: center;
   background: #fff;
   color: #000080;
@@ -285,6 +285,12 @@
 }
 .feedback a {
   color: #a95638;
+}
+.food-protein-note {
+  display: block;
+  margin-top: 9px;
+  color: var(--navy, #000080);
+  font-weight: 700;
 }
 .out-of-stock {
   color: #9b5143;

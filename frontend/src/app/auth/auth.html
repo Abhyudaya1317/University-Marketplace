@@ -1,8 +1,8 @@
 <!-- Keep personal-email authentication separate from the temporary home page. -->
 <main class="auth-shell">
-  <a class="brand" href="/" aria-label="UniTrade home">
+  <a class="brand" href="/" aria-label="UniBee home">
     <span class="brand-mark" aria-hidden="true">✦</span>
-    <span>UNITRADE<sup>’99</sup></span>
+    <span>UNIBEE<sup>’26</sup></span>
   </a>
 
   <section class="auth-card" aria-labelledby="auth-title">
@@ -14,7 +14,7 @@
       <button class="primary-button" type="button" (click)="signOut()">Sign out</button>
     } @else {
       <!-- The headline and message change based on the selected account task. -->
-      <p class="eyebrow">UNITRADE · LPU COMMUNITY</p>
+      <p class="eyebrow">UNIBEE · LPU COMMUNITY</p>
       <h1 id="auth-title">
         @if (mode() === 'signup') {
           Create your account
@@ -24,7 +24,7 @@
           Welcome back
         }
       </h1>
-      <p class="description">Use your personal email to continue with UniTrade.</p>
+      <p class="description">Use your personal email to continue with UniBee.</p>
 
       @if (mode() !== 'reset') {
         <!-- Sign-up and sign-in share one small form and endpoint choice. -->
@@ -93,7 +93,7 @@
             Already have an account?
             <button class="text-button" type="button" (click)="chooseMode('login')">Sign in</button>
           } @else {
-            New to UniTrade?
+            New to UniBee?
             <button class="text-button" type="button" (click)="chooseMode('signup')">
               Create an account
             </button>
@@ -165,7 +165,7 @@
 
       <!-- Account creation uses personal email; CampusX does not verify student status. -->
       <p class="community-note">
-        UniTrade is intended for the LPU community. We use personal email for account access and do
+        UniBee is intended for the LPU community. We use personal email for account access and do
         not verify student status.
       </p>
     }

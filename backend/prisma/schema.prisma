@@ -282,6 +282,11 @@ enum ProductCondition {
   GOOD
   FAIR
   OLD
+  FRESH
+  PACKAGED
+  OPENED
+  PREPARED
+  FROZEN
   CUSTOM
 }
 

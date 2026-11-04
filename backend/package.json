@@ -13,10 +13,11 @@
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
+    "vercel-build": "prisma generate",
     "db:check": "node src/scripts/checkDatabase.js"
   },
-  "engines":{
-    "node": ">=22.0.0"
+  "engines": {
+    "node": "22.x"
   },
   "keywords": [],
   "author": "",

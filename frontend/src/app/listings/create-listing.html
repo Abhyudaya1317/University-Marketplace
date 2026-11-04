@@ -1,9 +1,9 @@
 <!-- Give sellers a focused listing form without changing the temporary home design. -->
 <main class="sell-page">
   <header class="sell-header">
-    <a class="brand" href="/" aria-label="UniTrade home">
+    <a class="brand" href="/" aria-label="UniBee home">
       <span class="brand-mark" aria-hidden="true">✦</span>
-      <span>UNITRADE<sup>’99</sup></span>
+      <span>UNIBEE<sup>’26</sup></span>
     </a>
     <a class="back-link" href="/">Back to home</a>
   </header>
@@ -14,15 +14,15 @@
       <p class="state-message" role="status">Checking your sign-in…</p>
     } @else if (!user()) {
       <!-- Keep listing creation available only to accounts with a valid server session. -->
-      <p class="eyebrow">SELL ON UNITRADE</p>
+      <p class="eyebrow">SELL ON UNIBEE</p>
       <h1 id="sell-title">Sign in to list an item</h1>
-      <p class="description">Use your personal email to sign in or create a UniTrade account first.</p>
+      <p class="description">Use your personal email to sign in or create a UniBee account first.</p>
       <a class="primary-button" href="/auth">Sign in or join</a>
     } @else if (loadingListing()) {
       <p class="state-message" role="status">Loading your listing…</p>
     } @else {
       <!-- Ask for the details buyers need to compare a seller's product offer. -->
-      <p class="eyebrow">SELL ON UNITRADE</p>
+      <p class="eyebrow">SELL ON UNIBEE</p>
       <h1 id="sell-title">{{ isEditing() ? 'Edit your listing.' : 'List something useful.' }}</h1>
       <p class="description">Signed in as {{ user()?.email }}. @if (isEditing()) { Update the offer details below. } @else { Listings are free right now. }</p>
 
@@ -46,9 +46,18 @@
         <div class="form-field">
           <label for="condition">Condition</label>
           <select id="condition" name="condition" required [(ngModel)]="condition">
-            <option value="NEW">Brand new</option><option value="LIKE_NEW">Like new</option>
-            <option value="GOOD">Good</option><option value="FAIR">Fair</option>
-            <option value="OLD">Old / used</option><option value="CUSTOM">Custom</option>
+            @if (category === 'FOOD') {
+              <option value="FRESH">Fresh</option>
+              <option value="PACKAGED">Packaged and sealed</option>
+              <option value="OPENED">Opened / partially used</option>
+              <option value="PREPARED">Prepared fresh</option>
+              <option value="FROZEN">Frozen</option>
+              <option value="CUSTOM">Other condition</option>
+            } @else {
+              <option value="NEW">Brand new</option><option value="LIKE_NEW">Like new</option>
+              <option value="GOOD">Good</option><option value="FAIR">Fair</option>
+              <option value="OLD">Old / used</option><option value="CUSTOM">Custom</option>
+            }
           </select>
         </div>
         @if (condition === 'CUSTOM') {
@@ -74,9 +83,17 @@
 
         @if (category === 'FOOD') {
           <div class="form-field">
-            <label for="protein-grams">Protein per serving (grams)</label>
-            <input id="protein-grams" name="proteinGrams" type="number" required min="0" max="5000" step="0.01"
-              [(ngModel)]="proteinGrams" placeholder="e.g. 12">
+            <label for="protein-rich">Is this a protein-rich food?</label>
+            <select id="protein-rich" name="proteinRich" required [ngModel]="proteinRich"
+              (ngModelChange)="onProteinRichChange($event)">
+              <option [ngValue]="false">No</option>
+              <option [ngValue]="true">Yes</option>
+            </select>
+            @if (proteinRich) {
+              <label for="protein-grams">Protein per serving (grams)</label>
+              <input id="protein-grams" name="proteinGrams" type="number" required min="0.01" max="5000" step="0.01"
+                [(ngModel)]="proteinGrams" placeholder="e.g. 12">
+            }
           </div>
         }
 

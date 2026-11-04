@@ -44,9 +44,32 @@ describe('Explore individual listings', () => {
     expect(component.visibleListings().map((item: { title: string }) => item.title)).toEqual(['Blue jeans']);
     fixture.destroy();
   });
+
+  it('submits the selected clothing gender and keeps mismatched offers out of the results', () => {
+    const fixture = TestBed.createComponent(Explore);
+    const component = fixture.componentInstance as any;
+    http.match('/api/auth/me').forEach((request) => request.flush({ success: true, user: null }));
+    http.expectOne('/api/products').flush({ success: true, listings: [] });
+
+    component.selectedCategory.set('CLOTHING');
+    component.onGenderChange('MEN');
+
+    const request = http.expectOne((candidate) =>
+      candidate.url === '/api/products' &&
+      candidate.params.get('category') === 'CLOTHING' &&
+      candidate.params.get('gender') === 'MEN'
+    );
+    request.flush({ success: true, listings: [
+      { ...listing(4, 'Men’s hoodie', '40.00'), clothingGender: 'MEN' },
+      { ...listing(5, 'Women’s hoodie', '35.00'), clothingGender: 'WOMEN' }
+    ] });
+
+    expect(component.visibleListings().map((item: { id: number }) => item.id)).toEqual([4]);
+    fixture.destroy();
+  });
 });
 
 // Each fixture row models one database Listing, not a grouped Product record.
 function listing(id: number, title: string, price: string) {
-  return { id, sellerId: id + 10, sellerName: `Seller ${id}`, title, category: 'CLOTHING', description: 'Good condition', price, quantityAvailable: 2, photoUrl: null, condition: 'GOOD' };
+  return { id, sellerId: id + 10, sellerName: `Seller ${id}`, title, category: 'CLOTHING', description: 'Good condition', price, quantityAvailable: 2, photoUrl: null, condition: 'GOOD', clothingGender: null };
 }

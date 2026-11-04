@@ -62,6 +62,19 @@
             <small
               >Seller: <a class="person-profile-link" [routerLink]="['/sellers', review.sellerId]">{{ review.sellerName }}</a> · {{ review.createdAt | date: 'mediumDate' }}</small
             >
+            @if (currentUserId() !== null && currentUserId()?.toString() === review.reviewerId.toString()) {
+              <div class="engagement-entry-actions">
+                @if (isDeletePending('review', review.id)) {
+                  <span class="delete-confirmation">Delete your review?</span>
+                  <button class="delete-entry-button" type="button" [disabled]="deletingEntryKey() === 'review:' + review.id" (click)="deleteReview(review.id)">
+                    {{ deletingEntryKey() === 'review:' + review.id ? 'Deleting…' : 'Confirm delete' }}
+                  </button>
+                  <button class="cancel-delete-button" type="button" (click)="cancelDelete()">Cancel</button>
+                } @else {
+                  <button class="delete-entry-button" type="button" (click)="requestDelete('review', review.id)">Delete review</button>
+                }
+              </div>
+            }
           </article>
         }
       </div>
@@ -116,6 +129,19 @@
                 >
               </div>
             </div>
+            @if (currentUserId() !== null && currentUserId()?.toString() === question.askerId.toString()) {
+              <div class="engagement-entry-actions">
+                @if (isDeletePending('question', question.id)) {
+                  <span class="delete-confirmation">Delete your question and its replies?</span>
+                  <button class="delete-entry-button" type="button" [disabled]="deletingEntryKey() === 'question:' + question.id" (click)="deleteQuestion(question.id)">
+                    {{ deletingEntryKey() === 'question:' + question.id ? 'Deleting…' : 'Confirm delete' }}
+                  </button>
+                  <button class="cancel-delete-button" type="button" (click)="cancelDelete()">Cancel</button>
+                } @else {
+                  <button class="delete-entry-button" type="button" (click)="requestDelete('question', question.id)">Delete question</button>
+                }
+              </div>
+            }
             @for (answer of question.answers; track answer.id) {
               <div class="answer-copy">
                 <span class="answer-mark" aria-hidden="true">A</span>
@@ -126,6 +152,19 @@
                   >
                 </div>
               </div>
+              @if (currentUserId() !== null && currentUserId()?.toString() === answer.sellerId.toString()) {
+                <div class="engagement-entry-actions answer-entry-actions">
+                  @if (isDeletePending('answer', answer.id)) {
+                    <span class="delete-confirmation">Delete your answer?</span>
+                    <button class="delete-entry-button" type="button" [disabled]="deletingEntryKey() === 'answer:' + answer.id" (click)="deleteAnswer(question.id, answer.id)">
+                      {{ deletingEntryKey() === 'answer:' + answer.id ? 'Deleting…' : 'Confirm delete' }}
+                    </button>
+                    <button class="cancel-delete-button" type="button" (click)="cancelDelete()">Cancel</button>
+                  } @else {
+                    <button class="delete-entry-button" type="button" (click)="requestDelete('answer', answer.id)">Delete answer</button>
+                  }
+                </div>
+              }
             }
             @if (canCurrentUserAnswer()) {
               <form class="answer-form" (ngSubmit)="submitAnswer(question.id)">

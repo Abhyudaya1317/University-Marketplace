@@ -1,8 +1,8 @@
 <!-- Keep the public-facing profile compact and route private account management separately. -->
 <div class="dashboard-page">
   <header class="dashboard-header">
-    <a class="brand" routerLink="/" aria-label="UniTrade home"
-      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
+    <a class="brand" routerLink="/" aria-label="UniBee home"
+      ><span class="brand-mark">✦</span><span>UNIBEE<sup>’26</sup></span></a
     >
     <app-account-navigation />
   </header>
@@ -69,7 +69,7 @@
                   </button>
                 </div>
                 <div class="profile-display-name">
-                  <h1 id="my-profile-title">{{ currentProfile.fullName || 'UniTrade Member' }}</h1>
+                  <h1 id="my-profile-title">{{ currentProfile.fullName || 'UniBee Member' }}</h1>
                   @if (currentProfile.reviewCount > 0) {
                     <p>
                       {{ currentProfile.averageRating }} / 5 ·

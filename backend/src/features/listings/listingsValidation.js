@@ -6,7 +6,8 @@ export const PRODUCT_CATEGORIES = new Set([
 
 // Use one stable set of clothing values in forms, storage, and filters.
 export const CLOTHING_GENDERS = new Set(["MEN", "WOMEN", "UNISEX", "OTHER"]);
-export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", "CUSTOM"]);
+export const FOOD_CONDITIONS = new Set(["FRESH", "PACKAGED", "OPENED", "PREPARED", "FROZEN", "CUSTOM"]);
+export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", ...FOOD_CONDITIONS]);
 
 // Re-check category-specific filters against each listing returned from storage.
 export function matchesExploreFilters(listing, { category = "", gender = "", proteinOnly = false } = {}) {
@@ -31,7 +32,12 @@ export function validateListingDetails({ name, category, description, price, pho
     if (trimmedLocation.length < 2 || trimmedLocation.length > 120) return "Enter a campus pickup location between 2 and 120 characters.";
     if (category === "CLOTHING" && !CLOTHING_GENDERS.has(clothingGender)) return "Choose a gender option for this clothing listing.";
     if (category === "FOOD" && !isValidProteinGrams(proteinGrams)) return "Enter protein per serving in grams, from 0 to 5,000.";
-    if (!PRODUCT_CONDITIONS.has(condition)) return "Choose a valid product condition.";
+    const allowedConditions = category === "FOOD"
+        ? FOOD_CONDITIONS
+        : new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", "CUSTOM"]);
+    if (!allowedConditions.has(condition)) return category === "FOOD"
+        ? "Choose a valid food condition."
+        : "Choose a valid product condition.";
     if (condition === "CUSTOM" && (typeof customCondition !== "string" || customCondition.trim().length < 2 || customCondition.trim().length > 80)) return "Describe the custom item condition in 2 to 80 characters.";
     if (!normalizeProductName(trimmedName)) return "Product name must include letters or numbers.";
     return null;

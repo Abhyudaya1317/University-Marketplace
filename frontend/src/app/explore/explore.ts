@@ -83,6 +83,14 @@ export class Explore {
     { value: 'OTHER', label: 'Other' },
   ];
 
+  // Give each listing card a stable retro filename; its window controls remain decorative.
+  protected listingWindowTitle(id: string): string {
+    const number = Number(id);
+    return Number.isSafeInteger(number) && number > 0
+      ? `ITEM_${String(number).padStart(3, '0')}.JPG`
+      : 'ITEM.SYS';
+  }
+
   constructor() {
     this.route.queryParamMap.subscribe((params) => {
       const category = params.get('category') ?? '';
@@ -123,6 +131,13 @@ export class Explore {
     this.selectedCategory.set(value);
     this.selectedGender.set('');
     this.proteinOnly.set(false);
+    this.randomizedIds.set([]);
+    this.loadListings();
+  }
+
+  // Apply a clothing gender immediately and request only listings for that value.
+  protected onGenderChange(value: string): void {
+    this.selectedGender.set(value);
     this.randomizedIds.set([]);
     this.loadListings();
   }
@@ -170,6 +185,11 @@ export class Explore {
     if (listing.condition === 'CUSTOM' && listing.customCondition) return listing.customCondition;
     if (listing.condition === 'NEW') return 'Brand new';
     if (listing.condition === 'OLD') return 'Old / used';
+    if (listing.condition === 'FRESH') return 'Fresh';
+    if (listing.condition === 'PACKAGED') return 'Packaged and sealed';
+    if (listing.condition === 'OPENED') return 'Opened / partially used';
+    if (listing.condition === 'PREPARED') return 'Prepared fresh';
+    if (listing.condition === 'FROZEN') return 'Frozen';
     return this.conditionLabel(listing.condition);
   }
 

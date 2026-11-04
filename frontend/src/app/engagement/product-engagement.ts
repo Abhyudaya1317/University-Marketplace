@@ -46,6 +46,13 @@ interface CurrentUserResponse {
   user?: { id: string; email: string };
 }
 
+type EngagementEntryType = 'review' | 'question' | 'answer';
+
+interface EngagementDeleteTarget {
+  type: EngagementEntryType;
+  id: string;
+}
+
 // Keep public product discussion and seller feedback in their own feature component.
 @Component({
   selector: 'app-product-engagement',
@@ -73,16 +80,20 @@ export class ProductEngagement {
   protected readonly savingQuestion = signal(false);
   protected readonly savingAnswerId = signal<string | null>(null);
   protected readonly savingReview = signal(false);
+  protected readonly pendingDelete = signal<EngagementDeleteTarget | null>(null);
+  protected readonly deletingEntryKey = signal<string | null>(null);
   protected readonly error = signal('');
   protected readonly success = signal('');
   protected readonly reviewableOffer = computed(
     () =>
       this.offers().find(
-        (offer) => offer.id === this.listingId() && offer.sellerId !== this.currentUserId(),
+        (offer) =>
+          String(offer.id) === String(this.listingId()) &&
+          String(offer.sellerId) !== String(this.currentUserId()),
       ) ?? null,
   );
   protected readonly listingReviews = computed(() =>
-    this.reviews().filter((review) => review.listingId === this.listingId()),
+    this.reviews().filter((review) => String(review.listingId) === String(this.listingId())),
   );
 
   // Load only this offer's discussion and check the user's session.
@@ -188,6 +199,86 @@ export class ProductEngagement {
       });
   }
 
+  // Ask for confirmation inline so deletion stays deliberate without a browser popup.
+  protected requestDelete(type: EngagementEntryType, id: string): void {
+    this.clearMessages();
+    this.pendingDelete.set({ type, id });
+  }
+
+  protected isDeletePending(type: EngagementEntryType, id: string): boolean {
+    const target = this.pendingDelete();
+    return target?.type === type && target.id === id;
+  }
+
+  protected cancelDelete(): void {
+    this.pendingDelete.set(null);
+  }
+
+  // Delete only the current user's review; the backend verifies ownership again.
+  protected deleteReview(reviewId: string): void {
+    this.deleteEntry(
+      'review',
+      reviewId,
+      `/api/listings/${this.listingId()}/reviews/${reviewId}`,
+      'Your review was deleted.',
+      () => this.reviews.update((reviews) => reviews.filter((review) => review.id !== reviewId)),
+    );
+  }
+
+  // Deleting a question also removes its replies through the database relationship.
+  protected deleteQuestion(questionId: string): void {
+    this.deleteEntry(
+      'question',
+      questionId,
+      `/api/listings/questions/${questionId}`,
+      'Your question and its replies were deleted.',
+      () => this.questions.update((questions) => questions.filter((question) => question.id !== questionId)),
+    );
+  }
+
+  // Remove only the current seller's answer and leave the question in place.
+  protected deleteAnswer(questionId: string, answerId: string): void {
+    this.deleteEntry(
+      'answer',
+      answerId,
+      `/api/listings/questions/${questionId}/answers/${answerId}`,
+      'Your answer was deleted.',
+      () =>
+        this.questions.update((questions) =>
+          questions.map((question) =>
+            question.id === questionId
+              ? { ...question, answers: question.answers.filter((answer) => answer.id !== answerId) }
+              : question,
+          ),
+        ),
+    );
+  }
+
+  // Share request state and feedback while each delete operation keeps its own endpoint.
+  private deleteEntry(
+    type: EngagementEntryType,
+    id: string,
+    endpoint: string,
+    successMessage: string,
+    updateLocalEntry: () => void,
+  ): void {
+    const key = `${type}:${id}`;
+    this.clearMessages();
+    this.deletingEntryKey.set(key);
+    this.http.delete<{ success: boolean }>(endpoint).subscribe({
+      next: () => {
+        updateLocalEntry();
+        this.pendingDelete.set(null);
+        this.success.set(successMessage);
+        this.deletingEntryKey.set(null);
+      },
+      error: (response: HttpErrorResponse) => {
+        this.error.set(response.error?.message ?? 'This entry could not be deleted. Please try again.');
+        this.deletingEntryKey.set(null);
+      },
+    });
+  }
+
   // Return an existing seller reply as the input hint so that seller can update it.
   protected answerDraft(
     questionId: string,
@@ -206,7 +297,7 @@ export class ProductEngagement {
   // Allow replies only for accounts that currently own an active offer in this group.
   protected canCurrentUserAnswer(): boolean {
     const userId = this.currentUserId();
-    return userId !== null && this.eligibleSellerIds().includes(userId);
+    return userId !== null && this.eligibleSellerIds().some((sellerId) => String(sellerId) === String(userId));
   }
 
   // Keep star values numeric when the select field changes.

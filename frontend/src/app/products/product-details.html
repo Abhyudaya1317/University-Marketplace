@@ -1,7 +1,7 @@
 <div class="details-page">
   <header class="details-header">
-    <a class="brand" routerLink="/" aria-label="UniTrade home"
-      ><span class="brand-mark">✦</span><span>UNITRADE<sup>’99</sup></span></a
+    <a class="brand" routerLink="/" aria-label="UniBee home"
+      ><span class="brand-mark">✦</span><span>UNIBEE<sup>’26</sup></span></a
     >
     <app-account-navigation />
   </header>
@@ -19,7 +19,7 @@
       <section class="listing-detail">
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
-            <img class="paint-frame-image" src="/images/untitled-paint.jpg" alt="Untitled Paint window" />
+            <img class="paint-frame-image" src="/images/untitled-paint.png" alt="Untitled Paint window" />
             @if (activePhotoUrl(); as photoUrl) {
               @if (isPhotoAvailable(photoUrl)) {
               <img
@@ -69,15 +69,14 @@
                 <dd>{{ categoryLabel(item.clothingGender) }}</dd>
               </div>
             }
-            @if (item.category === 'FOOD' && item.proteinGrams) {
-              <div class="product-field">
-                <dt>Protein</dt>
-                <dd>{{ item.proteinGrams }} g per serving</dd>
-              </div>
-            }
             <div class="product-field description-field">
               <dt>Description</dt>
-              <dd>{{ item.description || 'No description provided by the seller.' }}</dd>
+              <dd>
+                {{ item.description || 'No description provided by the seller.' }}
+                @if (item.category === 'FOOD') {
+                  <span class="food-protein-note">{{ foodProteinDescription(item) }}</span>
+                }
+              </dd>
             </div>
             <div class="product-field">
               <dt>Pickup location</dt>

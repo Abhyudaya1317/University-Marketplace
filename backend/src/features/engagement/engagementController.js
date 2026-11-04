@@ -153,6 +153,57 @@ export async function answerProductQuestion(request, response) {
     }
 }
 
+// Let only the person who asked a question remove it; its answers cascade with it.
+export async function deleteProductQuestion(request, response) {
+    const questionId = Number(request.params.questionId);
+    if (!Number.isSafeInteger(questionId) || questionId < 1) {
+        return response.status(400).json({ success: false, message: "Question id must be a positive integer." });
+    }
+
+    try {
+        const question = await prisma.productQuestion.findUnique({
+            where: { id: questionId },
+            select: { id: true, askerId: true }
+        });
+        if (!question) return response.status(404).json({ success: false, message: "Question not found." });
+        if (question.askerId !== request.user.id) {
+            return response.status(403).json({ success: false, message: "You can delete only your own question." });
+        }
+
+        await prisma.productQuestion.delete({ where: { id: questionId } });
+        return response.json({ success: true });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not delete your question. Please try again." });
+    }
+}
+
+// Let only the seller who wrote an answer remove that reply.
+export async function deleteProductAnswer(request, response) {
+    const questionId = Number(request.params.questionId);
+    const answerId = Number(request.params.answerId);
+    if (!Number.isSafeInteger(questionId) || questionId < 1 || !Number.isSafeInteger(answerId) || answerId < 1) {
+        return response.status(400).json({ success: false, message: "Question and answer ids must be positive integers." });
+    }
+
+    try {
+        const answer = await prisma.productAnswer.findUnique({
+            where: { id: answerId },
+            select: { id: true, questionId: true, sellerId: true }
+        });
+        if (!answer || answer.questionId !== questionId) {
+            return response.status(404).json({ success: false, message: "Answer not found for this question." });
+        }
+        if (answer.sellerId !== request.user.id) {
+            return response.status(403).json({ success: false, message: "You can delete only your own answer." });
+        }
+
+        await prisma.productAnswer.delete({ where: { id: answerId } });
+        return response.json({ success: true });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not delete your answer. Please try again." });
+    }
+}
+
 // Save one community review per signed-in user and offer, while blocking seller self-reviews.
 export async function reviewListing(request, response) {
     const listingId = Number(request.params.listingId);
@@ -185,5 +236,32 @@ export async function reviewListing(request, response) {
         });
     } catch {
         return response.status(500).json({ success: false, message: "We could not save your review. Please try again." });
+    }
+}
+
+// Confirm the review belongs to both this offer and the signed-in reviewer.
+export async function deleteListingReview(request, response) {
+    const listingId = Number(request.params.listingId);
+    const reviewId = Number(request.params.reviewId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1 || !Number.isSafeInteger(reviewId) || reviewId < 1) {
+        return response.status(400).json({ success: false, message: "Listing and review ids must be positive integers." });
+    }
+
+    try {
+        const review = await prisma.listingReview.findUnique({
+            where: { id: reviewId },
+            select: { id: true, listingId: true, reviewerId: true }
+        });
+        if (!review || review.listingId !== listingId) {
+            return response.status(404).json({ success: false, message: "Review not found for this offer." });
+        }
+        if (review.reviewerId !== request.user.id) {
+            return response.status(403).json({ success: false, message: "You can delete only your own review." });
+        }
+
+        await prisma.listingReview.delete({ where: { id: reviewId } });
+        return response.json({ success: true });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not delete your review. Please try again." });
     }
 }

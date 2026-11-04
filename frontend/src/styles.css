@@ -1,4 +1,4 @@
-/* UniTrade's shared retro desktop palette and typography. */
+/* UniBee's shared retro desktop palette and typography. */
 :root {
   color-scheme: light;
   --slate: #708090;
@@ -82,7 +82,7 @@ input, select, textarea {
 
 /* The shared account navigation is the gray main toolbar on every routed page. */
 .account-navigation {
-  gap: 0 !important;
+  gap: 10px !important;
   flex-wrap: wrap;
   border: 2px solid #777;
   background: var(--os-gray);
@@ -121,7 +121,7 @@ body :is(.market-page,.details-page,.seller-page,.dashboard-page,.orders-page,.m
 body .sell-page .brand {
   color: var(--deep-navy) !important;
   font-family: var(--pixel) !important;
-  font-size: 10px !important;
+  font-size: 19px !important;
   letter-spacing: 0 !important;
 }
 body :is(.market-page,.details-page,.seller-page,.dashboard-page,.orders-page,.messages-page) .brand-mark,
@@ -142,15 +142,38 @@ body .market-page .product-card {
   overflow: hidden;
   background: var(--os-gray) !important;
 }
-body .market-page .product-card::before {
-  display: block;
+body .market-page .listing-window-titlebar {
+  display: flex;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 27px;
-  padding: 8px 10px;
-  content: 'LISTING.EXE  ▬  □  ×';
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 7px 5px 10px;
   background: var(--navy);
   color: white;
-  font: 7px var(--pixel);
+}
+body .market-page .listing-window-titlebar > strong {
+  overflow: hidden;
+  font: 9px/1.5 var(--pixel);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body .market-page .listing-window-controls {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+body .market-page .listing-window-controls > span {
+  display: grid;
+  width: 25px;
+  height: 24px;
+  place-items: center;
+  border: 2px outset #fff;
+  background: var(--os-gray);
+  color: var(--deep-navy);
+  font: 700 13px/1 Arial, sans-serif;
 }
 body .market-page .product-card-main { width: 100%; padding: 12px; }
 body .market-page .catalog-photo { border: 2px solid #777; border-radius: 0; }
@@ -205,7 +228,7 @@ body :is(.market-page,.details-page,.sell-page,.seller-page,.dashboard-page,.ord
   min-height: 28px;
   margin: 0 -28px 0;
   padding: 8px 22px;
-  content: 'UNITRADE NETWORK     ◆     SECURE CAMPUS CONNECTION     ◆     MARKETPLACE SYSTEM';
+  content: 'UNIBEE NETWORK     ◆     SECURE CAMPUS CONNECTION     ◆     MARKETPLACE SYSTEM';
   background: var(--navy);
   color: white;
   font: 7px var(--pixel);
@@ -245,7 +268,7 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 .buyer-chat-error { margin: 0; padding: 10px 16px; color: #9b2525; }.buyer-chat-notice { margin: 0; padding: 8px 16px; color: #075a32; font-weight: 700; }.buyer-chat-full-link { align-self: flex-start; margin: 0 16px 16px; color: var(--navy); font-size: 13px; }
 .account-navigation .messages-nav-link { position: relative; overflow: visible; }
 .account-navigation .unread-badge { display: inline-grid; min-width: 22px; height: 22px; flex: 0 0 auto; place-items: center; padding: 0 5px; border: 2px solid var(--deep-navy); border-radius: 50%; background: var(--pink); color: var(--deep-navy); font: 700 10px/1 var(--body); box-shadow: 2px 2px 0 var(--deep-navy); }
-.universe-shell { max-width: 1600px; margin: 0 auto; overflow: hidden; border-inline: 1px solid #777; background: var(--desktop); }
+.universe-shell { max-width: 1600px; margin: 0 auto; overflow-x: clip; overflow-y: visible; border-inline: 1px solid #777; background: var(--desktop); }
 .system-strip { display: flex; min-height: 30px; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 26px; background: var(--navy); color: white; font: 10px var(--pixel); }
 .system-strip strong { color: white; }
 .system-strip span { display: inline-flex; align-items: center; gap: 8px; }
@@ -274,7 +297,22 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 .toolbar-sell, .toolbar-cart { display: inline-flex; min-height: 39px; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 2px outset white; background: var(--os-gray); color: var(--deep-navy); font: 8px var(--pixel); text-decoration: none; white-space: nowrap; box-shadow: 3px 3px 0 var(--deep-navy); }
 .toolbar-cart { border-color: var(--deep-navy); background: var(--deep-navy); color: white; }
 .universe-shell .account-navigation { flex: 0 0 auto; border: 0; background: transparent; box-shadow: none; }
-.universe-shell .account-navigation > a[href='/explore'], .universe-shell .account-navigation > a[href='/sell'] { display: none; }
+.universe-shell .account-navigation > a[href='/sell'] { display: none; }
+.universe-shell .account-navigation > a[href='/explore'] {
+  display: inline-flex !important;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px !important;
+  border: 2px solid var(--deep-navy) !important;
+  background: var(--electric-blue) !important;
+  color: #fff !important;
+  font: 9px var(--pixel) !important;
+  text-decoration: none;
+  box-shadow: 3px 3px 0 var(--deep-navy), 0 0 12px rgb(23 75 255 / 55%) !important;
+  animation: explore-link-glow 2.2s ease-in-out infinite alternate;
+}
+.universe-shell .account-navigation > a[href='/explore']:hover { background: var(--navy) !important; }
 .universe-shell .account-navigation > a, .universe-shell .account-navigation > button { min-height: 32px; padding-inline: 7px !important; font-size: 7px !important; }
 .universe-shell .account-navigation > .account-button { padding: 8px 10px !important; border: 2px outset #fff !important; background: var(--os-gray) !important; color: var(--deep-navy) !important; box-shadow: 2px 2px 0 var(--deep-navy) !important; text-decoration: none; white-space: nowrap; }
 
@@ -290,6 +328,10 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 .hero h1 .campus-word { color: var(--electric-blue); }
 .hero-description { max-width: 570px; margin: 28px 0 0; color: var(--deep-navy); font-size: 17px; font-weight: 600; line-height: 1.7; }
 .hero-actions { display: flex; align-items: center; gap: 26px; margin-top: 34px; }
+@keyframes explore-link-glow {
+  from { box-shadow: 3px 3px 0 var(--deep-navy), 0 0 7px rgb(23 75 255 / 38%); }
+  to { box-shadow: 3px 3px 0 var(--deep-navy), 0 0 17px rgb(23 75 255 / 78%); }
+}
 .browse-button { display: inline-flex; min-height: 64px; align-items: center; gap: 25px; padding: 0 22px; border: 2px solid white; background: var(--electric-blue); color: white; box-shadow: 7px 7px 0 var(--deep-navy); font: 9px var(--pixel); text-decoration: none; }
 .browse-button span { font: 21px var(--body); }
 .verified-badge { display: grid; grid-template-columns: 36px 1fr; align-items: center; column-gap: 8px; color: var(--deep-navy); }
@@ -422,7 +464,7 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
   .footer-top { flex-wrap: wrap; }.uptime { margin-left: auto; }
 }
 @media (max-width: 560px) {
-  .main-toolbar .brand { font-size: 14px; }.main-toolbar .desktop-links { gap: 12px; }.desktop-links a { font-size: 7px; }
+  .main-toolbar .brand { font-size: 19px; }.main-toolbar .desktop-links { gap: 12px; }.desktop-links a { font-size: 7px; }
   .toolbar-search { order: 5; }.toolbar-sell { margin-left: auto; }.toolbar-cart { display: none; }
   .universe-shell .account-navigation { flex-basis: 100%; justify-content: center; }
   .universe-shell .account-navigation > a, .universe-shell .account-navigation > button { min-height: 28px; padding-inline: 5px !important; font-size: 6px !important; }
@@ -481,6 +523,10 @@ body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-h
   box-shadow: inset 0 2px #fff;
 }
 
+body :is(.market-page,.details-page,.orders-page,.messages-page) { --route-header-gutter: 28px; }
+body .sell-page { --route-header-gutter: 24px; }
+body :is(.seller-page,.dashboard-page) { --route-header-gutter: 0px; }
+
 body :is(.market-page,.details-page,.sell-page,.orders-page,.messages-page) {
   padding-inline: clamp(14px, 3.5vw, 48px);
 }
@@ -494,7 +540,7 @@ body .orders-content, body .messages-content { max-width: 1120px; }
 
 body :is(.market-page,.details-page,.seller-page,.dashboard-page,.orders-page,.messages-page,.sell-page) .brand {
   color: var(--deep-navy) !important;
-  font: 12px/1.8 var(--pixel) !important;
+  font: 19px/1.8 var(--pixel) !important;
   letter-spacing: 0 !important;
 }
 body :is(.market-page,.details-page,.seller-page,.dashboard-page,.orders-page,.messages-page,.sell-page) .brand-mark {
@@ -746,10 +792,10 @@ body .details-page .paint-frame-image {
 }
 body .details-page .paint-product-image {
   position: absolute !important;
-  top: 11%;
-  left: 22.4%;
-  width: 69.7% !important;
-  height: 65.5% !important;
+  top: 12.3%;
+  left: 23%;
+  width: 70% !important;
+  height: 69.5% !important;
   min-height: 0 !important;
   max-width: none !important;
   max-height: none !important;
@@ -757,10 +803,10 @@ body .details-page .paint-product-image {
 }
 body .details-page .paint-placeholder {
   position: absolute;
-  top: 11%;
-  left: 22.4%;
-  width: 69.7%;
-  height: 65.5%;
+  top: 12.3%;
+  left: 23%;
+  width: 70%;
+  height: 69.5%;
   background: #fff;
     gap: 8px;
     align-content: center;
@@ -802,7 +848,7 @@ body .details-page .paint-screenshot { overflow: visible; }
 body .details-page .paint-photo-arrow {
   position: absolute;
   z-index: 2;
-  top: 42%;
+  top: 47%;
   display: grid;
   width: 42px;
   height: 54px;
@@ -825,8 +871,7 @@ body .details-page .paint-photo-count {
   color: #000080;
   font: 11px/1.2 var(--body);
 }
-body .market-page .product-card::before { content: 'LISTING.EXE'; }
-body .market-page .product-card { overflow: visible; }
+body .market-page .product-card { overflow: hidden !important; }
 body .market-page .catalog-media {
   position: relative;
   display: grid;
@@ -957,12 +1002,13 @@ body .universe-shell {
 }
 
 body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) {
-  width: 100vw;
+  box-sizing: border-box;
+  width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px));
   max-width: none !important;
   position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0 !important;
+  left: auto;
+  transform: none;
+  margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
   padding-inline: clamp(16px, 3vw, 48px) !important;
 }
 
@@ -987,8 +1033,6 @@ body .account-navigation > button {
 @media (max-width: 600px) {
   body .details-page .paint-photo-previous { left: 18%; }
   body .details-page .paint-photo-next { right: 7%; }
-  body .market-page .catalog-media { min-height: 210px; }
-  body .market-page .catalog-photo-link, body .market-page .catalog-photo { min-height: 206px; height: 206px; }
 }
 
 /* Profile pages share one Windows-style identity card and tappable listing gallery. */
@@ -1056,4 +1100,382 @@ body .seller-page .listing-section { display: none; }
   body :is(.dashboard-page,.seller-page) .profile-photo-grid { gap: 2px; }
   body :is(.dashboard-page,.seller-page) .profile-photo-caption { padding: 5px; opacity: 1; }
   body :is(.dashboard-page,.seller-page) .profile-photo-caption strong, body :is(.dashboard-page,.seller-page) .profile-photo-caption small { font-size: 10px; }
+}
+
+/* Mobile layout pass: keep the retro Windows look, but give every route room to work. */
+@media (max-width: 760px) {
+  body :is(.market-page,.details-page,.sell-page,.seller-page,.dashboard-page,.orders-page,.messages-page) {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 32px;
+  }
+
+  /* Match each full-width route header to that page's real mobile gutter. */
+  body .market-page { --route-header-gutter: 16px; }
+  body .details-page { --route-header-gutter: 16px; }
+  body .sell-page { --route-header-gutter: 15px; }
+  body .seller-page,
+  body .dashboard-page { --route-header-gutter: 0px; }
+  body .orders-page { --route-header-gutter: 16px; }
+  body .messages-page { --route-header-gutter: 14px; }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) {
+    z-index: 50;
+    box-sizing: border-box;
+    width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px));
+    max-width: none !important;
+    position: relative;
+    left: auto;
+    transform: none;
+    margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
+    overflow: visible;
+  }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) app-account-navigation {
+    position: relative;
+    z-index: 60;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  body :is(.market-page,.details-page,.sell-page,.seller-page,.dashboard-page,.orders-page,.messages-page) :is(main, .market-content, .details-content, .seller-content, .dashboard-content, .orders-content, .messages-content) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body .market-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body :is(.dashboard-page,.seller-page) .listing-grid { grid-template-columns: minmax(0, 1fr); }
+  body :is(.dashboard-page,.seller-page) .listing-card { min-width: 0; padding: 10px; }
+  body .dashboard-page .listing-main, body .seller-page .listing-main { min-width: 0; gap: 10px; padding: 2px; }
+  body :is(.dashboard-page,.seller-page) .listing-copy { min-width: 0; }
+  body :is(.dashboard-page,.seller-page) .listing-owner-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  body :is(.dashboard-page,.seller-page) .stock-editor { width: 100%; min-width: 0; }
+  body :is(.dashboard-page,.seller-page) .request-card { min-width: 0; padding: 11px; }
+  body .orders-page .order-card { min-width: 0; padding: 12px; }
+  body .orders-page .order-actions { gap: 7px; margin-top: 12px; }
+  body .orders-page .order-actions > * { max-width: 100%; white-space: normal; }
+  body .messages-page .thread-card, body .messages-page .inbox-list { min-width: 0; width: 100%; }
+  body .messages-page .thread-card .message-list .chat-message { overflow-wrap: anywhere; }
+  body .messages-page .thread-card .message-list .message-bubble { max-width: 100%; }
+  body .sell-page .sell-card { box-sizing: border-box; width: 100%; }
+}
+
+@media (max-width: 600px) {
+  /* Use predictable rows on phones so the brand, actions and search never collide. */
+  body .universe-shell { overflow-x: clip; overflow-y: visible; }
+  body .main-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'brand sell' 'account account' 'links links' 'search search';
+    align-items: center;
+    gap: 8px 10px;
+    min-width: 0;
+    padding: 9px 12px 11px;
+  }
+  body .main-toolbar > .brand { grid-area: brand; min-width: 0; font-size: clamp(13px, 4vw, 17px); }
+  body .main-toolbar > .toolbar-sell { grid-area: sell; min-height: 36px; justify-self: end; margin: 0; padding-inline: 8px; font-size: 7px; }
+  body .main-toolbar > app-account-navigation {
+    grid-area: account;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-basis: auto !important;
+    justify-content: flex-end;
+    overflow: visible;
+  }
+  body .main-toolbar .account-navigation {
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    justify-self: end;
+    margin-left: auto;
+    gap: 10px !important;
+  }
+  body .account-navigation > a[href='/explore'] {
+    flex: 0 0 auto !important;
+    flex-basis: auto !important;
+    width: fit-content !important;
+    max-width: 100%;
+    min-width: 0;
+    padding-inline: 8px !important;
+    font-size: 7px !important;
+    white-space: nowrap;
+  }
+  body .universe-shell .account-navigation { flex-wrap: nowrap; gap: 10px !important; }
+  body .universe-shell .account-navigation > a[href='/explore'] { min-height: 36px; padding-inline: 8px !important; font-size: 7px !important; }
+  body .main-toolbar .account-menu > summary { min-height: 36px; padding-inline: 9px; font-size: 7px; }
+  body .main-toolbar > .desktop-links { grid-area: links; display: flex; min-width: 0; flex-basis: auto; justify-content: flex-start; gap: clamp(10px, 4vw, 18px); margin: 0; }
+  body .main-toolbar > .desktop-links a { padding: 7px 0 5px; font-size: 7px; }
+  body .main-toolbar > .toolbar-search { grid-area: search; width: 100%; min-width: 0; height: 38px; margin: 0; }
+  body .main-toolbar .toolbar-search label { padding-inline: 8px; font-size: 6px; }
+  body .main-toolbar .toolbar-search button { width: 34px; }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    min-height: 0;
+    height: auto;
+    padding: 9px 12px !important;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) > .brand { min-width: 0; font-size: clamp(14px, 4vw, 17px) !important; }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) app-account-navigation { width: 100%; justify-content: flex-end; }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) .account-navigation {
+    width: max-content;
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    margin-left: auto;
+    gap: 8px !important;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) .account-navigation > a,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) .account-navigation > button { min-height: 34px; padding: 0 8px !important; font-size: 6px !important; }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) .account-menu > summary { min-height: 34px; padding-inline: 8px; font-size: 7px; }
+
+  /* The menu is anchored to the nav and stays above page content and product frames. */
+  body .account-navigation { position: relative; z-index: 60; overflow: visible; }
+  body .account-menu { position: relative; z-index: 70; }
+  body .account-menu-list {
+    z-index: 2000;
+    box-sizing: border-box;
+    left: auto;
+    right: 0;
+    width: min(270px, calc(100vw - 24px));
+    min-width: 0;
+    max-height: min(68vh, 420px);
+    overflow-y: auto;
+  }
+
+  /* Compact square image windows preserve the two-column Explore grid, even at 320px. */
+  body .market-page .product-grid { gap: 9px; }
+  body .market-page .product-card { min-width: 0; min-height: 0; }
+  body .market-page .listing-window-titlebar { min-height: 23px; padding: 3px 5px; }
+  body .market-page .listing-window-titlebar > strong { min-width: 0; overflow: hidden; font-size: 6px; text-overflow: ellipsis; }
+  body .market-page .listing-window-controls { gap: 2px; }
+  body .market-page .listing-window-controls > span { width: 17px; height: 17px; font-size: 9px; }
+  body .market-page .catalog-media { box-sizing: border-box; min-height: 0; margin: 7px 7px 0; }
+  body .market-page .catalog-photo-link,
+  body .market-page .catalog-photo {
+    box-sizing: border-box;
+    width: 100%;
+    height: clamp(108px, 33vw, 145px);
+    min-height: 0;
+  }
+  body .market-page .catalog-photo { object-fit: contain; }
+  body .market-page .catalog-photo-arrow { width: 30px; height: 38px; font-size: 23px; }
+  body .market-page .product-card-main { min-width: 0; padding: 8px 9px 0; }
+  body .market-page .category-label { font-size: 8px !important; line-height: 1.45; overflow-wrap: anywhere; }
+  body .market-page .product-card h2 { display: -webkit-box; overflow: hidden; margin: 4px 0; font-size: 14px !important; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  body .market-page .listing-condition { font-size: 11px !important; }
+  body .market-page .price { padding-top: 5px; font-size: 14px !important; }
+  body .market-page .stock-label { margin-top: 2px; font-size: 10px !important; }
+  body .market-page .seller-count { width: 100%; gap: 5px; padding: 8px 9px 10px; font-size: 9px !important; line-height: 1.35; }
+
+  body .market-page .page-intro { margin: 18px 0 14px; padding: 14px; }
+  body .market-page .page-intro h1 { margin-block: 5px; font-size: clamp(18px, 5vw, 25px); }
+  body .market-page .page-intro > p:last-child { font-size: 13px; line-height: 1.45; }
+  body .market-page .filters { gap: 8px; margin-bottom: 14px; padding: 10px; }
+  body .market-page .filters :is(input, select) { min-height: 40px; }
+  body .market-page .results-toolbar { flex-wrap: wrap; gap: 8px; margin-bottom: 9px; }
+  body .market-page .results-caption { min-width: 0; overflow-wrap: anywhere; }
+  body .market-page .randomize-button { min-height: 36px; padding-inline: 9px; font-size: 7px; }
+
+  /* Product detail retains its supplied Paint frame without forcing a desktop height. */
+  body .details-page .listing-detail { grid-template-columns: minmax(0, 1fr); gap: 10px; margin: 12px 0 26px; }
+  body .details-page .photo-panel { width: 100%; min-width: 0; min-height: 0 !important; height: auto; }
+  body .details-page .paint-screenshot { width: 100%; max-width: 460px; }
+  body .details-page .paint-screenshot > .paint-frame-image { display: block; width: 100% !important; height: auto !important; min-height: 0 !important; object-fit: contain !important; }
+  body .details-page .paint-screenshot > .paint-product-image { top: 12.3% !important; left: 23% !important; width: 70% !important; height: 69.5% !important; min-height: 0 !important; object-fit: contain !important; }
+  body .details-page .detail-copy { min-width: 0; padding: 12px !important; }
+  body .details-page .detail-copy h1 { font-size: clamp(18px, 6vw, 25px); line-height: 1.45; }
+  body .details-page .product-field { grid-template-columns: minmax(82px, .32fr) minmax(0, 1fr); gap: 7px; }
+  body .details-page .product-field dt, body .details-page .product-field dd { min-width: 0; font-size: 13px !important; }
+  body .details-page .product-field .price-tag { font-size: 20px; }
+  body .details-page .seller-link { min-width: 0; padding: 8px; }
+  body .details-page .detail-actions { flex-wrap: wrap; gap: 7px; margin-block: 10px; }
+  body .details-page .detail-actions > * { min-height: 38px; max-width: 100%; padding-inline: 10px; font-size: 13px; }
+  body .details-page .request-form { gap: 8px; margin-top: 12px; padding: 12px !important; }
+  body .details-page .request-form h2 { font-size: 18px; }
+  body .details-page .request-form :is(input, textarea) { min-width: 0; font-size: 16px; }
+
+  /* The profile card gives its space back to the listing photo grid. */
+  body .dashboard-page .dashboard-content { width: calc(100% - 20px); padding-top: 18px; padding-bottom: 32px; }
+  body .dashboard-page .profile-console { margin-bottom: 12px; }
+  body .dashboard-page .profile-window-titlebar { min-height: 30px; font-size: 8px; }
+  body .dashboard-page .profile-window-menu { min-height: 34px; flex-wrap: wrap; padding-inline: 4px; }
+  body .dashboard-page .profile-window-menu a { min-height: 32px; padding-inline: 7px; font-size: 6px; }
+  body .dashboard-page .profile-console-body { padding: 9px; }
+  body .dashboard-page .profile-handle { margin-bottom: 7px; font-size: 8px; }
+  body .dashboard-page .profile-summary,
+  body .seller-page .profile-heading {
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    grid-template-areas: 'avatar stats action' 'name name name' 'note note note';
+    align-items: center;
+    gap: 5px 8px;
+    padding: 8px;
+  }
+  body :is(.dashboard-page,.seller-page) .profile-avatar { width: 62px; height: 62px; }
+  body :is(.dashboard-page,.seller-page) .profile-stats { justify-content: space-between; gap: 3px; }
+  body :is(.dashboard-page,.seller-page) .profile-stats strong { font-size: 14px; }
+  body :is(.dashboard-page,.seller-page) .profile-stats span { font-size: 9px; }
+  body .dashboard-page .profile-display-name h1, body .seller-page .profile-copy h1 { font-size: 16px; }
+  body :is(.dashboard-page,.seller-page) .profile-display-name p, body .seller-page .profile-copy > p:last-child { font-size: 11px; }
+  body .dashboard-page .profile-action,
+  body .seller-page .profile-heading .save-button {
+    justify-self: end;
+    align-self: start;
+    width: auto;
+    max-width: min(132px, 38vw);
+    min-height: 31px;
+    padding-inline: 7px;
+    font-size: 6px;
+    white-space: normal;
+  }
+  body .seller-page .profile-actions { width: auto; min-width: 0; flex-direction: column; align-items: flex-end; justify-content: flex-start; gap: 5px; }
+  body .seller-page .profile-actions .save-button { width: auto; max-width: min(132px, 38vw); min-height: 31px; padding-inline: 7px; font-size: 6px; white-space: normal; }
+  body :is(.dashboard-page,.seller-page) .profile-gallery-section { margin-top: 10px; }
+  body :is(.dashboard-page,.seller-page) .profile-photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  body :is(.dashboard-page,.seller-page) .profile-photo-caption { gap: 3px; padding: 4px; }
+  body :is(.dashboard-page,.seller-page) .profile-photo-caption strong, body :is(.dashboard-page,.seller-page) .profile-photo-caption small { font-size: 9px; }
+
+  /* Inventory cards stay compact while all seller controls remain reachable. */
+  body .dashboard-page .items-page-heading { gap: 8px; margin-bottom: 18px; padding: 12px; }
+  body .dashboard-page .items-page-heading h1 { font-size: clamp(16px, 5vw, 22px); overflow-wrap: anywhere; }
+  body .dashboard-page .items-page-heading p:not(.eyebrow) { margin-top: 6px; font-size: 13px; }
+  body .dashboard-page .items-page-heading > .text-link { font-size: 12px; }
+  body .dashboard-page .section-heading { align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  body .dashboard-page .section-heading h2 { font-size: 10px; }
+  body .dashboard-page .listing-main, body .seller-page .listing-main { align-items: flex-start; min-height: 0; }
+  body :is(.dashboard-page,.seller-page) .listing-photo { width: 72px; height: 88px; flex: 0 0 72px; }
+  body :is(.dashboard-page,.seller-page) .listing-copy h3 { font-size: 15px; line-height: 1.25; }
+  body :is(.dashboard-page,.seller-page) .listing-description { display: -webkit-box; overflow: hidden; font-size: 12px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  body :is(.dashboard-page,.seller-page) .listing-price { margin-left: auto; font-size: 15px; }
+  body :is(.dashboard-page,.seller-page) .pending-request-notice { padding: 7px; font-size: 12px; }
+  body :is(.dashboard-page,.seller-page) .listing-owner-tools { margin-top: 8px; padding-top: 8px; }
+  body :is(.dashboard-page,.seller-page) .management-button,
+  body :is(.dashboard-page,.seller-page) .listing-owner-tools button,
+  body :is(.dashboard-page,.seller-page) .request-actions button { min-height: 34px; max-width: 100%; padding-inline: 9px; font-size: 7px; }
+  body :is(.dashboard-page,.seller-page) .stock-editor { gap: 6px; }
+  body :is(.dashboard-page,.seller-page) .stock-editor input { width: 62px; }
+  body :is(.dashboard-page,.seller-page) .request-details summary { min-height: 34px; padding: 7px; font-size: 13px; }
+  body :is(.dashboard-page,.seller-page) .request-card p { font-size: 13px; }
+
+  /* Orders and chats use the available width instead of turning details into long columns. */
+  body .orders-page .orders-content { padding-top: 16px; }
+  body .orders-page .back-link, body .messages-page .back-link { margin-block: 12px; }
+  body .orders-page .orders-title-panel { margin-bottom: 14px; padding: 12px; }
+  body .orders-page .orders-title-panel h1, body .messages-page .page-heading h1 { font-size: clamp(16px, 5vw, 22px); }
+  body .orders-page .intro { font-size: 13px; line-height: 1.45; }
+  body .orders-page .order-list { gap: 9px; }
+  body .orders-page .order-heading { flex-direction: row; align-items: center; gap: 7px; }
+  body .orders-page .order-heading h2 { font-size: 16px; overflow-wrap: anywhere; }
+  body .orders-page .status-pill { max-width: 48%; font-size: 6px; }
+  body .orders-page .order-details { flex-direction: row !important; align-items: flex-start; gap: 9px; margin-top: 10px; }
+  body .orders-page .order-details img { width: 66px; height: 66px; flex: 0 0 66px; }
+  body .orders-page .order-copy { min-width: 0; gap: 4px; }
+  body .orders-page .order-copy p { font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+  body .orders-page .order-copy small { font-size: 10px; }
+  body .orders-page .order-actions > * { min-height: 34px; padding-inline: 9px; font-size: 7px; }
+  body .messages-page .messages-content { padding-top: 14px; }
+  body .messages-page .page-heading { margin-block: 12px; padding: 12px; }
+  body .messages-page .inbox-row { min-width: 0; gap: 8px; padding: 9px; }
+  body .messages-page .inbox-row img, body .messages-page .listing-placeholder { width: 44px; height: 44px; flex: 0 0 44px; }
+  body .messages-page .inbox-row > *, body .messages-page .thread-person-details { min-width: 0; overflow-wrap: anywhere; }
+  body .messages-page .thread-card { min-width: 0; }
+  body .messages-page .thread-heading { gap: 9px; padding: 10px; }
+  body .messages-page .thread-person-avatar { width: 46px; height: 46px; flex: 0 0 46px; }
+  body .messages-page .thread-heading h1 { font-size: 18px; overflow-wrap: anywhere; }
+  body .messages-page .message-list { min-width: 0; padding: 10px 10px 10px 30px; }
+  body .messages-page .thread-card .message-list .chat-message { max-width: 92%; }
+  body .messages-page .message-form { min-width: 0; padding: 9px; }
+  body .messages-page .composer-row { gap: 6px; }
+  body .messages-page .composer-row textarea { box-sizing: border-box; min-width: 0; }
+  body .messages-page .bulk-message-toolbar { gap: 6px; padding: 7px; }
+  body .messages-page .bulk-message-toolbar button { max-width: 100%; }
+
+  /* Avoid clipping and oversized padding in forms, dialogs and auth pages. */
+  body .sell-page .sell-card { margin-top: 16px; padding: 14px !important; }
+  body .sell-page .form-field { min-width: 0; padding: 9px; }
+  body .sell-page :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+  body .sell-page .photo-preview { width: min(100%, 190px); max-height: 150px; }
+  body .auth-shell { padding: 20px 12px; }
+  body .auth-shell .auth-card { padding: 16px !important; }
+  body .confirmation-modal { width: calc(100vw - 28px); max-width: 440px; padding: 14px; }
+}
+
+@media (max-width: 380px) {
+  body .main-toolbar { padding-inline: 9px; column-gap: 7px; }
+  body .main-toolbar .brand { font-size: 13px; }
+  body .main-toolbar .toolbar-sell { padding-inline: 6px; font-size: 6px; }
+  body .main-toolbar .account-navigation { gap: 8px !important; }
+  body .main-toolbar .desktop-links { gap: 9px; }
+  body .main-toolbar .desktop-links a { font-size: 6px; }
+  body .market-page { --route-header-gutter: 16px; }
+  body .market-page .product-grid { gap: 7px; }
+  body .market-page .catalog-media { margin-inline: 5px; }
+  body .market-page .product-card-main { padding-inline: 7px; }
+  body .market-page .seller-count { padding-inline: 7px; }
+  body .market-page .product-card h2 { font-size: 13px !important; }
+  body .dashboard-page .profile-console-body { padding: 7px; }
+  body .dashboard-page .profile-summary, body .seller-page .profile-heading { grid-template-columns: 54px minmax(0,1fr) auto; gap: 4px 6px; padding: 6px; }
+  body :is(.dashboard-page,.seller-page) .profile-avatar { width: 54px; height: 54px; }
+  body :is(.dashboard-page,.seller-page) .profile-stats span { font-size: 9px; }
+  body .dashboard-page .profile-window-menu a { padding-inline: 5px; font-size: 5px; }
+  body :is(.dashboard-page,.seller-page) .listing-photo { width: 62px; height: 78px; flex-basis: 62px; }
+  body .orders-page .order-details img { width: 54px; height: 54px; flex-basis: 54px; }
+}
+
+@media (min-width: 360px) and (max-width: 600px) {
+  body .universe-shell .home-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  body .universe-shell .home-product-image { height: clamp(112px, 34vw, 150px); }
+  body .universe-shell .home-product-main { min-width: 0; padding: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body .market-page .product-card,
+  body .universe-shell .home-product-window,
+  body :is(.dashboard-page,.seller-page) .profile-photo-tile img { transition: none; }
+}
+
+/* Keep the mobile Home actions together in one row below the brand. */
+@media (max-width: 600px) {
+  body .universe-shell .main-toolbar {
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    grid-template-areas: 'brand brand brand' 'explore sell options' 'links links links' 'search search search';
+    column-gap: 7px;
+    row-gap: 8px;
+  }
+  body .universe-shell .main-toolbar > .brand { grid-area: brand; }
+  body .universe-shell .main-toolbar > app-account-navigation { display: contents !important; }
+  body .universe-shell .main-toolbar .account-navigation { display: contents !important; }
+  body .universe-shell .main-toolbar .account-navigation > a[href='/explore'] {
+    grid-area: explore;
+    justify-self: end;
+    width: auto !important;
+    max-width: none;
+    padding-inline: 7px !important;
+    font-size: 6px !important;
+  }
+  body .universe-shell .main-toolbar > .toolbar-sell {
+    grid-area: sell;
+    justify-self: end;
+    min-width: 0;
+    margin: 0;
+    padding-inline: 7px;
+    font-size: 6px;
+  }
+  body .universe-shell .main-toolbar .account-menu { grid-area: options; justify-self: end; }
+  body .universe-shell .main-toolbar .account-menu > summary { min-height: 36px; padding-inline: 7px; font-size: 6px; }
+  body .universe-shell .main-toolbar > .desktop-links { grid-area: links; }
+  body .universe-shell .main-toolbar > .toolbar-search { grid-area: search; }
+}
+
+@media (max-width: 380px) {
+  body .universe-shell .main-toolbar { column-gap: 5px; padding-inline: 8px; }
+  body .universe-shell .main-toolbar .account-navigation > a[href='/explore'] { padding-inline: 5px !important; font-size: 5px !important; }
+  body .universe-shell .main-toolbar > .toolbar-sell { gap: 3px; padding-inline: 5px; font-size: 5px; }
+  body .universe-shell .main-toolbar .account-menu > summary { gap: 4px; padding-inline: 5px; font-size: 5px; }
 }
