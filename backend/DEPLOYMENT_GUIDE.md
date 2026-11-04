@@ -2,7 +2,7 @@
 
 ## Deployment status
 
-The backend is prepared for a Vercel Node.js function and Supabase PostgreSQL configuration. No Supabase database was contacted, and no production migrations or deployment were run.
+The backend is prepared for a Vercel Node.js function and a **new, empty Supabase PostgreSQL database**. No existing records were transferred, and the existing PostgreSQL database has not been changed or deleted. A migration attempt was made after approval, but the connection timed out before Prisma reported any applied migrations. The migration state could not be verified from this environment; check it from a network that can reach Supabase before assuming tables were created.
 
 The backend currently stores listing photos, profile photos, and private message attachments on local disk. Vercel function filesystems are not durable, and Express static files are not served by Vercel's Express integration. Before production, move these three upload flows to persistent object storage and retain the existing file validation and private access checks. Do not use the current local upload storage for production data.
 
@@ -35,15 +35,15 @@ Prisma is version 7.10.1. `prisma.config.ts` supplies the CLI connection URL, pr
 
 For pooled runtime connections, use Supabase's generated URI and its required pooler options (often `pgbouncer=true` and a low `connection_limit`). Do not edit or invent the host, username, password, database, or SSL parameters. The exact URI format depends on the selected Supabase connection mode.
 
-Prisma schema: `prisma/schema.prisma`. Migration history currently contains 22 ordered migration directories, including two uncommitted migrations already present in this working tree. The migration set has not been applied to Supabase, and its state has not been compared with any live database.
+Prisma schema: `prisma/schema.prisma`. Migration history currently contains 22 ordered migration directories, including two uncommitted migrations already present in this working tree. Applying this complete history to a confirmed empty Supabase database will create its tables and indexes without copying records from the old database. The migration set has not yet been applied to Supabase.
 
 ## Safe migration procedure
 
-1. Create the Supabase project and provide the direct and transaction-pooler connection URLs securely through Vercel/local environment settings, never in Git or chat logs.
-2. Before migration, determine whether this is a new empty database or contains data. For an existing database, take and verify an approved backup and compare its schema and `_prisma_migrations` records against the checked-in migration history.
-3. For an empty database, review all checked-in migrations, then run `npx prisma migrate deploy` with `DIRECT_URL` set. This applies the migrations in order; it does not create a baseline from an existing schema.
-4. If the database already has tables or data without matching migration history, stop and prepare a separate reviewed baseline/data-transfer plan. Do not apply migrations until that plan is approved.
-5. Verify migration status, tables, records, and application reads/writes after explicit production approval.
+1. Create a separate Supabase project and confirm its database is new and empty. Do not connect it to the existing database, copy records, or delete the old database.
+2. Set `DATABASE_URL` to Supabase's transaction-pooler URL for runtime queries and `DIRECT_URL` to a direct or session-pooler URL for migrations. Keep both private.
+3. Review all 22 checked-in migration folders, including the two uncommitted migrations already in this workspace. Commit the intended schema and migration changes before deploying.
+4. After explicit approval, run `npm run db:migrate:deploy` from `backend`. Prisma 7 uses `DIRECT_URL` from `prisma.config.ts` for this command. It applies the migration history in order and does not transfer data. If the command times out, check connectivity and migration status before retrying.
+5. Verify the new tables and migration status, then test application reads/writes against the new database.
 
 Never run `prisma migrate reset`, drop, truncate, or destructive schema commands against production.
 
@@ -62,7 +62,7 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Required only for password-reset email delivery. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Required only for Google sign-in; callback must match the URL registered with Google. |
 
-`PORT` is set by local hosting and is not a production Vercel setting. There is no `JWT_SECRET`, payment provider, Cloudinary, or frontend database variable used by the inspected backend. Never expose database or authentication secrets to Angular.
+`PORT` is set by local hosting and is not a production Vercel setting. The inspected authentication uses opaque, database-backed cookies and session records; it does not use JWT. Orders currently use cash on delivery; no online payment provider or webhook is implemented in this backend. There is no `JWT_SECRET`, payment provider, Cloudinary, or frontend database variable used by the inspected backend. Never expose database or authentication secrets to Angular.
 
 ## Vercel deployment
 
@@ -81,7 +81,7 @@ The Angular project is deployed separately. Update its existing `/api/:path*` re
 - [ ] Vercel project root is `backend`, using Node.js 22.x.
 - [ ] Secrets are set in Vercel and are absent from commits and build logs.
 - [ ] The Supabase runtime pooler and migration URLs are correct and kept separate.
-- [ ] Migration history is reviewed, database state is known, backup is approved where needed, and production migration is explicitly approved.
+- [ ] The new Supabase database is confirmed empty; migration history is reviewed and table creation is explicitly approved.
 - [ ] Uploads use durable object storage with private message-file authorization preserved.
 - [ ] `GET /api/health` returns success.
 - [ ] Production CORS allows only the exact Angular origin and credentials are enabled.
