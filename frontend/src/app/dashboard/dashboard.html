@@ -159,11 +159,11 @@
 
         <section class="dashboard-section" id="my-listings" aria-labelledby="my-listings-title">
           <div class="section-heading">
-            <div>
-              <p class="eyebrow">YOUR SELLER CATALOG</p>
-              <h2 id="my-listings-title">Active listings</h2>
-            </div>
-            <div class="section-heading-actions">
+            <div class="section-heading-main">
+              <div>
+                <p class="eyebrow">YOUR SELLER CATALOG</p>
+                <h2 id="my-listings-title">Active listings</h2>
+              </div>
               <button
                 class="management-button request-filter-button"
                 type="button"
@@ -181,8 +181,8 @@
                       : 'Loading buyer requests…'
                 }}
               </button>
-              <a class="text-link" routerLink="/sell">+ List an item</a>
             </div>
+            <a class="text-link" routerLink="/sell">+ List an item</a>
           </div>
           @if (stockNotice()) {
             <p class="dashboard-notice" role="status">{{ stockNotice() }}</p>
@@ -203,14 +203,21 @@
             <div class="empty-state">
               <h3>No buyer requests yet</h3>
               <p>Items with pending buyer requests will appear here.</p>
-              <button class="management-button" type="button" (click)="toggleBuyerRequestFilter()">
+              <button
+                class="management-button request-filter-button"
+                type="button"
+                (click)="toggleBuyerRequestFilter()"
+              >
                 Show all items
               </button>
             </div>
           } @else {
             <div class="listing-grid">
               @for (listing of visibleActiveListings(); track listing.id) {
-                  <article class="listing-card" [class.has-buyer-request]="listingRequests(listing.id).length > 0">
+                <article
+                  class="listing-card"
+                  [class.has-buyer-request]="listingRequests(listing.id).length > 0"
+                >
                   <a class="listing-main" [routerLink]="['/products', listing.id]">
                     @if (listing.photoUrl) {
                       <img
@@ -232,22 +239,10 @@
                           on the item.
                         </p>
                       }
-                      <p class="listing-description">{{ listing.description }}</p>
-                      <p class="listing-location">{{ listing.location }}</p>
-                      <small>Condition: {{ statusLabel(listing.condition) }}</small>
-                      <small>Listed {{ listing.createdAt | date: 'mediumDate' }}</small>
                     </div>
                     <strong class="listing-price">₹{{ listing.price }}</strong>
                   </a>
                   <div class="listing-owner-tools">
-                    <span class="status-pill" [class.status-active]="listing.status === 'ACTIVE'">{{
-                      statusLabel(listing.status)
-                    }}</span>
-                    <span
-                      class="stock-state"
-                      [class.stock-empty]="listing.quantityAvailable === 0"
-                      >{{ stockLabel(listing.quantityAvailable) }}</span
-                    >
                     @if (listing.status === 'ACTIVE') {
                       <div class="listing-actions">
                         <a
@@ -410,16 +405,7 @@
                     <div class="listing-copy">
                       <p class="eyebrow">{{ listing.product.category.replaceAll('_', ' ') }}</p>
                       <h3>{{ listing.title }}</h3>
-                      <strong>₹{{ listing.price }}</strong>
-                      <p class="listing-description">{{ listing.description }}</p>
-                      <small
-                        >Archived
-                        {{
-                          listing.archivedAt
-                            ? (listing.archivedAt | date: 'mediumDate')
-                            : 'date unavailable'
-                        }}</small
-                      >
+                      <strong class="listing-price">₹{{ listing.price }}</strong>
                     </div>
                   </div>
                   <div class="archived-actions">

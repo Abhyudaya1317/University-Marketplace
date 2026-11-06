@@ -162,21 +162,25 @@
 .section-heading > .text-link {
   font-weight: 700;
 }
-.section-heading-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
+.section-heading-main {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-width: 0;
 }
-.request-filter-button {
+.dashboard-section .request-filter-button {
+  box-sizing: border-box;
+  min-height: 52px !important;
+  max-width: 100%;
+  padding: 0 20px !important;
+  font: 700 16px/1.25 var(--body) !important;
   white-space: normal;
 }
-.request-filter-button[aria-pressed="true"] {
+.dashboard-section .request-filter-button[aria-pressed="true"] {
   outline: 2px solid #174bff;
   outline-offset: 2px;
 }
-.request-filter-button:disabled {
+.dashboard-section .request-filter-button:disabled {
   cursor: wait;
   opacity: 0.65;
 }
@@ -348,12 +352,12 @@
 }
 .listing-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 .listing-card {
   min-width: 0;
-  padding: 14px;
+  padding: 10px;
   border: 1px solid #ebe5da;
   border-radius: 16px;
   background: #fffefa;
@@ -375,18 +379,19 @@
   font-weight: 700;
   line-height: 1.45;
 }
-.listing-main {
+.dashboard-section .listing-card .listing-main {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  min-height: 142px;
+  align-items: center;
+  gap: 12px;
+  min-height: 104px;
+  padding: 8px;
   color: inherit;
   text-decoration: none;
 }
-.listing-photo {
-  width: 122px;
-  height: 142px;
-  flex: 0 0 122px;
+.dashboard-section .listing-card .listing-photo {
+  width: 92px;
+  height: 106px;
+  flex: 0 0 92px;
   border-radius: 12px;
   background: #f4eee5;
   object-fit: cover;
@@ -400,7 +405,7 @@
 .listing-copy {
   display: grid;
   align-content: start;
-  gap: 7px;
+  gap: 4px;
   min-width: 0;
   flex: 1;
 }
@@ -409,20 +414,9 @@
 }
 .listing-copy h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.25;
   overflow-wrap: anywhere;
-}
-.listing-description,
-.listing-location {
-  margin: 0;
-  color: #716d66;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.listing-copy small {
-  color: #817b73;
-  font-size: 11px;
 }
 .listing-price {
   color: #24251f;
@@ -431,19 +425,12 @@
 }
 .listing-owner-tools {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding-top: 12px;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid #f0ece5;
-}
-.stock-state {
-  color: #55755d;
-  font-size: 12px;
-}
-.stock-empty {
-  color: #b84632;
 }
 .stock-editor {
   display: flex;
@@ -551,17 +538,6 @@
   border-radius: 9px;
   background: #f5eee3;
 }
-.status-pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eeeae2;
-  color: #716d66;
-  font-size: 11px;
-}
-.status-active {
-  background: #e6f0e7;
-  color: #397154;
-}
 .price {
   min-width: 74px;
   text-align: right;
@@ -614,6 +590,11 @@
     grid-template-columns: 1fr;
   }
 }
+@media (min-width: 761px) and (max-width: 1000px) {
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 @media (max-width: 680px) {
   .dashboard-header {
     padding: 0 18px;
@@ -626,6 +607,32 @@
     align-items: flex-start;
     flex-direction: column;
     padding: 14px;
+  }
+  .dashboard-section .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .section-heading-main {
+    width: 100%;
+  }
+  .dashboard-section .request-filter-button {
+    min-height: 48px !important;
+    padding-inline: 14px !important;
+    font-size: 14px !important;
+  }
+  .dashboard-section .section-heading > .text-link {
+    align-self: flex-end;
+  }
+  .dashboard-section .listing-card .listing-main {
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-height: 0;
+    padding: 6px;
+  }
+  .dashboard-section .listing-card .listing-photo {
+    width: 72px;
+    height: 84px;
+    flex-basis: 72px;
   }
   .saved-grid {
     grid-template-columns: 1fr;
