@@ -236,7 +236,7 @@ model ProductAnswer {
   @@index([sellerId, createdAt])
 }
 
-// Attach one community rating to an offer per reviewer; transaction verification is not available yet.
+// Attach one purchase-verified rating to an offer per reviewer; the API checks for a completed order.
 model ListingReview {
   id         Int      @id @default(autoincrement())
   listingId  Int

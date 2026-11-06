@@ -55,11 +55,12 @@ All wishlist mutations use the individual Listing ID. ListingFavorite composite 
 | Method and path | Auth | Request | Response / behavior | Source |
 |---|---|---|---|---|
 | GET /api/listings/:listingId/engagement | No | ID | {success,eligibleSellerIds,questions:[...answers],reviews:[...]}; only active listing; newest 50 questions / 100 reviews | getListingEngagement |
+| GET /api/listings/:listingId/review-eligibility | Required | ID | {success,canReview}; true only for a buyer with a completed order for this exact offer | getListingReviewEligibility |
 | POST /api/listings/:listingId/questions | Required | {question}, 10–500 chars | 201 {success:true,question}; max 20 per user/listing per day; exact listing scope | askListingQuestion |
 | POST /api/listings/questions/:questionId/answers | Required; exact listing seller | {answer}, 2–1000 chars | 201 {success:true,answer}; upsert one answer per seller/question | answerProductQuestion |
-| POST /api/listings/:listingId/reviews | Required | {rating:1..5,comment:3..1000 chars} | 201 {success:true,review}; blocks self-review; upsert one review per user/listing | reviewListing |
+| POST /api/listings/:listingId/reviews | Required | {rating:1..5,comment:3..1000 chars} | 201 {success:true,review}; requires the buyer to have a COMPLETED order for this exact offer; blocks self-review; upsert one review per user/listing | reviewListing |
 
-Reviews are not purchase-verified; endpoint does not require a completed Order.
+Order completion requires the seller to confirm handoff and the buyer to confirm receipt and cash payment. Reviews can be read publicly, but only completed buyers can create or update one.
 
 ## Sellers and dashboard
 

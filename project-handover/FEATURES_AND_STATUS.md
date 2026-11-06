@@ -100,9 +100,9 @@ ListingFavorite references userId + listingId and unique key prevents duplicates
 
 Questions are associated with exact listing; seller of that listing answers/upserts. Public GET includes up to 50 recent questions; owner answer route checks sellerId. Rate limit currently 20 questions/user/listing/day. Source engagement component/controller. Legacy productId remains in ProductQuestion and indexes.
 
-### Reviews — PARTIALLY IMPLEMENTED
+### Reviews — PURCHASE-VERIFIED WRITES IMPLEMENTED
 
-One review per user/listing (upsert), rating 1–5 and comment. Self-review rejected; review totals aggregate across seller's active listing reviews. No completed-order requirement, dispute moderation, abuse report or verified-purchase status. Therefore do not present as purchase-verified reputation.
+One review per user/listing (upsert), rating 1–5 and comment. Self-review is rejected. Creating or updating a review requires that the signed-in user is the buyer on a COMPLETED order for the exact offer; completion follows seller handoff confirmation and buyer receipt/cash confirmation. Public reviews and seller aggregates remain visible. Dispute moderation and abuse reporting are not implemented.
 
 ## Orders and payments
 

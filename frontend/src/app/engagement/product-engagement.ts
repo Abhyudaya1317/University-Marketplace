@@ -46,6 +46,11 @@ interface CurrentUserResponse {
   user?: { id: string; email: string };
 }
 
+interface ReviewEligibilityResponse {
+  success: boolean;
+  canReview: boolean;
+}
+
 type EngagementEntryType = 'review' | 'question' | 'answer';
 
 interface EngagementDeleteTarget {
@@ -62,6 +67,9 @@ interface EngagementDeleteTarget {
 })
 export class ProductEngagement {
   private readonly http = inject(HttpClient);
+  private reviewEligibilityRequestKey = '';
+  private reviewEligibilityResolvedKey = '';
+  private reviewEligibilityGeneration = 0;
 
   // The parent passes the exact seller listing this discussion belongs to.
   readonly offers = input<EngagementOffer[]>([]);
@@ -70,6 +78,8 @@ export class ProductEngagement {
   // Signals drive loading, sign-in permissions, feedback, and form state.
   protected readonly loading = signal(true);
   protected readonly currentUserId = signal<string | null>(null);
+  protected readonly canReview = signal<boolean | null>(null);
+  protected readonly reviewEligibilityError = signal('');
   protected readonly eligibleSellerIds = signal<string[]>([]);
   protected readonly questions = signal<EngagementResponse['questions']>([]);
   protected readonly reviews = signal<EngagementResponse['reviews']>([]);
@@ -102,6 +112,20 @@ export class ProductEngagement {
       const listingId = this.listingId();
       if (listingId) this.loadEngagement(listingId);
     });
+    effect(() => {
+      const listingId = this.listingId();
+      const reviewerId = this.currentUserId();
+      const offer = this.reviewableOffer();
+      if (!listingId || !reviewerId || !offer) {
+        this.reviewEligibilityGeneration += 1;
+        this.reviewEligibilityRequestKey = '';
+        this.reviewEligibilityResolvedKey = '';
+        this.canReview.set(null);
+        this.reviewEligibilityError.set('');
+        return;
+      }
+      this.loadReviewEligibility(listingId, reviewerId);
+    });
     this.http.get<CurrentUserResponse>('/api/auth/me').subscribe({
       next: (response) => this.currentUserId.set(response.user?.id ?? null),
       error: () => this.currentUserId.set(null),
@@ -121,6 +145,32 @@ export class ProductEngagement {
       error: (response: HttpErrorResponse) => {
         this.error.set(response.error?.message ?? 'Questions and reviews could not be loaded.');
         this.loading.set(false);
+      },
+    });
+  }
+
+  // Ask the server whether this signed-in buyer completed this exact seller offer.
+  private loadReviewEligibility(listingId: string, reviewerId: string): void {
+    const requestKey = `${listingId}:${reviewerId}`;
+    if (this.reviewEligibilityRequestKey === requestKey || this.reviewEligibilityResolvedKey === requestKey) return;
+
+    this.reviewEligibilityRequestKey = requestKey;
+    const generation = ++this.reviewEligibilityGeneration;
+    this.canReview.set(null);
+    this.reviewEligibilityError.set('');
+    this.http.get<ReviewEligibilityResponse>(`/api/listings/${listingId}/review-eligibility`).subscribe({
+      next: (response) => {
+        if (generation !== this.reviewEligibilityGeneration) return;
+        this.reviewEligibilityRequestKey = '';
+        this.reviewEligibilityResolvedKey = requestKey;
+        this.canReview.set(response.canReview === true);
+      },
+      error: () => {
+        if (generation !== this.reviewEligibilityGeneration) return;
+        this.reviewEligibilityRequestKey = '';
+        this.reviewEligibilityResolvedKey = requestKey;
+        this.canReview.set(false);
+        this.reviewEligibilityError.set('We could not verify your purchase. Refresh the page or sign in again.');
       },
     });
   }
@@ -174,6 +224,10 @@ export class ProductEngagement {
     const listingId = this.listingId();
     if (!listingId) {
       this.error.set('Choose a seller offer to review.');
+      return;
+    }
+    if (this.canReview() !== true) {
+      this.error.set('Complete a purchase of this offer before posting a review.');
       return;
     }
 

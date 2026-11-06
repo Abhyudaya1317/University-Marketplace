@@ -204,7 +204,41 @@ export async function deleteProductAnswer(request, response) {
     }
 }
 
-// Save one community review per signed-in user and offer, while blocking seller self-reviews.
+// Check purchase eligibility separately so anonymous visitors can still read public reviews.
+export async function getListingReviewEligibility(request, response) {
+    const listingId = Number(request.params.listingId);
+    if (!Number.isSafeInteger(listingId) || listingId < 1) {
+        return response.status(400).json({ success: false, message: "Listing id must be a positive integer." });
+    }
+
+    try {
+        const listing = await prisma.listing.findUnique({
+            where: { id: listingId },
+            select: { id: true, sellerId: true, status: true }
+        });
+        if (!listing || listing.status !== "ACTIVE") {
+            return response.status(404).json({ success: false, message: "This seller offer was not found." });
+        }
+        if (listing.sellerId === request.user.id) {
+            return response.json({ success: true, canReview: false });
+        }
+
+        const completedPurchase = await prisma.order.findFirst({
+            where: {
+                listingId: listing.id,
+                buyerId: request.user.id,
+                sellerId: listing.sellerId,
+                status: "COMPLETED"
+            },
+            select: { id: true }
+        });
+        return response.json({ success: true, canReview: Boolean(completedPurchase) });
+    } catch {
+        return response.status(500).json({ success: false, message: "We could not verify your purchase for this review." });
+    }
+}
+
+// Save one community review per signed-in buyer and offer after a completed purchase.
 export async function reviewListing(request, response) {
     const listingId = Number(request.params.listingId);
     const reviewInput = validateReview(request.body?.rating, request.body?.comment);
@@ -222,6 +256,19 @@ export async function reviewListing(request, response) {
         }
         if (listing.sellerId === request.user.id) {
             return response.status(403).json({ success: false, message: "You cannot review your own offer." });
+        }
+
+        const completedPurchase = await prisma.order.findFirst({
+            where: {
+                listingId: listing.id,
+                buyerId: request.user.id,
+                sellerId: listing.sellerId,
+                status: "COMPLETED"
+            },
+            select: { id: true }
+        });
+        if (!completedPurchase) {
+            return response.status(403).json({ success: false, message: "You can review this seller only after completing a purchase of this offer." });
         }
 
         const review = await prisma.listingReview.upsert({

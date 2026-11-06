@@ -20,31 +20,33 @@
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
             <img class="paint-frame-image" src="/images/untitled-paint.png" alt="Untitled Paint window" />
-            @if (activePhotoUrl(); as photoUrl) {
-              @if (isPhotoAvailable(photoUrl)) {
-              <img
-                class="paint-product-image"
-                [src]="photoUrl"
-                [alt]="item.title + ' product photo ' + (activePhotoIndex() + 1)"
-                (error)="markPhotoUnavailable(photoUrl)"
-              />
+            <div class="paint-photo-viewport">
+              @if (activePhotoUrl(); as photoUrl) {
+                @if (isPhotoAvailable(photoUrl)) {
+                  <img
+                    class="paint-product-image"
+                    [src]="photoUrl"
+                    [alt]="item.title + ' product photo ' + (activePhotoIndex() + 1)"
+                    (error)="markPhotoUnavailable(photoUrl)"
+                  />
+                } @else {
+                  <div class="paint-placeholder" aria-label="No product photo available">
+                    <span aria-hidden="true">✳</span>
+                    <small>Product photo unavailable</small>
+                  </div>
+                }
               } @else {
                 <div class="paint-placeholder" aria-label="No product photo available">
                   <span aria-hidden="true">✳</span>
-                  <small>Product photo unavailable</small>
+                  <small>No product photo uploaded</small>
                 </div>
               }
-            } @else {
-              <div class="paint-placeholder" aria-label="No product photo available">
-                <span aria-hidden="true">✳</span>
-                <small>No product photo uploaded</small>
-              </div>
-            }
-            @if (productPhotos().length > 1) {
-              <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>
-              <button class="paint-photo-arrow paint-photo-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1)">›</button>
-              <span class="paint-photo-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
-            }
+              @if (productPhotos().length > 1) {
+                <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>
+                <button class="paint-photo-arrow paint-photo-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1)">›</button>
+                <span class="paint-photo-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
+              }
+            </div>
           </div>
         </div>
         <div class="detail-copy">

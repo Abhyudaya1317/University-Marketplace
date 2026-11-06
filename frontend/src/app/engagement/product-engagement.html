@@ -8,7 +8,15 @@
       </div>
       <span class="section-count">{{ listingReviews().length }} reviews</span>
     </div>
-    @if (currentUserId() && reviewableOffer()) {
+    @if (!currentUserId()) {
+      <p class="signin-note"><a routerLink="/auth">Sign in</a> to leave a review after a completed purchase.</p>
+    } @else if (!reviewableOffer()) {
+      <p class="signin-note">You cannot review your own offers.</p>
+    } @else if (reviewEligibilityError()) {
+      <p class="failure" role="alert">{{ reviewEligibilityError() }}</p>
+    } @else if (canReview() === null) {
+      <p class="empty-note" role="status">Checking purchase eligibility…</p>
+    } @else if (canReview()) {
       <form class="engagement-form review-form" (ngSubmit)="submitReview()">
         <p class="offer-review-context">Reviewing this seller · ₹{{ reviewableOffer()?.price }}</p>
         <label for="review-rating">Rating</label>
@@ -40,10 +48,8 @@
           {{ savingReview() ? 'Saving…' : 'Post review' }}
         </button>
       </form>
-    } @else if (!currentUserId()) {
-      <p class="signin-note"><a routerLink="/auth">Sign in</a> to leave a seller review.</p>
     } @else {
-      <p class="signin-note">You cannot review your own offers.</p>
+      <p class="signin-note">Only buyers with a completed purchase of this offer can leave a review.</p>
     }
 
     @if (loading()) {
