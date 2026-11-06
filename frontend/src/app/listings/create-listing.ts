@@ -127,7 +127,6 @@ export class CreateListing implements OnDestroy {
     this.createdListingId.set(null);
 
     if (this.photoError()) {
-      this.error.set(this.photoError());
       return;
     }
     if (this.photoProcessing()) {
@@ -140,7 +139,8 @@ export class CreateListing implements OnDestroy {
     }
     if ((!this.isEditing() && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4)) ||
         (this.isEditing() && this.selectedPhotos.length !== 0 && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4))) {
-      this.error.set(this.isEditing() ? 'Choose 2–4 photos to replace the current photos.' : 'Choose 2–4 product photos before publishing.');
+      this.photoError.set(this.isEditing() ? 'Choose 2–4 photos to replace the current photos.' : 'Choose 2–4 product photos before publishing.');
+      this.photoInput?.nativeElement.focus();
       return;
     }
 
@@ -212,8 +212,17 @@ export class CreateListing implements OnDestroy {
         this.busy.set(false);
       },
       error: (response: HttpErrorResponse) => {
-        this.error.set(response.error?.message ?? 'We could not create your listing. Please try again.');
         this.busy.set(false);
+        const serverMessage = typeof response.error?.message === 'string' ? response.error.message : '';
+        if (/photo|image|upload/i.test(serverMessage)) {
+          // Older backend deployments still return the former two-photo limit message.
+          this.photoError.set(/upload up to two|exactly two/i.test(serverMessage)
+            ? 'The photo service is using an older upload rule and needs its latest update.'
+            : serverMessage);
+          this.photoInput?.nativeElement.focus();
+          return;
+        }
+        this.error.set(serverMessage || 'We could not create your listing. Please try again.');
       }
     });
   }
@@ -227,7 +236,7 @@ export class CreateListing implements OnDestroy {
     this.photoProcessing.set(false);
     this.clearSelectedPhotos();
     if (files.length < 2 || files.length > 4) {
-      this.photoError.set('Choose between 2 and 4 product photos.');
+      this.photoError.set('Choose 2, 3, or 4 product photos.');
       input.value = '';
       return;
     }

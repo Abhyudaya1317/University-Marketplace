@@ -41,7 +41,7 @@ export function uploadListingPhoto(request, response, next) {
                 : uploadError.message === "UNSUPPORTED_IMAGE_TYPE"
                     ? "Product photos must be JPG, PNG, or WebP images."
                     : uploadError.code === "LIMIT_UNEXPECTED_FILE"
-                        ? "Choose between 2 and 4 JPG, PNG, or WebP product photos."
+                        ? "You can upload at most 4 JPG, PNG, or WebP product photos."
                         : "Product photos could not be uploaded. Please try again.";
             return response.status(400).json({ success: false, message });
         }

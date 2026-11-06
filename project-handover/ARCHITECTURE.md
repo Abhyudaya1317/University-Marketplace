@@ -96,7 +96,7 @@ Product search is deterministic local keyword matching, prefix and one-edit tole
 
 ## Images
 
-Multer stores allowed listing images in backend/uploads/listings. Listing creation requires exactly two JPG/PNG/WebP photos (5 MB each); Listing has photoUrl and photoUrl2. Backend serves them under /api/uploads/listings with nosniff and cache headers. The authenticated profile-photo endpoint stores avatars under backend/uploads/profiles and serves them under /api/uploads/profiles. This is local filesystem storage; backups, durability in cloud deployment, multi-instance sharing, image transformations, malware scanning, quotas and CDN are not demonstrated.
+Listing creation accepts 2–4 JPG/PNG/WebP photos (up to 5 MB each before browser optimization). In production, listing images are stored in the public Supabase `listing-photos` bucket; local development stores them under backend/uploads/listings and serves them under /api/uploads/listings. Listing records have photoUrl through photoUrl4. The authenticated profile-photo endpoint still stores avatars under backend/uploads/profiles and serves them under /api/uploads/profiles. Profile-photo durability in cloud deployment, multi-instance sharing, image transformations, malware scanning, quotas and CDN are not demonstrated.
 
 ## Payment architecture
 

@@ -132,12 +132,17 @@
         </div>
 
         <div class="form-field">
-          <label for="product-photo">Product photos (2–4 required)</label>
+          <label for="product-photo">Product photos (choose 2, 3, or 4)</label>
           <input #photoInput id="product-photo" name="photos" type="file" accept="image/jpeg,image/png,image/webp"
-            multiple [required]="!isEditing()" [disabled]="busy() || photoProcessing()" (change)="selectPhotos($event)">
-          <small>Choose 2–4 JPG, PNG, or WebP photos · maximum 5 MB each. Photos are optimized for upload. When editing, leave this empty to keep the current photos or select 2–4 replacements.</small>
+            multiple [disabled]="busy() || photoProcessing()" [attr.aria-invalid]="photoError() ? 'true' : null"
+            [attr.aria-describedby]="photoError() ? 'product-photo-help product-photo-error' : 'product-photo-help'"
+            (change)="selectPhotos($event)">
+          <small id="product-photo-help">Choose 2, 3, or 4 JPG, PNG, or WebP photos · maximum 5 MB each. Photos are optimized for upload. When editing, leave this empty to keep the current photos or select 2–4 replacements.</small>
           @if (photoProcessing()) { <small role="status">Preparing photos for upload…</small> }
-          @if (photoError()) { <small class="failure" role="alert">{{ photoError() }}</small> }
+          @if (photoPreviews().length > 0) {
+            <small role="status">{{ photoPreviews().length }} of 4 product photos selected.</small>
+          }
+          @if (photoError()) { <small id="product-photo-error" class="failure" role="alert">{{ photoError() }}</small> }
           @if (photoPreviews().length > 0) {
             <div class="photo-preview-row">
               @for (preview of photoPreviews(); track preview; let i = $index) {
