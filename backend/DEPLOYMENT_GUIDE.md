@@ -71,9 +71,10 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 
 1. Import the existing Git repository in Vercel and set the project Root Directory to `backend`.
 2. Select Node.js 22.x. The `build` and `vercel-build` scripts generate Prisma Client; the function bundle includes that generated client.
-3. Add the production environment variables above in Vercel. Use Preview and Production values appropriate to each environment.
-4. Create a public `listing-photos` Storage bucket in the same Supabase project and add `SUPABASE_URL` plus the private `SUPABASE_SECRET_KEY` (or legacy service-role key) to the backend project's Production environment.
-5. Deploy a Preview first. Verify its health endpoint and API, database, CORS, cookies, authentication, email/OAuth configuration, and upload permissions before promoting it.
+3. Keep the backend function in Mumbai (`bom1`) to match the Supabase database region configured in `backend/vercel.json`.
+4. Add the production environment variables above in Vercel. Use Preview and Production values appropriate to each environment.
+5. Create a public `listing-photos` Storage bucket in the same Supabase project and add `SUPABASE_URL` plus the private `SUPABASE_SECRET_KEY` (or legacy service-role key) to the backend project's Production environment.
+6. Deploy a Preview first. Verify its health endpoint and API, database, CORS, cookies, authentication, email/OAuth configuration, and upload permissions before promoting it.
 
 Vercel deployment and account authorization remain manual because no Vercel account action was authorized or available in this workspace.
 

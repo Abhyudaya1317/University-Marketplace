@@ -97,86 +97,86 @@ export async function getSellerProfile(request, response) {
 // Show the signed-in user's listings and saved sellers together on their dashboard.
 export async function getSellerDashboard(request, response) {
     try {
-        const account = await prisma.user.findUnique({
-            where: { id: request.user.id },
-            select: {
-                id: true,
-                email: true,
-                fullName: true,
-                avatarUrl: true,
-                _count: { select: { savedBy: true } },
-                listings: {
-                    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-                    select: {
-                        id: true,
-                        title: true,
-                        description: true,
-                        price: true,
-                        quantityAvailable: true,
-                        photoUrl: true,
-                        photoUrl2: true,
-                        photoUrl3: true,
-                        photoUrl4: true,
-                        location: true,
-                        status: true,
-                        archivedAt: true,
-                        condition: true,
-                        customCondition: true,
-                        createdAt: true,
-                        product: { select: { id: true, name: true, category: true } }
-                    }
-                },
-                savedSellers: {
-                    orderBy: { createdAt: "desc" },
-                    select: {
-                        createdAt: true,
-                        seller: {
-                            select: {
-                                id: true,
-                                fullName: true,
-                                avatarUrl: true,
-                                listings: {
-                                    ...activeListingSelection,
-                                    take: 1
+        const [account, reviewSummary] = await Promise.all([
+            prisma.user.findUnique({
+                where: { id: request.user.id },
+                select: {
+                    id: true,
+                    email: true,
+                    fullName: true,
+                    avatarUrl: true,
+                    _count: { select: { savedBy: true } },
+                    listings: {
+                        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+                        select: {
+                            id: true,
+                            title: true,
+                            description: true,
+                            price: true,
+                            quantityAvailable: true,
+                            photoUrl: true,
+                            photoUrl2: true,
+                            photoUrl3: true,
+                            photoUrl4: true,
+                            location: true,
+                            status: true,
+                            archivedAt: true,
+                            condition: true,
+                            customCondition: true,
+                            createdAt: true,
+                            product: { select: { id: true, name: true, category: true } }
+                        }
+                    },
+                    savedSellers: {
+                        orderBy: { createdAt: "desc" },
+                        select: {
+                            createdAt: true,
+                            seller: {
+                                select: {
+                                    id: true,
+                                    fullName: true,
+                                    avatarUrl: true,
+                                    listings: {
+                                        ...activeListingSelection,
+                                        take: 1
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    savedListings: {
+                        orderBy: { createdAt: "desc" },
+                        select: {
+                            createdAt: true,
+                            listing: {
+                                select: {
+                                    id: true,
+                                    description: true,
+                                    price: true,
+                                    photoUrl: true,
+                                    photoUrl2: true,
+                                    photoUrl3: true,
+                                    photoUrl4: true,
+                                    sellerId: true,
+                                    title: true,
+                                    seller: { select: { fullName: true, avatarUrl: true } },
+                                    product: { select: { id: true, name: true, category: true } }
                                 }
                             }
                         }
                     }
-                },
-                savedListings: {
-                    orderBy: { createdAt: "desc" },
-                    select: {
-                        createdAt: true,
-                        listing: {
-                            select: {
-                                id: true,
-                                description: true,
-                                price: true,
-                                photoUrl: true,
-                                photoUrl2: true,
-                                photoUrl3: true,
-                                photoUrl4: true,
-                                sellerId: true,
-                                title: true,
-                                seller: { select: { fullName: true, avatarUrl: true } },
-                                product: { select: { id: true, name: true, category: true } }
-                            }
-                        }
-                    }
                 }
-            }
-        });
+            }),
+            prisma.listingReview.aggregate({
+                where: { listing: { sellerId: request.user.id, status: "ACTIVE" } },
+                _avg: { rating: true },
+                _count: { _all: true }
+            })
+        ]);
 
         if (!account) {
             return response.status(404).json({ success: false, message: "This account was not found." });
         }
-
-        // Include the public reputation summary so the dashboard can serve as the owner's profile.
-        const reviewSummary = await prisma.listingReview.aggregate({
-            where: { listing: { sellerId: account.id, status: "ACTIVE" } },
-            _avg: { rating: true },
-            _count: { _all: true }
-        });
 
         return response.json({
             success: true,

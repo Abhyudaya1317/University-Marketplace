@@ -38,7 +38,8 @@ export class AccountNavigation {
 
   constructor() {
     this.refreshSession();
-    interval(3000)
+    // Keep badges fresh without repeatedly waking the API and database on every page.
+    interval(30_000)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         if (this.signedIn() && typeof document !== 'undefined' && document.visibilityState === 'visible') {

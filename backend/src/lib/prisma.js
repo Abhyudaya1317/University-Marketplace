@@ -11,5 +11,11 @@ if (!connectionString) {
 }
 
 // Reuse one client and connection pool for the lifetime of this backend process.
-const adapter = new PrismaPg({ connectionString });
+const adapter = new PrismaPg({
+    connectionString,
+    // Keep a small warm pool per Vercel instance instead of opening pg's default ten connections.
+    max: 5,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000
+});
 export const prisma = new PrismaClient({ adapter });

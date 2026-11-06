@@ -286,21 +286,14 @@ export async function getMyConversations(request, response) {
 // Return a small unread total for the Messages link in the site navigation.
 export async function getUnreadMessageCount(request, response) {
     try {
-        const conversations = await prisma.conversation.findMany({
-            where: participantFilter(request.user.id),
-            select: { id: true },
+        const count = await prisma.message.count({
+            where: {
+                conversation: { is: participantFilter(request.user.id) },
+                senderId: { not: request.user.id },
+                readAt: null,
+                body: { not: DELETED_MESSAGE_BODY },
+            },
         });
-        const conversationIds = conversations.map((conversation) => conversation.id);
-        const count = conversationIds.length
-            ? await prisma.message.count({
-                where: {
-                    conversationId: { in: conversationIds },
-                    senderId: { not: request.user.id },
-                    readAt: null,
-                    body: { not: DELETED_MESSAGE_BODY },
-                },
-            })
-            : 0;
         return response.json({ success: true, unreadCount: count });
     } catch (error) {
         console.error("Unread message count failed:", error?.code ?? error?.name ?? "UNKNOWN");

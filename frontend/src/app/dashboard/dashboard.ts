@@ -188,8 +188,9 @@ export class Dashboard {
       },
     });
 
-    // Refresh an open side chat so new buyer messages arrive without leaving the dashboard.
-    interval(3000).pipe(takeUntilDestroyed()).subscribe(() => {
+    // Refresh an open side chat without making needless requests while this tab is hidden.
+    interval(5000).pipe(takeUntilDestroyed()).subscribe(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       const conversationId = this.buyerChat()?.id;
       if (conversationId) this.refreshBuyerChat(conversationId);
     });

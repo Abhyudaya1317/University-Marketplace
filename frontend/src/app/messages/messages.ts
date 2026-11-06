@@ -84,6 +84,7 @@ export class Messages {
 
   private inboxRequestInFlight = false;
   private conversationRequestInFlight = false;
+  private lastInboxRefreshAt = 0;
 
   constructor() {
     this.http.get<{ user?: { id: string } }>('/api/auth/me').subscribe({
@@ -99,8 +100,8 @@ export class Messages {
       if (id) this.loadConversation(id);
     });
 
-    // Check for new messages every three seconds while this tab is visible.
-    interval(3000)
+    // Refresh open conversations frequently, but avoid reloading the whole inbox every few seconds.
+    interval(5000)
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
         if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
@@ -108,7 +109,7 @@ export class Messages {
         const openConversationId = this.conversationId();
         if (openConversationId) {
           this.refreshConversation(openConversationId);
-        } else {
+        } else if (Date.now() - this.lastInboxRefreshAt >= 15_000) {
           this.refreshInbox();
         }
       });
@@ -126,6 +127,7 @@ export class Messages {
   private fetchInbox(showLoading: boolean): void {
     if (this.inboxRequestInFlight) return;
     this.inboxRequestInFlight = true;
+    this.lastInboxRefreshAt = Date.now();
     if (showLoading) this.inboxLoading.set(true);
 
     this.http.get<{ conversations: ConversationSummary[] }>('/api/messages').subscribe({
