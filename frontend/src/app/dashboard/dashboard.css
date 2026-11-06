@@ -162,6 +162,24 @@
 .section-heading > .text-link {
   font-weight: 700;
 }
+.section-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.request-filter-button {
+  white-space: normal;
+}
+.request-filter-button[aria-pressed="true"] {
+  outline: 2px solid #174bff;
+  outline-offset: 2px;
+}
+.request-filter-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
 .section-count {
   color: #817b73;
   font-size: 14px;

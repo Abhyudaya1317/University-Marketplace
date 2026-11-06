@@ -163,7 +163,26 @@
               <p class="eyebrow">YOUR SELLER CATALOG</p>
               <h2 id="my-listings-title">Active listings</h2>
             </div>
-            <a class="text-link" routerLink="/sell">+ List an item</a>
+            <div class="section-heading-actions">
+              <button
+                class="management-button request-filter-button"
+                type="button"
+                [attr.aria-pressed]="showOnlyBuyerRequests()"
+                [disabled]="!sellerRequestsLoaded() || sellerRequestsFailed()"
+                (click)="toggleBuyerRequestFilter()"
+              >
+                {{
+                  sellerRequestsFailed()
+                    ? 'Buyer requests unavailable'
+                    : sellerRequestsLoaded()
+                      ? showOnlyBuyerRequests()
+                        ? 'Show all items'
+                        : 'View items with buyer requests'
+                      : 'Loading buyer requests…'
+                }}
+              </button>
+              <a class="text-link" routerLink="/sell">+ List an item</a>
+            </div>
           </div>
           @if (stockNotice()) {
             <p class="dashboard-notice" role="status">{{ stockNotice() }}</p>
@@ -180,9 +199,17 @@
               <p>When you list an item, it will appear here.</p>
               <a class="primary-link" routerLink="/sell">Create your first listing</a>
             </div>
+          } @else if (visibleActiveListings().length === 0) {
+            <div class="empty-state">
+              <h3>No buyer requests yet</h3>
+              <p>Items with pending buyer requests will appear here.</p>
+              <button class="management-button" type="button" (click)="toggleBuyerRequestFilter()">
+                Show all items
+              </button>
+            </div>
           } @else {
             <div class="listing-grid">
-              @for (listing of activeListings(); track listing.id) {
+              @for (listing of visibleActiveListings(); track listing.id) {
                   <article class="listing-card" [class.has-buyer-request]="listingRequests(listing.id).length > 0">
                   <a class="listing-main" [routerLink]="['/products', listing.id]">
                     @if (listing.photoUrl) {

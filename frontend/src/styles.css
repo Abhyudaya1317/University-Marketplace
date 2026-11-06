@@ -858,10 +858,10 @@ body .details-page .paint-screenshot { overflow: visible; }
 body .details-page .paint-photo-arrow {
   position: absolute;
   z-index: 2;
-  top: 50%;
+  top: 47%;
   display: grid;
-  width: 38px;
-  height: 48px;
+  width: 42px;
+  height: 54px;
   place-items: center;
   border: 2px outset #fff;
   background: #fff;
@@ -869,14 +869,13 @@ body .details-page .paint-photo-arrow {
   box-shadow: 3px 3px 0 #080817;
   cursor: pointer;
   font: 30px/1 var(--body);
-  transform: translateY(-50%);
 }
-body .details-page .paint-photo-previous { left: 18%; }
-body .details-page .paint-photo-next { right: 18%; }
+body .details-page .paint-photo-previous { left: 20%; }
+body .details-page .paint-photo-next { right: 8%; }
 body .details-page .paint-photo-count {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 9%;
+  bottom: 22%;
   padding: 4px 7px;
   background: #fff;
   color: #000080;
@@ -1043,6 +1042,8 @@ body .account-navigation > button {
 
 @media (max-width: 600px) {
   body .details-page .paint-photo-arrow { width: 34px; height: 42px; }
+  body .details-page .paint-photo-previous { left: 18%; }
+  body .details-page .paint-photo-next { right: 7%; }
 }
 
 /* Profile pages share one Windows-style identity card and tappable listing gallery. */

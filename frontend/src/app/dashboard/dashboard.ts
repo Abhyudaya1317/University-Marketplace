@@ -118,6 +118,13 @@ export class Dashboard {
   protected readonly activeListings = computed(() =>
     this.listings().filter((listing) => listing.status !== 'ARCHIVED'),
   );
+  protected readonly showOnlyBuyerRequests = signal(false);
+  protected readonly visibleActiveListings = computed(() => {
+    const listings = this.activeListings();
+    if (!this.showOnlyBuyerRequests()) return listings;
+    const requestedListingIds = new Set(this.requests().map((request) => request.listingId));
+    return listings.filter((listing) => requestedListingIds.has(listing.id));
+  });
   protected readonly archivedListings = computed(() =>
     this.listings().filter((listing) => listing.status === 'ARCHIVED'),
   );
@@ -129,6 +136,8 @@ export class Dashboard {
   protected readonly favoriteSellers = signal<DashboardResponse['favoriteSellers']>([]);
   protected readonly savedListings = signal<DashboardResponse['savedListings']>([]);
   protected readonly requests = signal<SellerRequest[]>([]);
+  protected readonly sellerRequestsLoaded = signal(false);
+  protected readonly sellerRequestsFailed = signal(false);
   protected readonly stockDrafts = signal<Record<string, number>>({});
   protected readonly meetingTimes = signal<Record<string, string>>({});
   protected readonly meetingLocations = signal<Record<string, string>>({});
@@ -419,10 +428,20 @@ export class Dashboard {
   // Load private buyer requests only after the dashboard confirms this seller is signed in.
   private loadSellerRequests(): void {
     this.http.get<{ requests: SellerRequest[] }>('/api/orders/seller/requests').subscribe({
-      next: (response) => this.requests.set(response.requests ?? []),
-      error: (response: HttpErrorResponse) =>
-        this.requestNotice.set(response.error?.message ?? 'Buyer requests could not be loaded.'),
+      next: (response) => {
+        this.requests.set(response.requests ?? []);
+        this.sellerRequestsLoaded.set(true);
+      },
+      error: (response: HttpErrorResponse) => {
+        this.requestNotice.set(response.error?.message ?? 'Buyer requests could not be loaded.');
+        this.sellerRequestsFailed.set(true);
+        this.sellerRequestsLoaded.set(true);
+      },
     });
+  }
+
+  protected toggleBuyerRequestFilter(): void {
+    this.showOnlyBuyerRequests.update((showOnly) => !showOnly);
   }
 
   protected listingRequests(listingId: string): SellerRequest[] {

@@ -41,12 +41,12 @@
                   <small>No product photo uploaded</small>
                 </div>
               }
-              @if (productPhotos().length > 1) {
-                <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>
-                <button class="paint-photo-arrow paint-photo-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1)">›</button>
-                <span class="paint-photo-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
-              }
             </div>
+            @if (productPhotos().length > 1) {
+              <button class="paint-photo-arrow paint-photo-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1)">‹</button>
+              <button class="paint-photo-arrow paint-photo-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1)">›</button>
+              <span class="paint-photo-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
+            }
           </div>
         </div>
         <div class="detail-copy">
