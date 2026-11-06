@@ -31,6 +31,8 @@ interface DashboardResponse {
     quantityAvailable: number;
     photoUrl: string | null;
     photoUrl2: string | null;
+    photoUrl3: string | null;
+    photoUrl4: string | null;
     location: string;
     status: string;
     condition: string;
@@ -58,6 +60,9 @@ interface DashboardResponse {
     description: string;
     price: string;
     photoUrl: string | null;
+    photoUrl2: string | null;
+    photoUrl3: string | null;
+    photoUrl4: string | null;
   }>;
   message?: string;
 }

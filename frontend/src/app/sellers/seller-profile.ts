@@ -30,6 +30,8 @@ interface SellerProfileResponse {
     quantityAvailable: number;
     photoUrl: string | null;
     photoUrl2: string | null;
+    photoUrl3: string | null;
+    photoUrl4: string | null;
     location: string;
     clothingGender: string | null;
     proteinGrams: string | null;

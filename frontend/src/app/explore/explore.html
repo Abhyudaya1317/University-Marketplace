@@ -149,7 +149,7 @@
                   <span class="product-icon" aria-label="No product photo available">✳</span>
                 }
               </a>
-              @if (listing.photoUrl2) {
+              @if (photoCount(listing) > 1) {
                 <button class="catalog-photo-arrow previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(listing, -1, $event)">‹</button>
                 <button class="catalog-photo-arrow next" type="button" aria-label="Next product photo" (click)="stepPhoto(listing, 1, $event)">›</button>
               }

@@ -15,6 +15,8 @@ const activeListingSelection = {
         quantityAvailable: true,
         photoUrl: true,
         photoUrl2: true,
+        photoUrl3: true,
+        photoUrl4: true,
         location: true,
         clothingGender: true,
         proteinGrams: true,
@@ -77,6 +79,8 @@ export async function getSellerProfile(request, response) {
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
+                photoUrl3: listing.photoUrl3,
+                photoUrl4: listing.photoUrl4,
                 location: listing.location,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
@@ -111,6 +115,8 @@ export async function getSellerDashboard(request, response) {
                         quantityAvailable: true,
                         photoUrl: true,
                         photoUrl2: true,
+                        photoUrl3: true,
+                        photoUrl4: true,
                         location: true,
                         status: true,
                         archivedAt: true,
@@ -148,6 +154,8 @@ export async function getSellerDashboard(request, response) {
                                 price: true,
                                 photoUrl: true,
                                 photoUrl2: true,
+                                photoUrl3: true,
+                                photoUrl4: true,
                                 sellerId: true,
                                 title: true,
                                 seller: { select: { fullName: true, avatarUrl: true } },
@@ -193,6 +201,8 @@ export async function getSellerDashboard(request, response) {
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
+                photoUrl3: listing.photoUrl3,
+                photoUrl4: listing.photoUrl4,
                 location: listing.location,
                 status: listing.status,
                 archivedAt: listing.archivedAt,
@@ -221,7 +231,9 @@ export async function getSellerDashboard(request, response) {
                 description: favorite.listing.description,
                 price: favorite.listing.price.toFixed(2),
                 photoUrl: favorite.listing.photoUrl,
-                photoUrl2: favorite.listing.photoUrl2
+                photoUrl2: favorite.listing.photoUrl2,
+                photoUrl3: favorite.listing.photoUrl3,
+                photoUrl4: favorite.listing.photoUrl4
             }))
         });
     } catch {

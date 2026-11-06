@@ -39,7 +39,7 @@ See BUSINESS_RULES.md for more nuance.
 - Frontend: Angular 21 standalone components, TypeScript 5.9, RxJS 7.8, Angular signals, Angular Router and HttpClient.
 - Backend: Node.js ES modules, Express 5.
 - Database: PostgreSQL, accessed through Prisma 7 with the PostgreSQL driver adapter.
-- Images: two required listing photos stored locally under backend/uploads/listings and optional profile photos under backend/uploads/profiles, served under /api/uploads. This is development-friendly, not durable multi-instance production storage.
+- Images: listings accept 2–4 photos. Production listing photos use the public Supabase `listing-photos` bucket; local development uses `backend/uploads/listings`. Profile photos remain local-only.
 - Auth: opaque random session token in an HttpOnly cookie; only the token hash is persisted in LoginSession.
 - Frontend development server: port 4200; current proxy maps /api to http://127.0.0.1:5002.
 - Backend default: port 5000, configurable by PORT; current private local backend/.env sets PORT=5002. Never copy this ignored file into Git or handoff output.

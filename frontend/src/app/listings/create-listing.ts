@@ -34,6 +34,8 @@ interface EditListingResponse {
     location: string;
     photoUrl: string | null;
     photoUrl2: string | null;
+    photoUrl3: string | null;
+    photoUrl4: string | null;
     condition: string;
     customCondition: string | null;
     clothingGender: string | null;
@@ -62,10 +64,10 @@ export class CreateListing implements OnDestroy {
   protected readonly createdListingId = signal<string | null>(null);
   protected readonly photoPreviews = signal<string[]>([]);
   protected readonly photoError = signal('');
+  protected readonly photoProcessing = signal(false);
   protected readonly isEditing = signal(false);
   protected readonly loadingListing = signal(false);
-  protected readonly currentPhotoUrl = signal<string | null>(null);
-  protected readonly currentPhotoUrl2 = signal<string | null>(null);
+  protected readonly currentPhotoUrls = signal<string[]>([]);
 
   @ViewChild('photoInput') private photoInput?: ElementRef<HTMLInputElement>;
 
@@ -84,6 +86,7 @@ export class CreateListing implements OnDestroy {
   protected customCondition = '';
   private selectedPhotos: File[] = [];
   private previewUrls: string[] = [];
+  private photoSelectionGeneration = 0;
 
   // Use the same controlled category values the backend accepts.
   protected readonly categories = [
@@ -127,12 +130,17 @@ export class CreateListing implements OnDestroy {
       this.error.set(this.photoError());
       return;
     }
+    if (this.photoProcessing()) {
+      this.error.set('Wait for photo preparation to finish before publishing.');
+      return;
+    }
     if (this.condition === 'CUSTOM' && this.customCondition.trim().length < 2) {
       this.error.set('Describe the custom condition in at least 2 characters.');
       return;
     }
-    if ((!this.isEditing() && this.selectedPhotos.length !== 2) || (this.isEditing() && this.selectedPhotos.length !== 0 && this.selectedPhotos.length !== 2)) {
-      this.error.set(this.isEditing() ? 'Choose exactly two photos to replace the current photos.' : 'Choose exactly two product photos before publishing.');
+    if ((!this.isEditing() && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4)) ||
+        (this.isEditing() && this.selectedPhotos.length !== 0 && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4))) {
+      this.error.set(this.isEditing() ? 'Choose 2–4 photos to replace the current photos.' : 'Choose 2–4 product photos before publishing.');
       return;
     }
 
@@ -154,7 +162,7 @@ export class CreateListing implements OnDestroy {
       return;
     }
 
-    // FormData carries listing details and both required photos in one request.
+    // FormData carries listing details and the selected product photos in one request.
     const formData = new FormData();
     formData.append('name', this.name);
     formData.append('category', this.category);
@@ -197,8 +205,7 @@ export class CreateListing implements OnDestroy {
         this.proteinRich = false;
         this.condition = 'GOOD';
         this.clearSelectedPhotos();
-        this.currentPhotoUrl.set(null);
-        this.currentPhotoUrl2.set(null);
+        this.currentPhotoUrls.set([]);
         this.customCondition = '';
         this.photoError.set('');
         if (this.photoInput) this.photoInput.nativeElement.value = '';
@@ -211,19 +218,21 @@ export class CreateListing implements OnDestroy {
     });
   }
 
-  // Require two supported images and show both before the seller publishes.
-  protected selectPhotos(event: Event): void {
+  // Require two to four supported images and show every selection before publishing.
+  protected async selectPhotos(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
+    const selectionGeneration = ++this.photoSelectionGeneration;
     this.photoError.set('');
+    this.photoProcessing.set(false);
     this.clearSelectedPhotos();
-    if (files.length !== 2) {
-      this.photoError.set('Choose exactly two product photos.');
+    if (files.length < 2 || files.length > 4) {
+      this.photoError.set('Choose between 2 and 4 product photos.');
       input.value = '';
       return;
     }
     if (files.some((file) => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) {
-      this.photoError.set('Both photos must be JPG, PNG, or WebP images.');
+      this.photoError.set('All photos must be JPG, PNG, or WebP images.');
       input.value = '';
       return;
     }
@@ -232,9 +241,22 @@ export class CreateListing implements OnDestroy {
       input.value = '';
       return;
     }
-    this.selectedPhotos = files;
-    this.previewUrls = files.map((file) => URL.createObjectURL(file));
-    this.photoPreviews.set(this.previewUrls);
+    this.photoProcessing.set(true);
+    try {
+      const optimizedPhotos: File[] = [];
+      for (const file of files) optimizedPhotos.push(await optimizePhotoForUpload(file));
+      if (selectionGeneration !== this.photoSelectionGeneration) return;
+      this.selectedPhotos = optimizedPhotos;
+      this.previewUrls = optimizedPhotos.map((file) => URL.createObjectURL(file));
+      this.photoPreviews.set(this.previewUrls);
+    } catch {
+      if (selectionGeneration === this.photoSelectionGeneration) {
+        this.photoError.set('One or more photos could not be prepared. Choose another JPG, PNG, or WebP image.');
+        input.value = '';
+      }
+    } finally {
+      if (selectionGeneration === this.photoSelectionGeneration) this.photoProcessing.set(false);
+    }
   }
 
   // Release browser preview URLs whenever the selected files change.
@@ -247,6 +269,7 @@ export class CreateListing implements OnDestroy {
 
   // Release the browser's temporary preview URL when the seller leaves this page.
   ngOnDestroy(): void {
+    this.photoSelectionGeneration += 1;
     this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
   }
 
@@ -289,8 +312,8 @@ export class CreateListing implements OnDestroy {
           this.clothingGender = listing.clothingGender ?? '';
           this.proteinGrams = listing.proteinGrams ?? '';
           this.proteinRich = Number(listing.proteinGrams ?? 0) > 0;
-          this.currentPhotoUrl.set(listing.photoUrl);
-          this.currentPhotoUrl2.set(listing.photoUrl2);
+          this.currentPhotoUrls.set([listing.photoUrl, listing.photoUrl2, listing.photoUrl3, listing.photoUrl4]
+            .filter((url): url is string => Boolean(url)));
           this.customCondition = listing.customCondition ?? '';
         }
         this.loadingListing.set(false);
@@ -300,5 +323,43 @@ export class CreateListing implements OnDestroy {
         this.loadingListing.set(false);
       }
     });
+  }
+}
+
+// Keep four-image multipart requests below Vercel's request-size ceiling without asking sellers to resize photos.
+async function optimizePhotoForUpload(file: File): Promise<File> {
+  const maxPreparedPhotoBytes = 850 * 1024;
+  if (file.size <= maxPreparedPhotoBytes) return file;
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const startingScale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    let width = Math.max(1, Math.round(bitmap.width * startingScale));
+    let height = Math.max(1, Math.round(bitmap.height * startingScale));
+    const qualities = [0.86, 0.78, 0.7, 0.62, 0.54];
+
+    for (let resizeAttempt = 0; resizeAttempt < 5; resizeAttempt += 1) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('PHOTO_CANVAS_UNAVAILABLE');
+      context.drawImage(bitmap, 0, 0, width, height);
+
+      for (const quality of qualities) {
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+        if (!blob) throw new Error('PHOTO_ENCODING_FAILED');
+        if (blob.size <= maxPreparedPhotoBytes) {
+          const baseName = file.name.replace(/\.[^.]+$/, '') || 'product-photo';
+          return new File([blob], `${baseName}.webp`, { type: 'image/webp', lastModified: file.lastModified });
+        }
+      }
+
+      width = Math.max(1, Math.round(width * 0.82));
+      height = Math.max(1, Math.round(height * 0.82));
+    }
+    throw new Error('PHOTO_TOO_LARGE_AFTER_OPTIMIZATION');
+  } finally {
+    bitmap.close();
   }
 }

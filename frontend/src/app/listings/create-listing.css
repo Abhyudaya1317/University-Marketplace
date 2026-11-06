@@ -17,7 +17,8 @@ input, select, textarea { width: 100%; box-sizing: border-box; padding: 12px 13p
 input:focus, select:focus, textarea:focus { border-color: #d97955; box-shadow: 0 0 0 3px #d9795520; }
 textarea { min-height: 100px; resize: vertical; }
 small { color: #89867d; font-size: 10px; line-height: 1.4; }
-.photo-preview { width: min(100%, 280px); max-height: 240px; margin-top: 8px; border: 1px solid #eae7df; border-radius: 10px; object-fit: contain; background: #f6f4ef; }
+.photo-preview-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.photo-preview { width: 100%; max-height: 240px; aspect-ratio: 4 / 3; border: 1px solid #eae7df; border-radius: 10px; object-fit: contain; background: #f6f4ef; }
 .remove-photo-option { display: flex; align-items: center; gap: 8px; }
 .remove-photo-option input { width: auto; }
 .failure { color: #ae443b; }

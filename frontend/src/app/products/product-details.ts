@@ -15,6 +15,8 @@ interface ListingDetails {
   quantityAvailable: number;
   photoUrl: string | null;
   photoUrl2: string | null;
+  photoUrl3: string | null;
+  photoUrl4: string | null;
   location: string;
   condition: string;
   customCondition: string | null;
@@ -55,7 +57,8 @@ export class ProductDetails {
   protected readonly activePhotoIndex = signal(0);
   protected readonly productPhotos = computed(() => {
     const item = this.listing();
-    return [item?.photoUrl, item?.photoUrl2].filter((url): url is string => Boolean(url));
+    return [item?.photoUrl, item?.photoUrl2, item?.photoUrl3, item?.photoUrl4]
+      .filter((url): url is string => Boolean(url));
   });
   protected readonly activePhotoUrl = computed(() => this.productPhotos()[this.activePhotoIndex()] ?? null);
   protected readonly buyerPhone = signal('');
@@ -237,7 +240,7 @@ export class ProductDetails {
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  // Switch between the two listing photos without stretching either image.
+  // Switch between the listing photos without stretching either image.
   protected stepPhoto(direction: number): void {
     const count = this.productPhotos().length;
     if (count < 2) return;
@@ -251,12 +254,16 @@ export class ProductDetails {
   protected markPhotoUnavailable(url: string): void {
     this.unavailablePhotoUrls.update((urls) => new Set(urls).add(url));
 
-      // If one photo URL is broken, automatically show the other uploaded photo when possible.
+      // If one photo URL is broken, automatically show the next available uploaded photo.
       const photos = this.productPhotos();
       if (photos.length > 1 && photos[this.activePhotoIndex()] === url) {
-        const otherIndex = this.activePhotoIndex() === 0 ? 1 : 0;
-        if (!this.unavailablePhotoUrls().has(photos[otherIndex])) {
-          this.activePhotoIndex.set(otherIndex);
+        const currentIndex = this.activePhotoIndex();
+        for (let offset = 1; offset < photos.length; offset += 1) {
+          const nextIndex = (currentIndex + offset) % photos.length;
+          if (!this.unavailablePhotoUrls().has(photos[nextIndex])) {
+            this.activePhotoIndex.set(nextIndex);
+            break;
+          }
         }
       }
   }

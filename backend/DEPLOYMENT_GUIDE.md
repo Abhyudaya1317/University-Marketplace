@@ -2,9 +2,9 @@
 
 ## Deployment status
 
-The backend is prepared for a Vercel Node.js function and a **new, empty Supabase PostgreSQL database**. No existing records were transferred, and the existing PostgreSQL database has not been changed or deleted. A migration attempt was made after approval, but the connection timed out before Prisma reported any applied migrations. The migration state could not be verified from this environment; check it from a network that can reach Supabase before assuming tables were created.
+The backend is prepared for a Vercel Node.js function and the new Supabase PostgreSQL database. On 2026-11-06, `npm run db:migrate:deploy` successfully applied all 23 Prisma migrations, including the additive migration for listing photos three and four. No existing database was changed and no records were transferred.
 
-The backend currently stores listing photos, profile photos, and private message attachments on local disk. Vercel function filesystems are not durable, and Express static files are not served by Vercel's Express integration. Before production, move these three upload flows to persistent object storage and retain the existing file validation and private access checks. Do not use the current local upload storage for production data.
+Listing photos now use the public `listing-photos` Supabase Storage bucket in production; local development continues to save them under `backend/uploads/listings`. Create that bucket as public and set `SUPABASE_URL` plus the backend-only `SUPABASE_SECRET_KEY` in the backend environment. The legacy `SUPABASE_SERVICE_ROLE_KEY` variable is also accepted. Profile photos and private message attachments still use local disk and must be moved to durable object storage before those upload flows are used in production.
 
 The Angular app sends relative `/api/...` requests. Its existing Vercel rewrite currently targets a previously configured Vercel hostname. After creating the backend deployment, point that rewrite at the real backend hostname so the browser continues using the Angular origin for cookie-backed requests.
 
@@ -17,6 +17,7 @@ The working tree already contained uncommitted product, Prisma, and frontend cha
 - Vercel recognizes the default Express app export at `src/app.js` and serves the existing `/api/*` routes through its Express function.
 - Prisma 7.10.1 generates the client into `src/generated/prisma` and uses `@prisma/adapter-pg` with `pg`.
 - The current app uses opaque, database-backed browser sessions, password-reset email, and optional Google OAuth. It does not use JWTs or an in-memory session store.
+- The listing form optimizes large photos to at most 850 KiB each before posting, so four photos remain under Vercel's 4.5 MB function request-body limit.
 
 ## Local development
 
@@ -35,13 +36,13 @@ Prisma is version 7.10.1. `prisma.config.ts` supplies the CLI connection URL, pr
 
 For pooled runtime connections, use Supabase's generated URI and its required pooler options (often `pgbouncer=true` and a low `connection_limit`). Do not edit or invent the host, username, password, database, or SSL parameters. The exact URI format depends on the selected Supabase connection mode.
 
-Prisma schema: `prisma/schema.prisma`. Migration history currently contains 22 ordered migration directories, including two uncommitted migrations already present in this working tree. Applying this complete history to a confirmed empty Supabase database will create its tables and indexes without copying records from the old database. The migration set has not yet been applied to Supabase.
+Prisma schema: `prisma/schema.prisma`. Migration history contains 23 ordered migration directories. The current Supabase database reports all migrations applied.
 
 ## Safe migration procedure
 
 1. Create a separate Supabase project and confirm its database is new and empty. Do not connect it to the existing database, copy records, or delete the old database.
 2. Set `DATABASE_URL` to Supabase's transaction-pooler URL for runtime queries and `DIRECT_URL` to a direct or session-pooler URL for migrations. Keep both private.
-3. Review all 22 checked-in migration folders, including the two uncommitted migrations already in this workspace. Commit the intended schema and migration changes before deploying.
+3. Review the ordered migration folders and commit intended schema changes before deploying.
 4. After explicit approval, run `npm run db:migrate:deploy` from `backend`. Prisma 7 uses `DIRECT_URL` from `prisma.config.ts` for this command. It applies the migration history in order and does not transfer data. If the command times out, check connectivity and migration status before retrying.
 5. Verify the new tables and migration status, then test application reads/writes against the new database.
 
@@ -55,6 +56,8 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 | --- | --- |
 | `DATABASE_URL` | Required runtime connection; Supabase transaction pooler URL. |
 | `DIRECT_URL` | Required for production migrations; Supabase direct connection or suitable session pooler URL. |
+| `SUPABASE_URL` | Required for production listing-photo storage; the Supabase project URL. |
+| `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`) | Required for production listing-photo uploads and deletion; secret, backend-only. |
 | `SESSION_SECRET` | Required, at least 32 characters; signs stored session-token hashes. |
 | `OTP_SECRET` | Required, independent value of at least 32 characters; protects password-reset code hashes. |
 | `FRONTEND_URL` | Exact Angular production origin, including scheme and no path; used for CORS and OAuth failure redirects. |
@@ -69,12 +72,12 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 1. Import the existing Git repository in Vercel and set the project Root Directory to `backend`.
 2. Select Node.js 22.x. The `build` and `vercel-build` scripts generate Prisma Client; the function bundle includes that generated client.
 3. Add the production environment variables above in Vercel. Use Preview and Production values appropriate to each environment.
-4. Confirm the external upload-storage migration is complete before serving users who can upload or access media.
+4. Create a public `listing-photos` Storage bucket in the same Supabase project and add `SUPABASE_URL` plus the private `SUPABASE_SECRET_KEY` (or legacy service-role key) to the backend project's Production environment.
 5. Deploy a Preview first. Verify its health endpoint and API, database, CORS, cookies, authentication, email/OAuth configuration, and upload permissions before promoting it.
 
 Vercel deployment and account authorization remain manual because no Vercel account action was authorized or available in this workspace.
 
-The Angular project is deployed separately. Update its existing `/api/:path*` rewrite to the backend's actual Vercel hostname after that hostname exists; keep the rewrite on the Angular origin so its current relative API calls and session cookies use one browser origin. Set backend `FRONTEND_URL` to the deployed Angular origin. The backend hostname cannot be entered in the frontend configuration until Vercel assigns it.
+The Angular project is deployed separately. Update its existing `/api/:path*` rewrite to the backend's actual Vercel hostname after that hostname exists; keep the rewrite on the Angular origin so its current relative API calls and session cookies use one browser origin. Set backend `FRONTEND_URL` to the deployed Angular origin. For Google sign-in, set `GOOGLE_CALLBACK_URL` to `<Angular origin>/api/auth/google/callback` and register that exact URL in Google OAuth; the Angular `/api` rewrite forwards the callback to the backend and keeps its session cookie on the Angular origin. The backend hostname cannot be entered in the frontend configuration until Vercel assigns it.
 
 ## Production verification checklist
 
@@ -82,7 +85,7 @@ The Angular project is deployed separately. Update its existing `/api/:path*` re
 - [ ] Secrets are set in Vercel and are absent from commits and build logs.
 - [ ] The Supabase runtime pooler and migration URLs are correct and kept separate.
 - [ ] The new Supabase database is confirmed empty; migration history is reviewed and table creation is explicitly approved.
-- [ ] Uploads use durable object storage with private message-file authorization preserved.
+- [ ] Listing photos use the public `listing-photos` bucket; profile photos and private message attachments still need durable storage before production use.
 - [ ] `GET /api/health` returns success.
 - [ ] Production CORS allows only the exact Angular origin and credentials are enabled.
 - [ ] Signup/login, cookie-backed session read/logout, and authorization are verified from the Angular domain.

@@ -1,9 +1,17 @@
-// Save listing images under random names and reject oversized or non-image uploads.
-import { mkdir, open, unlink } from "node:fs/promises";
+// Validate listing photos and store them durably on Vercel or locally during development.
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
+import {
+    deleteStorageObject,
+    isPersistentStorageRequired,
+    isSupabaseStorageConfigured,
+    publicStorageUrl,
+    STORAGE_BUCKETS,
+    uploadStorageObject
+} from "../../lib/supabaseStorage.js";
 
 const backendDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const listingUploadDirectory = path.join(backendDirectory, "uploads", "listings");
@@ -14,68 +22,94 @@ const supportedTypes = new Map([
     ["image/webp", { extension: ".webp", signature: (bytes) => bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP" }]
 ]);
 
-// Generate opaque file names so original names and paths never become public URLs.
-const storage = multer.diskStorage({
-    destination: async (_request, _file, callback) => {
-        try {
-            await mkdir(listingUploadDirectory, { recursive: true });
-            callback(null, listingUploadDirectory);
-        } catch (error) {
-            callback(error);
-        }
-    },
-    filename: (_request, file, callback) => {
-        const type = supportedTypes.get(file.mimetype);
-        if (!type) return callback(new Error("UNSUPPORTED_IMAGE_TYPE"));
-        callback(null, `${randomUUID()}${type.extension}`);
-    }
-});
-
+// Keep files in memory until their signatures are checked and the correct storage is selected.
 const imageUpload = multer({
-    storage,
-    limits: { fileSize: maxPhotoSize, files: 2, fields: 16, parts: 18 },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxPhotoSize, files: 4, fields: 16, parts: 20 },
     fileFilter: (_request, file, callback) => {
         if (!supportedTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_IMAGE_TYPE"));
         callback(null, true);
     }
-}).array("photos", 2);
+}).array("photos", 4);
 
-// Check each uploaded file's bytes as well as its browser-provided MIME type.
+// Accept only the documented image formats based on file bytes, then persist each photo.
 export function uploadListingPhoto(request, response, next) {
     imageUpload(request, response, async (uploadError) => {
         if (uploadError) {
-            await removeListingPhotos(request.files);
             const message = uploadError.code === "LIMIT_FILE_SIZE"
                 ? "Product photos must be 5 MB or smaller."
-                : "Upload up to two JPG, PNG, or WebP product photos.";
+                : uploadError.message === "UNSUPPORTED_IMAGE_TYPE"
+                    ? "Product photos must be JPG, PNG, or WebP images."
+                    : uploadError.code === "LIMIT_UNEXPECTED_FILE"
+                        ? "Choose between 2 and 4 JPG, PNG, or WebP product photos."
+                        : "Product photos could not be uploaded. Please try again.";
             return response.status(400).json({ success: false, message });
         }
 
         if (!request.files?.length) return next();
 
         for (const uploadedPhoto of request.files) {
-            try {
-                const file = await open(uploadedPhoto.path, "r");
-                const header = Buffer.alloc(12);
-                await file.read(header, 0, header.length, 0);
-                await file.close();
-                const type = supportedTypes.get(uploadedPhoto.mimetype);
-                if (!type?.signature(header)) {
-                    await removeListingPhotos(request.files);
-                    return response.status(400).json({ success: false, message: "A product photo is not a valid JPG, PNG, or WebP image." });
-                }
-            } catch {
-                await removeListingPhotos(request.files);
-                return response.status(400).json({ success: false, message: "The product photos could not be processed." });
+            const bytes = uploadedPhoto.buffer;
+            const type = supportedTypes.get(uploadedPhoto.mimetype);
+            if (!Buffer.isBuffer(bytes) || !type?.signature(bytes.subarray(0, 12))) {
+                return response.status(400).json({ success: false, message: "A product photo is not a valid JPG, PNG, or WebP image." });
             }
         }
-        return next();
+
+        try {
+            if (isPersistentStorageRequired()) {
+                if (!isSupabaseStorageConfigured()) {
+                    return response.status(503).json({
+                        success: false,
+                        message: "Product photo storage is not configured for this deployment. Please contact the site administrator."
+                    });
+                }
+                await persistToSupabase(request.files);
+            } else {
+                await persistLocally(request.files);
+            }
+            return next();
+        } catch (error) {
+            await removeListingPhotos(request.files);
+            console.error("Product photo upload failed:", error?.code ?? error?.name ?? "UNKNOWN");
+            return response.status(502).json({ success: false, message: "Product photos could not be saved. Please try again." });
+        }
     });
+}
+
+async function persistToSupabase(files) {
+    for (const file of files) {
+        const type = supportedTypes.get(file.mimetype);
+        const objectPath = `listings/${randomUUID()}${type.extension}`;
+        file.storageObjectPath = objectPath;
+        await uploadStorageObject(STORAGE_BUCKETS.listings, objectPath, file.buffer, file.mimetype);
+        file.publicUrl = publicStorageUrl(STORAGE_BUCKETS.listings, objectPath);
+    }
+}
+
+async function persistLocally(files) {
+    await mkdir(listingUploadDirectory, { recursive: true });
+    for (const file of files) {
+        const type = supportedTypes.get(file.mimetype);
+        file.filename = `${randomUUID()}${type.extension}`;
+        file.path = path.join(listingUploadDirectory, file.filename);
+        await writeFile(file.path, file.buffer, { flag: "wx" });
+    }
 }
 
 // Clean up every file when validation or database saving rejects the upload.
 export async function removeListingPhotos(files = []) {
-    await Promise.all((files ?? []).map((file) => removeListingPhoto(file?.path)));
+    await Promise.all((files ?? []).map(async (file) => {
+        if (file?.storageObjectPath) {
+            try {
+                await deleteStorageObject(STORAGE_BUCKETS.listings, file.storageObjectPath);
+            } catch (error) {
+                console.error("Could not remove an uploaded product photo:", error?.code ?? error?.name ?? "UNKNOWN");
+            }
+            return;
+        }
+        await removeListingPhoto(file?.path);
+    }));
 }
 
 // Remove a temporary upload whenever its listing fails validation or cannot be saved.
@@ -88,21 +122,38 @@ export async function removeListingPhoto(filePath) {
     }
 }
 
-// Resolve only a photo URL created by this service before deleting its local file.
+// Remove only a photo URL owned by this app from its configured storage location.
 export async function removeListingPhotoByUrl(photoUrl) {
-    const prefix = "/api/uploads/listings/";
-    if (typeof photoUrl !== "string" || !photoUrl.startsWith(prefix)) return;
+    const localPrefix = "/api/uploads/listings/";
+    if (typeof photoUrl !== "string") return;
+    if (photoUrl.startsWith(localPrefix)) {
+        let fileName;
+        try {
+            fileName = decodeURIComponent(photoUrl.slice(localPrefix.length));
+        } catch {
+            return;
+        }
+        if (!fileName || path.basename(fileName) !== fileName) return;
+        await removeListingPhoto(path.join(listingUploadDirectory, fileName));
+        return;
+    }
 
-    let fileName;
+    const baseUrl = process.env.SUPABASE_URL?.replace(/\/+$/, "");
+    if (!baseUrl) return;
+    const publicPrefix = `${baseUrl}/storage/v1/object/public/${encodeURIComponent(STORAGE_BUCKETS.listings)}/`;
+    if (!photoUrl.startsWith(publicPrefix)) return;
+    let objectPath;
     try {
-        fileName = decodeURIComponent(photoUrl.slice(prefix.length));
+        objectPath = photoUrl.slice(publicPrefix.length).split("/").map(decodeURIComponent).join("/");
     } catch {
         return;
     }
-    if (!fileName || path.basename(fileName) !== fileName) return;
-
-    await removeListingPhoto(path.join(listingUploadDirectory, fileName));
+    if (!objectPath || objectPath.startsWith("/") || objectPath.split("/").includes("..")) return;
+    await deleteStorageObject(STORAGE_BUCKETS.listings, objectPath);
 }
 
-// Express serves only this dedicated folder for public listing photos.
-export const listingPhotoUrl = (fileName) => `/api/uploads/listings/${encodeURIComponent(fileName)}`;
+// Persist external URLs in the database and local relative URLs in development.
+export function listingPhotoUrl(photo) {
+    if (photo?.publicUrl) return photo.publicUrl;
+    return `/api/uploads/listings/${encodeURIComponent(photo.filename)}`;
+}

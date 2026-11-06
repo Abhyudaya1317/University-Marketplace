@@ -15,7 +15,8 @@ export async function getListingForEdit(request, response) {
             where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
             select: {
                 id: true, title: true, description: true, price: true, quantityAvailable: true,
-                phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, condition: true, customCondition: true,
+                phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
+                condition: true, customCondition: true,
                 clothingGender: true, proteinGrams: true,
                 product: { select: { category: true } }
             }
@@ -35,6 +36,8 @@ export async function getListingForEdit(request, response) {
                 location: listing.location,
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
+                photoUrl3: listing.photoUrl3,
+                photoUrl4: listing.photoUrl4,
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
@@ -56,9 +59,9 @@ export async function updateListing(request, response) {
         return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
     }
 
-    if (uploadedPhotos.length !== 0 && uploadedPhotos.length !== 2) {
+    if (uploadedPhotos.length !== 0 && (uploadedPhotos.length < 2 || uploadedPhotos.length > 4)) {
         await removeListingPhotos(uploadedPhotos);
-        return response.status(400).json({ success: false, message: "Choose either no new photos or exactly two replacement photos." });
+        return response.status(400).json({ success: false, message: "Choose either no new photos or between 2 and 4 replacement photos." });
     }
 
     const validationMessage = validateListingDetails(request.body ?? {});
@@ -76,7 +79,7 @@ export async function updateListing(request, response) {
         const updatedListing = await prisma.$transaction(async (transaction) => {
             const current = await transaction.listing.findFirst({
                 where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
-                select: { photoUrl: true, photoUrl2: true }
+                select: { photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true }
             });
             if (!current) return { error: "NOT_FOUND" };
 
@@ -85,8 +88,9 @@ export async function updateListing(request, response) {
                 create: { name, normalizedName, category: request.body.category },
                 update: {}
             });
-            const photoUrl = uploadedPhotos.length === 2 ? listingPhotoUrl(uploadedPhotos[0].filename) : current.photoUrl;
-            const photoUrl2 = uploadedPhotos.length === 2 ? listingPhotoUrl(uploadedPhotos[1].filename) : current.photoUrl2;
+            const photoUrls = uploadedPhotos.length
+                ? uploadedPhotos.map(listingPhotoUrl)
+                : [current.photoUrl, current.photoUrl2, current.photoUrl3, current.photoUrl4];
             const changed = await transaction.listing.updateMany({
                 where: { id: listingId, sellerId: request.user.id, status: "ACTIVE" },
                 data: {
@@ -97,8 +101,10 @@ export async function updateListing(request, response) {
                     phoneNumber: request.body.phoneNumber.trim(),
                     quantityAvailable: Number(request.body.quantityAvailable),
                     location,
-                    photoUrl,
-                    photoUrl2,
+                    photoUrl: photoUrls[0] ?? null,
+                    photoUrl2: photoUrls[1] ?? null,
+                    photoUrl3: photoUrls[2] ?? null,
+                    photoUrl4: photoUrls[3] ?? null,
                     condition: request.body.condition,
                     customCondition: request.body.condition === "CUSTOM" ? request.body.customCondition.trim() : null,
                     clothingGender: request.body.category === "CLOTHING" ? request.body.clothingGender : null,
@@ -111,11 +117,12 @@ export async function updateListing(request, response) {
                 where: { id: listingId },
                 select: {
                     id: true, title: true, description: true, price: true, quantityAvailable: true,
-                    photoUrl: true, photoUrl2: true, location: true, condition: true, customCondition: true, clothingGender: true,
+                    photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
+                    location: true, condition: true, customCondition: true, clothingGender: true,
                     proteinGrams: true, product: { select: { id: true, name: true, category: true } }
                 }
             });
-            return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2] };
+            return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2, current.photoUrl3, current.photoUrl4] };
         });
 
         if (updatedListing.error === "NOT_FOUND") {
@@ -123,7 +130,7 @@ export async function updateListing(request, response) {
             return response.status(404).json({ success: false, message: "This active listing was not found on your account." });
         }
 
-        const updatedPhotoUrls = [updatedListing.listing.photoUrl, updatedListing.listing.photoUrl2];
+        const updatedPhotoUrls = [updatedListing.listing.photoUrl, updatedListing.listing.photoUrl2, updatedListing.listing.photoUrl3, updatedListing.listing.photoUrl4];
         for (const oldPhotoUrl of updatedListing.previousPhotoUrls) {
             if (oldPhotoUrl && !updatedPhotoUrls.includes(oldPhotoUrl)) {
                 await removeListingPhotoByUrl(oldPhotoUrl).catch((error) => logListingFailure("remove replaced photo", error));
@@ -141,6 +148,8 @@ export async function updateListing(request, response) {
                 quantityAvailable: updatedListing.listing.quantityAvailable,
                 photoUrl: updatedListing.listing.photoUrl,
                 photoUrl2: updatedListing.listing.photoUrl2,
+                photoUrl3: updatedListing.listing.photoUrl3,
+                photoUrl4: updatedListing.listing.photoUrl4,
                 location: updatedListing.listing.location,
                 condition: updatedListing.listing.condition,
                 customCondition: updatedListing.listing.customCondition,
@@ -232,7 +241,7 @@ export async function permanentlyDeleteListing(request, response) {
     try {
         const archivedListing = await prisma.listing.findFirst({
             where: { id: listingId, sellerId: request.user.id, status: "ARCHIVED" },
-            select: { id: true, photoUrl: true, photoUrl2: true, _count: { select: { orders: true } } }
+            select: { id: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true, _count: { select: { orders: true } } }
         });
         if (!archivedListing) return response.status(404).json({ success: false, message: "This archived listing was not found on your account." });
         if (archivedListing._count.orders > 0) {
@@ -244,7 +253,7 @@ export async function permanentlyDeleteListing(request, response) {
         });
         if (deleted.count !== 1) return response.status(409).json({ success: false, message: "This listing gained order history and must remain archived." });
 
-        for (const photoUrl of [archivedListing.photoUrl, archivedListing.photoUrl2]) {
+        for (const photoUrl of [archivedListing.photoUrl, archivedListing.photoUrl2, archivedListing.photoUrl3, archivedListing.photoUrl4]) {
             if (photoUrl) await removeListingPhotoByUrl(photoUrl).catch((error) => logListingFailure("remove deleted listing photo", error));
         }
         return response.json({ success: true, deleted: true });

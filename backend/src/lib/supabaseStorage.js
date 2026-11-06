@@ -6,7 +6,7 @@ export const STORAGE_BUCKETS = Object.freeze({
 });
 
 export function isSupabaseStorageConfigured() {
-    return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+    return Boolean(process.env.SUPABASE_URL && storageSecretKey());
 }
 
 export function isPersistentStorageRequired() {
@@ -15,9 +15,14 @@ export function isPersistentStorageRequired() {
 
 function storageConfig() {
     const baseUrl = process.env.SUPABASE_URL?.replace(/\/+$/, "");
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!baseUrl || !serviceKey) throw new Error("SUPABASE_STORAGE_NOT_CONFIGURED");
-    return { baseUrl, serviceKey };
+    const secretKey = storageSecretKey();
+    if (!baseUrl || !secretKey) throw new Error("SUPABASE_STORAGE_NOT_CONFIGURED");
+    return { baseUrl, secretKey };
+}
+
+// Prefer Supabase's current server-only key and keep compatibility with the legacy service_role variable.
+function storageSecretKey() {
+    return process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
 function encodeObjectPath(objectPath) {
@@ -29,12 +34,12 @@ function storageUrl(baseUrl, route) {
 }
 
 async function storageRequest(route, options = {}) {
-    const { baseUrl, serviceKey } = storageConfig();
+    const { baseUrl, secretKey } = storageConfig();
     const response = await fetch(storageUrl(baseUrl, route), {
         ...options,
         headers: {
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
+            apikey: secretKey,
+            Authorization: `Bearer ${secretKey}`,
             ...options.headers,
         },
     });

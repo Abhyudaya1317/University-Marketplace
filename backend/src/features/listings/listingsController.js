@@ -12,11 +12,11 @@ export async function createListing(request, response) {
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
     const uploadedPhotos = request.files ?? [];
-    if (uploadedPhotos.length !== 2) {
+    if (uploadedPhotos.length < 2 || uploadedPhotos.length > 4) {
         await removeListingPhotos(uploadedPhotos);
-        return response.status(400).json({ success: false, message: "Choose exactly two product photos before publishing." });
+        return response.status(400).json({ success: false, message: "Choose between 2 and 4 product photos before publishing." });
     }
-    const [photoUrl, photoUrl2] = uploadedPhotos.map((photo) => listingPhotoUrl(photo.filename));
+    const [photoUrl, photoUrl2, photoUrl3, photoUrl4] = uploadedPhotos.map(listingPhotoUrl);
 
     // Use the same server-side validation rules for creating and editing offers.
     const validationMessage = validateListingDetails(request.body ?? {});
@@ -46,6 +46,8 @@ export async function createListing(request, response) {
                     quantityAvailable: Number(quantityAvailable),
                     photoUrl,
                     photoUrl2,
+                    photoUrl3: photoUrl3 ?? null,
+                    photoUrl4: photoUrl4 ?? null,
                     location: trimmedLocation,
                     condition,
                     customCondition: condition === "CUSTOM" ? customCondition.trim() : null,
@@ -70,6 +72,8 @@ export async function createListing(request, response) {
                 price: listing.price.toFixed(2),
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
+                photoUrl3: listing.photoUrl3,
+                photoUrl4: listing.photoUrl4,
                 location: listing.location,
                 condition: listing.condition,
                 customCondition: listing.customCondition,
@@ -150,6 +154,8 @@ export async function getExploreProducts(request, response) {
                 quantityAvailable: true,
                 photoUrl: true,
                 photoUrl2: true,
+                photoUrl3: true,
+                photoUrl4: true,
                 location: true,
                 condition: true,
                 customCondition: true,
@@ -181,6 +187,8 @@ export async function getExploreProducts(request, response) {
             quantityAvailable: listing.quantityAvailable,
             photoUrl: listing.photoUrl,
             photoUrl2: listing.photoUrl2,
+            photoUrl3: listing.photoUrl3,
+            photoUrl4: listing.photoUrl4,
             location: listing.location,
             condition: listing.condition,
             customCondition: listing.customCondition,
@@ -229,6 +237,8 @@ export async function getPublicListingDetails(request, response) {
                 quantityAvailable: true,
                 photoUrl: true,
                 photoUrl2: true,
+                photoUrl3: true,
+                photoUrl4: true,
                 location: true,
                 condition: true,
                 customCondition: true,
@@ -257,6 +267,8 @@ export async function getPublicListingDetails(request, response) {
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
+                photoUrl3: listing.photoUrl3,
+                photoUrl4: listing.photoUrl4,
                 location: listing.location,
                 condition: listing.condition,
                 customCondition: listing.customCondition,

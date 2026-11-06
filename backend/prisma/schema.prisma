@@ -105,6 +105,8 @@ model Listing {
   phoneNumber    String
   photoUrl       String?
   photoUrl2      String?
+  photoUrl3      String?
+  photoUrl4      String?
   location       String          @default("LPU campus") @db.VarChar(120)
   clothingGender ClothingGender?
   proteinGrams   Decimal?        @db.Decimal(6, 2)

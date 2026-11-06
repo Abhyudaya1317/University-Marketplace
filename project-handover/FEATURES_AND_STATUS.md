@@ -48,7 +48,7 @@ Public profile provides favorite seller controls. SellerFavorite has unique fan/
 
 ### Create listing — IMPLEMENTED BUT NOT TESTED end-to-end
 
-Form supports title/name, category, description, price, phone, campus pickup location, condition, stock, clothing gender and food protein. Listing creation requires exactly two photos. Backend validates and creates/reuses Product, then creates seller-owned Listing. Routes POST /api/listings. Images are local disk files; max 5 MB each, JPG/PNG/WebP, checked by signature. OLD and CUSTOM condition values plus customCondition were added in migration 20261101120000_add_second_listing_photo_custom_condition.
+Form supports title/name, category, description, price, phone, campus pickup location, condition, stock, clothing gender and food protein. Listing creation accepts 2–4 photos. The browser optimizes large images for Vercel requests; the backend validates image signatures and stores production listing photos in the public Supabase `listing-photos` bucket. Configure that bucket and the backend-only Supabase environment variables before production uploads. OLD and CUSTOM condition values plus customCondition were added in migration 20261101120000_add_second_listing_photo_custom_condition.
 
 Listing fee first-three-free / ₹2 later is NOT IMPLEMENTED. User email comes from account; phone number stored per listing. Category values are enum.
 

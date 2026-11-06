@@ -16,6 +16,8 @@ interface ExploreListing {
   quantityAvailable: number;
   photoUrl: string | null;
   photoUrl2: string | null;
+  photoUrl3: string | null;
+  photoUrl4: string | null;
   condition: string;
   customCondition: string | null;
   clothingGender: string | null;
@@ -194,17 +196,26 @@ export class Explore {
   }
 
   protected photoFor(listing: ExploreListing): string | null {
-    const photos = [listing.photoUrl, listing.photoUrl2].filter((url): url is string => Boolean(url));
+    const photos = this.listingPhotos(listing);
     if (!photos.length || this.unavailablePhotoIds().has(listing.id)) return null;
     return photos[this.photoIndexes()[listing.id] ?? 0] ?? photos[0];
+  }
+
+  protected photoCount(listing: ExploreListing): number {
+    return this.listingPhotos(listing).length;
   }
 
   protected stepPhoto(listing: ExploreListing, direction: number, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    const count = [listing.photoUrl, listing.photoUrl2].filter(Boolean).length;
+    const count = this.photoCount(listing);
     if (count < 2) return;
     this.photoIndexes.update((indexes) => ({ ...indexes, [listing.id]: ((indexes[listing.id] ?? 0) + direction + count) % count }));
+  }
+
+  private listingPhotos(listing: ExploreListing): string[] {
+    return [listing.photoUrl, listing.photoUrl2, listing.photoUrl3, listing.photoUrl4]
+      .filter((url): url is string => Boolean(url));
   }
 
   protected markPhotoUnavailable(listingId: string): void {

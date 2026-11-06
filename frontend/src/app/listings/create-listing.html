@@ -132,10 +132,11 @@
         </div>
 
         <div class="form-field">
-          <label for="product-photo">Product photos (exactly 2 required)</label>
+          <label for="product-photo">Product photos (2–4 required)</label>
           <input #photoInput id="product-photo" name="photos" type="file" accept="image/jpeg,image/png,image/webp"
-            multiple [required]="!isEditing()" (change)="selectPhotos($event)">
-          <small>Choose two JPG, PNG, or WebP photos · maximum 5 MB each. When editing, select both to replace the existing photos.</small>
+            multiple [required]="!isEditing()" [disabled]="busy() || photoProcessing()" (change)="selectPhotos($event)">
+          <small>Choose 2–4 JPG, PNG, or WebP photos · maximum 5 MB each. Photos are optimized for upload. When editing, leave this empty to keep the current photos or select 2–4 replacements.</small>
+          @if (photoProcessing()) { <small role="status">Preparing photos for upload…</small> }
           @if (photoError()) { <small class="failure" role="alert">{{ photoError() }}</small> }
           @if (photoPreviews().length > 0) {
             <div class="photo-preview-row">
@@ -145,13 +146,14 @@
             </div>
           } @else if (isEditing()) {
             <div class="photo-preview-row">
-              @if (currentPhotoUrl()) { <img class="photo-preview" [src]="currentPhotoUrl()" alt="Current product photo 1"> }
-              @if (currentPhotoUrl2()) { <img class="photo-preview" [src]="currentPhotoUrl2()" alt="Current product photo 2"> }
+              @for (photoUrl of currentPhotoUrls(); track photoUrl; let i = $index) {
+                <img class="photo-preview" [src]="photoUrl" [alt]="'Current product photo ' + (i + 1)">
+              }
             </div>
           }
         </div>
 
-        <button class="primary-button" type="submit" [disabled]="busy()">
+        <button class="primary-button" type="submit" [disabled]="busy() || photoProcessing()">
           @if (busy()) { Saving… } @else if (isEditing()) { Save listing changes } @else { Publish listing }
         </button>
       </form>
@@ -163,7 +165,7 @@
         }
       }
       @if (error()) { <p class="feedback failure" role="alert">{{ error() }}</p> }
-      <p class="privacy-note">Your phone number is saved with the listing but isn’t shown on public product pages. The campus pickup location and product photo are public.</p>
+      <p class="privacy-note">Your phone number is saved with the listing but isn’t shown on public product pages. The campus pickup location and product photos are public.</p>
     }
   </section>
 </main>

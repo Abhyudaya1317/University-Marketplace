@@ -36,7 +36,7 @@ Historical complaints: generic Seller #1, blank/incomplete My Profile and Items 
 
 ## P1 — image persistence/display
 
-Historical photos were missing in Explore/detail but shown in profile. Current backend stores local paths, serves /api/uploads/listings, frontend uses photoUrl with fallback. Verify actual path + GET image status, replacement/removal, restart persistence and page URLs. In cloud deployment local disk may be ephemeral and not shared.
+Listing creation/edit now accepts 2–4 photos, validates them, optimizes large browser selections, and stores production listing images in the public Supabase `listing-photos` bucket. Configure `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`) in Vercel and create that public bucket before production uploads. Local development still uses `backend/uploads/listings`. Profile photos and private message attachments still use local disk. Verify upload, display, replacement/removal, and persistence after deployment.
 
 ## P1 — listing management/archive
 
