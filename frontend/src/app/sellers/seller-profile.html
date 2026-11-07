@@ -47,9 +47,9 @@
           </div>
           <h1 id="seller-profile-name">{{ currentSeller.fullName }}</h1>
           @if (currentSeller.reviewCount) {
-            <p>{{ currentSeller.averageRating }} / 5 · {{ currentSeller.reviewCount }} seller reviews</p>
+            <p class="seller-reputation">{{ currentSeller.averageRating }} / 5 · {{ currentSeller.reviewCount }} seller reviews</p>
           } @else {
-            <p>LPU marketplace member</p>
+            <p class="seller-reputation">LPU marketplace member</p>
           }
           @if (currentSeller.bio) {
             <p class="seller-bio">{{ currentSeller.bio }}</p>

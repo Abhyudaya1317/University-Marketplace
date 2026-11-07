@@ -38,8 +38,6 @@ export function uploadProfilePhoto(request, response, next) {
         if (!type) {
             return response.status(400).json({ success: false, message: "The selected file is not a valid JPG, PNG, or WebP image." });
         }
-        request.file.detectedImageType = type;
-
         try {
             if (isPersistentStorageRequired()) {
                 if (!isSupabaseStorageConfigured()) {

@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -157,6 +157,7 @@ export class Dashboard {
   protected readonly profileSaving = signal(false);
   protected readonly profilePhotoUploading = signal(false);
   protected readonly profileEditOpen = signal(false);
+  @ViewChild('profileBioInput') private profileBioInput?: ElementRef<HTMLTextAreaElement>;
   protected readonly buyerChat = signal<SellerChatThread | null>(null);
   protected readonly buyerChatLoading = signal(false);
   protected readonly buyerChatError = signal('');
@@ -281,6 +282,7 @@ export class Dashboard {
     this.profileNameDraft.set(this.profile()?.fullName ?? '');
     this.profileEditOpen.set(true);
     this.profileNotice.set('');
+    requestAnimationFrame(() => this.profileBioInput?.nativeElement.focus());
   }
 
   // Display database status values as readable labels on the listing cards.

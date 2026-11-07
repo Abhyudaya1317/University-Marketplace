@@ -1078,13 +1078,13 @@ body .dashboard-page .profile-name-form { margin-top: 16px; padding: 12px; borde
 body .dashboard-page .profile-name-form label { color: #080817; font-size: 14px; font-weight: 700; }
 body .dashboard-page .profile-name-form input { min-height: 40px; border: 2px inset #fff; }
 body .dashboard-page .profile-name-form button { min-height: 40px; padding: 0 14px; border: 2px outset #fff; background: #000080; color: #fff; cursor: pointer; font-weight: 700; }
-body .seller-page .profile-heading { display: grid; grid-template-columns: 150px minmax(0,1fr) auto; grid-template-areas: 'avatar stats action' 'avatar name action' 'avatar note action'; align-items: center; gap: 8px 24px; padding: 20px; border: 0; border-radius: 0; background: #c0c0c0; box-shadow: none; }
+body .seller-page .profile-heading { display: grid; grid-template-columns: 150px minmax(0,1fr) auto; grid-template-areas: 'avatar stats action' 'avatar name action' 'avatar bio action' 'avatar note action'; align-items: center; gap: 8px 24px; padding: 20px; border: 0; border-radius: 0; background: #c0c0c0; box-shadow: none; }
 body .seller-page .profile-copy { display: contents; }
 body .seller-page .profile-copy h1 { grid-area: name; }
-body .seller-page .profile-copy > p:last-child { grid-area: note; }
+body .seller-page .profile-copy .seller-reputation { grid-area: note; }
 body .seller-page .profile-heading .save-button { grid-area: action; min-height: 42px; align-self: center; padding: 0 14px; border: 2px outset #fff; border-radius: 0; background: #c0c0c0; color: #000080; box-shadow: 3px 3px 0 #080817; font: 8px/1.5 var(--pixel); white-space: nowrap; }
 body .seller-page .profile-heading .save-button:hover, body .dashboard-page .profile-action:hover { background: #fff; }
-body .seller-page .profile-copy .seller-bio { max-width: 600px; margin: 12px 0 0; color: #080817; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+body .seller-page .profile-copy .seller-bio { grid-area: bio; max-width: 600px; margin: 0; color: #080817; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 body :is(.dashboard-page,.seller-page) .profile-gallery-section { margin-top: 20px; }
 body :is(.dashboard-page,.seller-page) .profile-photo-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; }
 body :is(.dashboard-page,.seller-page) .profile-photo-tile { position: relative; display: block; overflow: hidden; aspect-ratio: 1; border: 2px solid #777; background: #d6d6d2; }
@@ -1105,7 +1105,8 @@ body .seller-page .listing-section { display: none; }
   body :is(.dashboard-page,.seller-page) .profile-window-menu { flex-wrap: wrap; }
   body :is(.dashboard-page,.seller-page) .profile-window-menu a { padding-inline: 8px; font-size: 7px; }
   body .dashboard-page .profile-console-body { padding: 12px; }
-  body .dashboard-page .profile-summary, body .seller-page .profile-heading { grid-template-columns: 96px minmax(0,1fr); grid-template-areas: 'avatar stats' 'name name' 'note note' 'action action'; gap: 10px 16px; padding: 12px; }
+  body .dashboard-page .profile-summary { grid-template-columns: 96px minmax(0,1fr); grid-template-areas: 'avatar stats' 'name name' 'action action'; gap: 10px 16px; padding: 12px; }
+  body .seller-page .profile-heading { grid-template-columns: 96px minmax(0,1fr); grid-template-areas: 'avatar stats' 'name name' 'bio bio' 'note note' 'action action'; gap: 10px 16px; padding: 12px; }
   body :is(.dashboard-page,.seller-page) .profile-avatar { width: 96px; height: 96px; }
   body :is(.dashboard-page,.seller-page) .profile-stats { justify-content: space-between; gap: 4px; }
   body :is(.dashboard-page,.seller-page) .profile-stats > div { min-width: 0; }
@@ -1324,10 +1325,16 @@ body .seller-page .listing-section { display: none; }
   body .dashboard-page .profile-window-menu a { min-height: 32px; padding-inline: 7px; font-size: 6px; }
   body .dashboard-page .profile-console-body { padding: 9px; }
   body .dashboard-page .profile-handle { margin-bottom: 7px; font-size: 8px; }
-  body .dashboard-page .profile-summary,
+  body .dashboard-page .profile-summary {
+    grid-template-columns: 62px minmax(0, 1fr) auto;
+    grid-template-areas: 'avatar stats action' 'name name name';
+    align-items: center;
+    gap: 5px 8px;
+    padding: 8px;
+  }
   body .seller-page .profile-heading {
     grid-template-columns: 62px minmax(0, 1fr) auto;
-    grid-template-areas: 'avatar stats action' 'name name name' 'note note note';
+    grid-template-areas: 'avatar stats action' 'name name name' 'bio bio bio' 'note note note';
     align-items: center;
     gap: 5px 8px;
     padding: 8px;
@@ -1337,7 +1344,7 @@ body .seller-page .listing-section { display: none; }
   body :is(.dashboard-page,.seller-page) .profile-stats strong { font-size: 14px; }
   body :is(.dashboard-page,.seller-page) .profile-stats span { font-size: 9px; }
   body .dashboard-page .profile-display-name h1, body .seller-page .profile-copy h1 { font-size: 16px; }
-  body :is(.dashboard-page,.seller-page) .profile-display-name p, body .seller-page .profile-copy > p:last-child { font-size: 11px; }
+  body :is(.dashboard-page,.seller-page) .profile-display-name p, body .seller-page .profile-copy .seller-reputation { font-size: 11px; }
   body .dashboard-page .profile-action,
   body .seller-page .profile-heading .save-button {
     justify-self: end;
