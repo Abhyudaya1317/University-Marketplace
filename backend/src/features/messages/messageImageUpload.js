@@ -33,10 +33,6 @@ const supportedTypes = new Map([
 const messageFileUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: maxMessageFileSize, files: 1, fields: 1, parts: 2 },
-    fileFilter: (_request, file, callback) => {
-        if (!supportedTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_MESSAGE_FILE_TYPE"));
-        callback(null, true);
-    },
 }).single("file");
 
 // Validate actual bytes before any attachment reaches persistent storage.
@@ -51,12 +47,21 @@ export function uploadMessageFile(request, response, next) {
         if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
 
         const file = request.file;
-        const header = file.buffer.subarray(0, 16);
-        const type = supportedTypes.get(file.mimetype);
-        const validText = type?.text && !header.includes(0);
-        if (!type || !(type.text ? validText : type.signature(header))) {
+        const extension = path.extname(file.originalname ?? "").toLowerCase();
+        const declaredType = typeof file.mimetype === "string" ? file.mimetype.toLowerCase() : "";
+        const binaryType = [...supportedTypes.entries()].find(([, type]) => !type.text && type.signature(file.buffer));
+        const textType = declaredType === "text/csv" || extension === ".csv"
+            ? supportedTypes.get("text/csv")
+            : declaredType === "text/plain" || extension === ".txt"
+                ? supportedTypes.get("text/plain")
+                : null;
+        const validText = textType && file.buffer.length > 0 && !file.buffer.includes(0);
+        const detected = binaryType ?? (validText ? [textType === supportedTypes.get("text/csv") ? "text/csv" : "text/plain", textType] : null);
+        if (!detected) {
             return response.status(400).json({ success: false, message: "The file contents do not match its file type." });
         }
+        const [detectedMimeType, type] = detected;
+        file.mimetype = detectedMimeType;
         file.messageExtension = type.extension;
         return next();
     });
