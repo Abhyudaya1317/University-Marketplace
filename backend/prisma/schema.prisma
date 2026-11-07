@@ -157,12 +157,13 @@ model Message {
   senderId       Int
   body           String       @db.VarChar(2000)
   type           MessageType  @default(TEXT)
-  attachmentName String?      @db.VarChar(100)
+  attachmentName String?      @db.VarChar(240)
   attachmentOriginalName String? @db.VarChar(180)
   attachmentMimeType String?   @db.VarChar(100)
   stickerKey     String?      @db.VarChar(40)
   meetupAt       DateTime?
   meetupLocation String?      @db.VarChar(120)
+  meetupStatus   MeetupStatus?
   editedAt       DateTime?
   contactName    String?      @db.VarChar(100)
   contactPhone   String?      @db.VarChar(30)
@@ -178,6 +179,7 @@ model Message {
   @@index([conversationId, readAt, senderId])
   @@index([senderId, readAt])
   @@index([senderId, createdAt])
+  @@index([conversationId, type, meetupStatus, createdAt(sort: Desc)])
 }
 
 // Keep a COD order record with the agreed price and the two participants.
@@ -326,4 +328,11 @@ enum MessageType {
   MEETUP
   CONTACT
   LOCATION
+}
+
+// Track whether the recipient accepted a proposed chat meetup.
+enum MeetupStatus {
+  PENDING
+  CONFIRMED
+  DENIED
 }

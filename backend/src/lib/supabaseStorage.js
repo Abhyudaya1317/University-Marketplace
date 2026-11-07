@@ -35,13 +35,14 @@ function storageUrl(baseUrl, route) {
 
 async function storageRequest(route, options = {}) {
     const { baseUrl, secretKey } = storageConfig();
+    const headers = { apikey: secretKey, ...options.headers };
+    // Current sb_secret keys are opaque API keys, not JWTs. Legacy service_role keys are JWTs.
+    if (!secretKey.startsWith("sb_secret_") && !headers.Authorization) {
+        headers.Authorization = `Bearer ${secretKey}`;
+    }
     const response = await fetch(storageUrl(baseUrl, route), {
         ...options,
-        headers: {
-            apikey: secretKey,
-            Authorization: `Bearer ${secretKey}`,
-            ...options.headers,
-        },
+        headers,
     });
     if (!response.ok) throw new Error(`SUPABASE_STORAGE_HTTP_${response.status}`);
     return response;

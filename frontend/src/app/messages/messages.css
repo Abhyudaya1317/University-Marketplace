@@ -528,7 +528,6 @@
 .meetup-message > span { font-size: 12px; }
 .meetup-message .meetup-status { color: #666; font-size: 10px; }
 .messages-page .thread-card .message-list .message-bubble.own-message .shared-file,
-.messages-page .thread-card .message-list .message-bubble.own-message .meetup-message,
 .messages-page .thread-card .message-list .message-bubble.own-message .campus-sticker { color: #080817; }
 .meetup-message + p { margin-top: 6px; }
 .message-bubble .edited-note { font-size: 10px; }
@@ -720,6 +719,70 @@
 .chat-message.selection-active .message-bubble { cursor: pointer; }
 .chat-message.selected-for-delete .message-bubble { outline: 2px solid #174bff; outline-offset: 2px; }
 .messages-page .page-heading h1 { text-shadow: 3px 3px 0 #fff; }
+
+/* Keep meetup details readable on the bright blue outgoing chat bubble. */
+.messages-page .thread-card .message-list .message-bubble.own-message .meetup-message {
+  padding: 8px;
+  border-radius: 10px;
+  background: #f2f4ff;
+  color: #171a2b;
+}
+.meetup-message > small:first-child { color: #174bff; }
+.meetup-message .meetup-status { color: #555; }
+.meetup-message-actionable { cursor: pointer; }
+.meetup-message-actionable:hover,
+.meetup-message-actionable:focus-visible { outline: 2px solid #174bff; outline-offset: 2px; }
+.meetup-message-denied,
+.messages-page .thread-card .message-list .message-bubble.own-message .meetup-message-denied {
+  padding: 8px;
+  border-radius: 10px;
+  background: #e2e2e2;
+  color: #565656;
+}
+.meetup-message-denied > small:first-child,
+.meetup-message-denied .meetup-status { color: #666; }
+.meetup-message-confirmed { padding: 8px; border-radius: 10px; background: #e5f2ea; color: #183d27; }
+.meetup-message-confirmed > small:first-child,
+.meetup-message-confirmed .meetup-status { color: #287245; }
+.confirmed-meeting-chip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 7px;
+  margin: 3px 0 7px;
+  color: #174bff;
+  font-size: 12px;
+}
+.confirmed-meeting-chip strong { font: 10px/1.4 var(--pixel, monospace); }
+.inbox-copy .inbox-meeting { color: #174bff; font-size: 11px; font-weight: 600; }
+.inbox-meeting strong { font-weight: 800; }
+.meetup-dialog-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: #08081788;
+}
+.meetup-dialog {
+  box-sizing: border-box;
+  width: min(100%, 420px);
+  padding: 22px;
+  border: 2px solid #080817;
+  background: #f7f6f0;
+  box-shadow: 6px 6px 0 #080817;
+  color: #171a2b;
+}
+.meetup-dialog .eyebrow { margin: 0; color: #174bff; font: 10px/1.5 var(--pixel, monospace); }
+.meetup-dialog h2 { margin: 8px 0 14px; font-size: 20px; }
+.meetup-dialog-time, .meetup-dialog-place { margin: 5px 0; font-size: 14px; }
+.meetup-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.meetup-dialog-actions button { min-height: 38px; padding: 6px 14px; border: 2px solid #080817; background: #fff; color: #080817; cursor: pointer; font: inherit; font-weight: 700; }
+.meetup-dialog-actions .meetup-deny-button { background: #e2e2e2; color: #555; }
+.meetup-dialog-actions .meetup-confirm-button { background: #174bff; color: #fff; }
+.meetup-dialog-actions button:disabled { cursor: wait; opacity: .6; }
+.meetup-dialog-error { color: #a62626; font-size: 13px; }
 @media (max-width: 560px) {
   .messages-page .thread-card .message-list .chat-message {
     max-width: 90%;

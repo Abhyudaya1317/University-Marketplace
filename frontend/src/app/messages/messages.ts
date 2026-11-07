@@ -13,6 +13,7 @@ interface ConversationSummary {
   updatedAt: string;
   otherUser: { id: string; fullName: string; avatarUrl: string | null };
   listing: { id: string; title: string; price: string; photoUrl: string | null; status: string } | null;
+  confirmedMeeting: { meetupAt: string; meetupLocation: string | null } | null;
   lastMessage: { body: string; createdAt: string; senderId: string } | null;
   unreadCount: number;
 }
@@ -33,6 +34,7 @@ interface ChatMessage {
   stickerKey?: string | null;
   meetupAt?: string | null;
   meetupLocation?: string | null;
+  meetupStatus?: 'PENDING' | 'CONFIRMED' | 'DENIED' | null;
   editedAt?: string | null;
   readAt: string | null;
   deletedAt: string | null;
@@ -43,7 +45,53 @@ interface ConversationThread {
   id: string;
   otherUser: { id: string; fullName: string; avatarUrl: string | null };
   listing: { id: string; title: string; price: string; photoUrl: string | null; status: string } | null;
+  confirmedMeeting: { meetupAt: string; meetupLocation: string | null } | null;
   messages: ChatMessage[];
+}
+
+// Reduce large camera photos before upload so chat image requests stay small and quick.
+async function prepareChatPhoto(file: File): Promise<File> {
+  const targetBytes = 2_200_000;
+  if (file.size <= targetBytes) return file;
+  if (typeof createImageBitmap !== 'function') throw new Error('Your browser could not prepare this photo. Try a smaller image.');
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 1920 / Math.max(bitmap.width, bitmap.height));
+    let width = Math.max(1, Math.round(bitmap.width * scale));
+    let height = Math.max(1, Math.round(bitmap.height * scale));
+    let smallest: Blob | null = null;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Your browser could not prepare this photo.');
+      context.drawImage(bitmap, 0, 0, width, height);
+      for (const quality of [0.84, 0.74, 0.64, 0.54]) {
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+        if (!blob) throw new Error('Your browser could not prepare this photo.');
+        if (!smallest || blob.size < smallest.size) smallest = blob;
+        if (blob.size <= targetBytes) {
+          return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'chat-photo'}.webp`, {
+            type: 'image/webp',
+            lastModified: file.lastModified,
+          });
+        }
+      }
+      width = Math.max(1, Math.round(width * 0.82));
+      height = Math.max(1, Math.round(height * 0.82));
+    }
+    if (smallest && smallest.size <= 3_500_000) {
+      return new File([smallest], `${file.name.replace(/\.[^.]+$/, '') || 'chat-photo'}.webp`, {
+        type: 'image/webp',
+        lastModified: file.lastModified,
+      });
+    }
+    throw new Error('This photo is too large to send. Try choosing a smaller image.');
+  } finally {
+    bitmap.close();
+  }
 }
 
 // Provide a simple inbox and a separate direct URL for each private conversation.
@@ -76,6 +124,8 @@ export class Messages {
   protected readonly notice = signal('');
   protected readonly conversationId = signal<string | null>(null);
   protected readonly uploadingFile = signal(false);
+  protected readonly meetupDecisionMessage = signal<ChatMessage | null>(null);
+  protected readonly respondingMeetupId = signal<string | null>(null);
   protected readonly deletingMessageId = signal<string | null>(null);
   protected readonly selectedMessageIds = signal<Set<string>>(new Set());
   protected readonly messageSelectionMode = signal(false);
@@ -97,6 +147,7 @@ export class Messages {
       const id = value && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0 ? value : null;
       this.conversationId.set(id);
       this.conversation.set(null);
+      this.meetupDecisionMessage.set(null);
       if (id) this.loadConversation(id);
     });
 
@@ -174,8 +225,10 @@ export class Messages {
             const previous = currentConversation.messages[index];
             return previous?.deletedAt !== message.deletedAt
               || previous?.body !== message.body
-              || previous?.editedAt !== message.editedAt;
-          });
+              || previous?.editedAt !== message.editedAt
+              || previous?.meetupStatus !== message.meetupStatus;
+          }) || currentConversation.confirmedMeeting?.meetupAt !== nextConversation.confirmedMeeting?.meetupAt
+            || currentConversation.confirmedMeeting?.meetupLocation !== nextConversation.confirmedMeeting?.meetupLocation;
         this.conversationRequestInFlight = false;
         this.conversationLoading.set(false);
         this.error.set('');
@@ -211,7 +264,7 @@ export class Messages {
   protected sendMessage(): void {
     const id = this.conversationId();
     const body = this.draft().trim();
-    if (!id || !body || body.length > 2000 || this.sending()) return;
+    if (!id || !body || body.length > 2000 || this.sending() || this.uploadingFile()) return;
     this.sendMessageRequest(`/api/messages/${id}`, { body }, 'Message sent.');
   }
 
@@ -224,36 +277,45 @@ export class Messages {
   }
 
   // Upload one supported image or document; it remains private to chat participants.
-  protected sendFile(event: Event): void {
+  protected async sendFile(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const id = this.conversationId();
-    if (!file || !id || this.uploadingFile()) return;
+    if (!file || !id || this.uploadingFile() || this.sending()) return;
     if (file.size > 10 * 1024 * 1024) {
       this.error.set('Chat files must be 10 MB or smaller.');
       input.value = '';
       return;
     }
 
-    const form = new FormData();
-    form.append('file', file);
-    form.append('caption', this.draft().trim());
     this.uploadingFile.set(true);
-    this.sendMessageRequest(`/api/messages/${id}/files`, form, 'File sent.', () => {
-      this.draft.set('');
+    this.error.set('');
+    this.notice.set('');
+    try {
+      const preparedFile = file.type.startsWith('image/') ? await prepareChatPhoto(file) : file;
+      const form = new FormData();
+      form.append('file', preparedFile);
+      form.append('caption', this.draft().trim());
+      this.sendMessageRequest(`/api/messages/${id}/files`, form, 'File sent.', () => {
+        this.draft.set('');
+        this.uploadingFile.set(false);
+        this.attachmentMenuOpen.set(false);
+        input.value = '';
+      }, () => {
+        this.uploadingFile.set(false);
+        input.value = '';
+      });
+    } catch (error) {
       this.uploadingFile.set(false);
-      this.attachmentMenuOpen.set(false);
       input.value = '';
-    }, () => {
-      this.uploadingFile.set(false);
-      input.value = '';
-    });
+      this.error.set(error instanceof Error ? error.message : 'We could not prepare this file. Please try again.');
+    }
   }
 
   // Send one selected sticker from the small built-in CampusX sticker pack.
   protected sendSticker(stickerKey: string): void {
     const id = this.conversationId();
-    if (!id) return;
+    if (!id || this.uploadingFile()) return;
     this.sendMessageRequest(`/api/messages/${id}/stickers`, { stickerKey }, 'Sticker sent.', () => {
       this.stickerPickerOpen.set(false);
       this.attachmentMenuOpen.set(false);
@@ -270,7 +332,7 @@ export class Messages {
   // Send a proposed campus meetup time and place; the other person still needs to agree.
   protected scheduleMeetup(): void {
     const id = this.conversationId();
-    if (!id || !this.meetupAt() || !this.meetupLocation().trim()) return;
+    if (!id || !this.meetupAt() || !this.meetupLocation().trim() || this.uploadingFile()) return;
     this.sendMessageRequest(`/api/messages/${id}/meetups`, {
       meetupAt: new Date(this.meetupAt()).toISOString(),
       meetupLocation: this.meetupLocation().trim(),
@@ -278,6 +340,58 @@ export class Messages {
       this.meetupAt.set('');
       this.meetupLocation.set('');
       this.meetupFormOpen.set(false);
+    });
+  }
+
+  protected isIncomingPendingMeetup(message: ChatMessage): boolean {
+    return message.type === 'MEETUP'
+      && (message.meetupStatus ?? 'PENDING') === 'PENDING'
+      && !this.isOwnMessage(message.senderId);
+  }
+
+  protected openMeetupDecision(message: ChatMessage, event: Event): void {
+    if (!this.isIncomingPendingMeetup(message)) return;
+    if (event instanceof KeyboardEvent && event.key === ' ') event.preventDefault();
+    event.stopPropagation();
+    this.meetupDecisionMessage.set(message);
+  }
+
+  protected closeMeetupDecision(): void {
+    if (!this.respondingMeetupId()) this.meetupDecisionMessage.set(null);
+  }
+
+  protected respondToMeetup(action: 'confirm' | 'deny'): void {
+    const conversationId = this.conversationId();
+    const request = this.meetupDecisionMessage();
+    if (!conversationId || !request || this.respondingMeetupId()) return;
+    this.respondingMeetupId.set(request.id);
+    this.error.set('');
+    this.http.post<{ meetupStatus: 'CONFIRMED' | 'DENIED' }>(
+      `/api/messages/${conversationId}/${request.id}/meetup-response`,
+      { action },
+    ).subscribe({
+      next: (response) => {
+        const thread = this.conversation();
+        if (thread) {
+          const updatedMessage = { ...request, meetupStatus: response.meetupStatus };
+          this.conversation.set({
+            ...thread,
+            messages: thread.messages.map((message) => message.id === request.id ? updatedMessage : message),
+            confirmedMeeting: response.meetupStatus === 'CONFIRMED'
+              ? { meetupAt: request.meetupAt!, meetupLocation: request.meetupLocation ?? null }
+              : thread.confirmedMeeting,
+          });
+        }
+        this.respondingMeetupId.set(null);
+        this.meetupDecisionMessage.set(null);
+        this.notice.set(response.meetupStatus === 'CONFIRMED' ? 'Meetup confirmed.' : 'Meetup request denied.');
+        this.refreshConversation(conversationId);
+        this.refreshInbox();
+      },
+      error: (response: HttpErrorResponse) => {
+        this.respondingMeetupId.set(null);
+        this.error.set(response.error?.message ?? 'We could not respond to this meetup request.');
+      },
     });
   }
 
@@ -356,6 +470,7 @@ export class Messages {
     action: 'inbox' | 'conversation' | 'send',
   ): string {
     if (response.status === 401) return 'Your sign-in has expired. Sign in again to continue.';
+    if (response.status === 503 && action === 'send' && response.error?.message) return response.error.message;
     if (response.status === 0) {
       return 'CampusX could not reach the backend. Check that the backend server is running, then retry.';
     }

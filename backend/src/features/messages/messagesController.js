@@ -1,12 +1,11 @@
 // Keep private buyer-seller messages scoped to participants and a single listing.
 import { prisma } from "../../lib/prisma.js";
 import { normalizeMessageBody } from "./messageValidation.js";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import {
     messageImageContentType,
-    messageImageDirectory,
     removeMessageImage,
+    readMessageImage,
+    storeMessageImage,
 } from "./messageImageUpload.js";
 
 // Reserve a database-stored tombstone so deleting a message needs no new database column.
@@ -33,6 +32,7 @@ function presentMessage(message) {
         stickerKey: message.stickerKey,
         meetupAt: message.meetupAt,
         meetupLocation: message.meetupLocation,
+        meetupStatus: message.type === "MEETUP" ? message.meetupStatus ?? "PENDING" : null,
         contactName: message.contactName,
         contactPhone: message.contactPhone,
         locationLabel: message.locationLabel,
@@ -218,14 +218,14 @@ export async function getMyConversations(request, response) {
                 messages: {
                     orderBy: { createdAt: "desc" },
                     take: 1,
-                    select: { body: true, createdAt: true, senderId: true, type: true },
+                    select: { body: true, createdAt: true, senderId: true, type: true, meetupStatus: true },
                 },
             },
         });
 
         const conversationIds = conversations.map((conversation) => conversation.id);
-        const unreadGroups = conversationIds.length
-            ? await prisma.message.groupBy({
+        const [unreadGroups, confirmedMeetups] = conversationIds.length
+            ? await Promise.all([prisma.message.groupBy({
                 by: ["conversationId"],
                 where: {
                     conversationId: { in: conversationIds },
@@ -234,9 +234,27 @@ export async function getMyConversations(request, response) {
                     body: { not: DELETED_MESSAGE_BODY },
                 },
                 _count: { _all: true },
-            })
-            : [];
+            }), prisma.message.findMany({
+                where: {
+                    conversationId: { in: conversationIds },
+                    type: "MEETUP",
+                    meetupStatus: "CONFIRMED",
+                    meetupAt: { not: null },
+                },
+                orderBy: { createdAt: "desc" },
+                select: { conversationId: true, meetupAt: true, meetupLocation: true },
+            })])
+            : [[], []];
         const unreadByConversation = new Map(unreadGroups.map((group) => [group.conversationId, group._count._all]));
+        const confirmedMeetingByConversation = new Map();
+        for (const meeting of confirmedMeetups) {
+            if (!confirmedMeetingByConversation.has(meeting.conversationId)) {
+                confirmedMeetingByConversation.set(meeting.conversationId, {
+                    meetupAt: meeting.meetupAt,
+                    meetupLocation: meeting.meetupLocation,
+                });
+            }
+        }
 
         return response.json({
             success: true,
@@ -261,9 +279,10 @@ export async function getMyConversations(request, response) {
                         photoUrl: conversation.listing.photoUrl,
                         status: conversation.listing.status,
                     } : null,
+                    confirmedMeeting: confirmedMeetingByConversation.get(conversation.id) ?? null,
                     lastMessage: lastMessage ? {
                         ...lastMessage,
-                        body: isDeletedMessage(lastMessage) ? "This message was deleted." : lastMessage.type === "IMAGE" ? "Photo" : lastMessage.type === "CONTACT" ? "Shared a contact" : lastMessage.type === "LOCATION" ? "Shared a location" : lastMessage.body,
+                        body: isDeletedMessage(lastMessage) ? "This message was deleted." : lastMessage.type === "IMAGE" ? "Photo" : lastMessage.type === "CONTACT" ? "Shared a contact" : lastMessage.type === "LOCATION" ? "Shared a location" : lastMessage.type === "MEETUP" && lastMessage.meetupStatus === "DENIED" ? "Meeting request denied" : lastMessage.type === "MEETUP" && lastMessage.meetupStatus === "CONFIRMED" ? "Meeting confirmed" : lastMessage.body,
                     } : null,
                     unreadCount: unreadByConversation.get(conversation.id) ?? 0,
                 };
@@ -325,7 +344,7 @@ export async function getConversation(request, response) {
             data: { readAt: new Date() },
         });
 
-        const conversation = await prisma.conversation.findFirst({
+        const [conversation, confirmedMeeting] = await Promise.all([prisma.conversation.findFirst({
             where: {
                 id: conversationId,
                 ...participantFilter(request.user.id),
@@ -366,12 +385,22 @@ export async function getConversation(request, response) {
                         stickerKey: true,
                         meetupAt: true,
                         meetupLocation: true,
+                        meetupStatus: true,
                         editedAt: true,
                         sender: { select: { fullName: true } },
                     },
                 },
             },
-        });
+        }), prisma.message.findFirst({
+            where: {
+                conversationId,
+                type: "MEETUP",
+                meetupStatus: "CONFIRMED",
+                meetupAt: { not: null },
+            },
+            orderBy: { createdAt: "desc" },
+            select: { meetupAt: true, meetupLocation: true },
+        })]);
         if (!conversation)
             return response
                 .status(404)
@@ -401,6 +430,10 @@ export async function getConversation(request, response) {
                     price: conversation.listing.price.toFixed(2),
                     photoUrl: conversation.listing.photoUrl,
                     status: conversation.listing.status,
+                } : null,
+                confirmedMeeting: confirmedMeeting ? {
+                    meetupAt: confirmedMeeting.meetupAt,
+                    meetupLocation: confirmedMeeting.meetupLocation,
                 } : null,
                 messages: messages.map(presentMessage),
             },
@@ -482,8 +515,46 @@ export async function sendMeetupMessage(request, response) {
         return response.status(400).json({ success: false, message: "Choose a future date and time within a year, and a location up to 120 characters." });
     }
     return createConversationMessage(request, response, {
-        type: "MEETUP", body: "Meetup request", meetupAt, meetupLocation,
+        type: "MEETUP", body: "Meetup request", meetupAt, meetupLocation, meetupStatus: "PENDING",
     });
+}
+
+// Only the other participant can confirm or deny a pending meetup request.
+export async function respondToMeetup(request, response) {
+    const conversationId = Number(request.params.conversationId);
+    const messageId = Number(request.params.messageId);
+    const action = request.body?.action;
+    if (!Number.isSafeInteger(conversationId) || conversationId < 1
+        || !Number.isSafeInteger(messageId) || messageId < 1
+        || !["confirm", "deny"].includes(action)) {
+        return response.status(400).json({ success: false, message: "Choose confirm or deny for this meetup request." });
+    }
+
+    try {
+        const result = await prisma.$transaction(async (transaction) => {
+            const updated = await transaction.message.updateMany({
+                where: {
+                    id: messageId,
+                    conversationId,
+                    senderId: { not: request.user.id },
+                    type: "MEETUP",
+                    conversation: { is: participantFilter(request.user.id) },
+                    OR: [{ meetupStatus: "PENDING" }, { meetupStatus: null }],
+                },
+                data: { meetupStatus: action === "confirm" ? "CONFIRMED" : "DENIED" },
+            });
+            if (updated.count !== 1) return false;
+            await transaction.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
+            return true;
+        });
+        if (!result) {
+            return response.status(409).json({ success: false, message: "This meetup request is no longer pending." });
+        }
+        return response.json({ success: true, meetupStatus: action === "confirm" ? "CONFIRMED" : "DENIED" });
+    } catch (error) {
+        console.error("Meetup response failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not update this meetup request." });
+    }
 }
 
 // Soft-delete only the sender's message while preserving the conversation record.
@@ -530,6 +601,7 @@ export async function deleteConversationMessage(request, response) {
                     stickerKey: null,
                     meetupAt: null,
                     meetupLocation: null,
+                    meetupStatus: null,
                 },
             });
             if (result.count !== 1) return false;
@@ -599,6 +671,7 @@ export async function deleteConversationMessages(request, response) {
                     stickerKey: null,
                     meetupAt: null,
                     meetupLocation: null,
+                    meetupStatus: null,
                 },
             });
             await transaction.conversation.update({ where: { id: conversationId }, data: { updatedAt: deletedAt } });
@@ -660,12 +733,37 @@ export async function sendImageMessage(request, response) {
 // Store an image or document as a private conversation attachment.
 export async function sendAttachmentMessage(request, response) {
     if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
+    const conversationId = Number(request.params.conversationId);
+    if (!Number.isSafeInteger(conversationId) || conversationId < 1) {
+        return response.status(400).json({ success: false, message: "Conversation ID must be a positive integer." });
+    }
+    try {
+        const conversation = await findParticipantConversation(conversationId, request.user.id);
+        if (!conversation) return response.status(404).json({ success: false, message: "This conversation was not found." });
+    } catch (error) {
+        console.error("Attachment conversation check failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not send this file." });
+    }
+
     const caption = normalizeMessageBody(request.body?.caption);
     const isImage = request.file.mimetype.startsWith("image/");
+    let attachmentName;
+    try {
+        attachmentName = await storeMessageImage(request.file, conversationId);
+    } catch (error) {
+        console.error("Message attachment storage failed:", error?.code ?? error?.message ?? error?.name ?? "UNKNOWN");
+        const storageNotConfigured = error?.message === "MESSAGE_STORAGE_NOT_CONFIGURED";
+        return response.status(storageNotConfigured ? 503 : 502).json({
+            success: false,
+            message: storageNotConfigured
+                ? "Photo storage is not configured on the backend yet. Add the Supabase storage settings and try again."
+                : "We could not store this attachment. Please try again.",
+        });
+    }
     return createConversationMessage(request, response, {
         type: isImage ? "IMAGE" : "FILE",
         body: caption || (isImage ? "Shared a photo" : `Shared a file: ${request.file.originalname.slice(0, 120)}`),
-        attachmentName: request.file.filename,
+        attachmentName,
         attachmentOriginalName: request.file.originalname.slice(0, 180),
         attachmentMimeType: request.file.mimetype,
     });
@@ -689,13 +787,13 @@ export async function getMessageImage(request, response) {
                 body: { not: DELETED_MESSAGE_BODY },
                 conversation: { is: participantFilter(request.user.id) },
             },
-            select: { attachmentName: true },
+            select: { attachmentName: true, type: true },
         });
         if (!message?.attachmentName) return response.status(404).json({ success: false, message: "This file was not found." });
         const contentType = messageImageContentType(message.attachmentName);
         if (!contentType) return response.status(404).json({ success: false, message: "This file was not found." });
 
-        const image = await readFile(path.join(messageImageDirectory, message.attachmentName));
+        const image = await readMessageImage(message.attachmentName);
         response.setHeader("Content-Type", contentType);
         response.setHeader("Content-Disposition", message.type === "IMAGE" ? "inline" : "attachment");
         response.setHeader("Cache-Control", "private, no-store");

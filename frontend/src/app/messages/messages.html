@@ -12,7 +12,7 @@
       <a class="inbox-link" routerLink="/messages">← All messages</a>
       @if (conversationLoading()) {
         <p class="page-state" role="status">Loading conversation…</p>
-      } @else if (error()) {
+      } @else if (error() && !conversation()) {
         <section class="state-card" role="alert">
           <h1>Conversation unavailable</h1>
           <p>{{ error() }}</p>
@@ -33,6 +33,13 @@
                   {{ thread.otherUser.fullName }}
                 </a>
               </h1>
+              @if (thread.confirmedMeeting; as meeting) {
+                <p class="confirmed-meeting-chip">
+                  <strong>MEETING CONFIRMED</strong>
+                  <span>{{ meeting.meetupAt | date: 'EEE, d MMM · h:mm a' }}</span>
+                  @if (meeting.meetupLocation) { <span>· {{ meeting.meetupLocation }}</span> }
+                </p>
+              }
               @if (thread.listing) {
                 <a [routerLink]="['/products', thread.listing.id]">{{ thread.listing.title }} · ₹{{ thread.listing.price }}</a>
               } @else {
@@ -88,11 +95,29 @@
                     <small>{{ message.body }}</small>
                   </div>
                 } @else if (message.type === 'MEETUP' && message.meetupAt && message.meetupLocation) {
-                  <div class="meetup-message">
+                  <div
+                    class="meetup-message"
+                    [class.meetup-message-actionable]="isIncomingPendingMeetup(message)"
+                    [class.meetup-message-denied]="message.meetupStatus === 'DENIED'"
+                    [class.meetup-message-confirmed]="message.meetupStatus === 'CONFIRMED'"
+                    [attr.role]="isIncomingPendingMeetup(message) ? 'button' : null"
+                    [attr.tabindex]="isIncomingPendingMeetup(message) ? 0 : null"
+                    (click)="openMeetupDecision(message, $event)"
+                    (keydown.enter)="openMeetupDecision(message, $event)"
+                    (keydown.space)="openMeetupDecision(message, $event)"
+                  >
                     <small>MEETUP REQUEST</small>
                     <strong>{{ message.meetupAt | date: 'EEE, d MMM · h:mm a' }}</strong>
                     <span>⌖ {{ message.meetupLocation }}</span>
-                    <small class="meetup-status">Proposed · please confirm in chat</small>
+                    @if (message.meetupStatus === 'DENIED') {
+                      <small class="meetup-status">Denied</small>
+                    } @else if (message.meetupStatus === 'CONFIRMED') {
+                      <small class="meetup-status">Confirmed</small>
+                    } @else if (isOwnMessage(message.senderId)) {
+                      <small class="meetup-status">Waiting for their response</small>
+                    } @else {
+                      <small class="meetup-status">Tap to confirm or deny</small>
+                    }
                   </div>
                 } @else if (message.type === 'CONTACT') {
                   <div class="shared-contact">
@@ -156,8 +181,8 @@
                 @if (attachmentMenuOpen()) {
                   <div class="retro-attachment-menu">
                     <input #fileInput class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,text/csv" (change)="sendFile($event)" />
-                    <button type="button" (click)="fileInput.click()" [disabled]="sending()">{{ uploadingFile() ? 'Sending file…' : '▤ Send file' }}</button>
-                    <button type="button" (click)="stickerPickerOpen.update(open => !open)">✦ Send sticker</button>
+                    <button type="button" (click)="fileInput.click()" [disabled]="sending() || uploadingFile()">{{ uploadingFile() ? 'Preparing and sending…' : '▤ Send file' }}</button>
+                    <button type="button" (click)="stickerPickerOpen.update(open => !open)" [disabled]="sending() || uploadingFile()">✦ Send sticker</button>
                     @if (stickerPickerOpen()) {
                       <div class="sticker-picker" aria-label="CampusX sticker pack">
                         <button type="button" class="sticker-choice sticker-star" (click)="sendSticker('campus-star')" aria-label="Campus star sticker"><img src="/stickers/campus-star.svg" alt="" /><small>star</small></button>
@@ -182,7 +207,7 @@
                 aria-label="Your message"
               ></textarea>
               <button class="meetup-button" type="button" (click)="meetupFormOpen.update(open => !open)">Schedule Meet</button>
-              <button class="send-button" type="submit" [disabled]="sending() || !draft().trim()" aria-label="Send message">{{ sending() ? '…' : '➤' }}</button>
+              <button class="send-button" type="submit" [disabled]="sending() || uploadingFile() || !draft().trim()" aria-label="Send message">{{ sending() ? '…' : '➤' }}</button>
             </div>
             <div class="composer-meta"><small>{{ draft().trim().length }}/2,000 · Enter to send</small></div>
             @if (meetupFormOpen()) {
@@ -192,7 +217,7 @@
                 <input id="meetup-at" type="datetime-local" [min]="minimumMeetupTime()" [ngModel]="meetupAt()" (ngModelChange)="meetupAt.set($event)" [ngModelOptions]="{standalone: true}" />
                 <label for="meetup-location">Meeting place</label>
                 <input id="meetup-location" type="text" maxlength="120" placeholder="e.g. Library entrance" [ngModel]="meetupLocation()" (ngModelChange)="meetupLocation.set($event)" [ngModelOptions]="{standalone: true}" />
-                <div><button type="button" class="meetup-send" (click)="scheduleMeetup()" [disabled]="sending() || !meetupAt() || !meetupLocation().trim()">Send request</button><button type="button" class="meetup-cancel" (click)="meetupFormOpen.set(false)">Cancel</button></div>
+                <div><button type="button" class="meetup-send" (click)="scheduleMeetup()" [disabled]="sending() || uploadingFile() || !meetupAt() || !meetupLocation().trim()">Send request</button><button type="button" class="meetup-cancel" (click)="meetupFormOpen.set(false)">Cancel</button></div>
                 <small>Confirm the plan together in chat.</small>
               </div>
             }
@@ -202,6 +227,26 @@
           }
           @if (notice()) {
             <p class="success-note" role="status">{{ notice() }}</p>
+          }
+          @if (meetupDecisionMessage(); as request) {
+            <div class="meetup-dialog-backdrop" (click)="closeMeetupDecision()" (keydown.escape)="closeMeetupDecision()">
+              <section class="meetup-dialog" role="dialog" aria-modal="true" aria-labelledby="meetup-dialog-title" (click)="$event.stopPropagation()">
+                <p class="eyebrow">MEETUP REQUEST</p>
+                <h2 id="meetup-dialog-title">Confirm this meeting?</h2>
+                <p class="meetup-dialog-time">{{ request.meetupAt | date: 'fullDate' }} · {{ request.meetupAt | date: 'shortTime' }}</p>
+                <p class="meetup-dialog-place">⌖ {{ request.meetupLocation }}</p>
+                @if (error()) { <p class="meetup-dialog-error" role="alert">{{ error() }}</p> }
+                <div class="meetup-dialog-actions">
+                  <button type="button" class="meetup-deny-button" (click)="respondToMeetup('deny')" [disabled]="respondingMeetupId() !== null">
+                    {{ respondingMeetupId() === request.id ? 'Saving…' : 'Deny' }}
+                  </button>
+                  <button type="button" class="meetup-confirm-button" (click)="respondToMeetup('confirm')" [disabled]="respondingMeetupId() !== null">
+                    {{ respondingMeetupId() === request.id ? 'Saving…' : 'Confirm' }}
+                  </button>
+                  <button type="button" class="meetup-cancel-button" (click)="closeMeetupDecision()" [disabled]="respondingMeetupId() !== null">Cancel</button>
+                </div>
+              </section>
+            </div>
           }
         </section>
       }
@@ -256,6 +301,9 @@
                     <span class="conversation-link">{{ item.listing.title }} · ₹{{ item.listing.price }}</span>
                   } @else {
                     <span class="conversation-link">General seller chat</span>
+                  }
+                  @if (item.confirmedMeeting; as meeting) {
+                    <span class="inbox-meeting"><strong>Meeting confirmed:</strong> {{ meeting.meetupAt | date: 'EEE, d MMM · h:mm a' }}@if (meeting.meetupLocation) { · {{ meeting.meetupLocation }} }</span>
                   }
                   <small>{{ item.lastMessage?.body || 'Conversation started' }}</small></span
                 >

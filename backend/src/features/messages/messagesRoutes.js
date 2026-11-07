@@ -13,6 +13,7 @@ import {
     sendAttachmentMessage,
     sendStickerMessage,
     sendMeetupMessage,
+    respondToMeetup,
     sendLocationMessage,
     startListingConversation,
     startSellerConversation,
@@ -39,6 +40,7 @@ router.get("/:conversationId/images/:messageId", getMessageImage);
 router.post("/:conversationId/files", uploadMessageFile, sendAttachmentMessage);
 router.post("/:conversationId/stickers", sendStickerMessage);
 router.post("/:conversationId/meetups", sendMeetupMessage);
+router.post("/:conversationId/:messageId/meetup-response", respondToMeetup);
 router.post("/:conversationId/contacts", sendContactMessage);
 router.post("/:conversationId/location", sendLocationMessage);
 router.get("/:conversationId", getConversation);

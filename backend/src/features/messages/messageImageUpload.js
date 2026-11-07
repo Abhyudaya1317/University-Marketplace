@@ -1,9 +1,19 @@
-// Keep chat attachments private; downloads are served only after checking conversation membership.
-import { mkdir, open, unlink } from "node:fs/promises";
+// Keep chat attachments private and durable in production; local development uses disk storage.
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import multer from "multer";
+import {
+    deleteStorageObject,
+    downloadStorageObject,
+    isPersistentStorageRequired,
+    isSupabaseStorageConfigured,
+    parseStorageMarker,
+    STORAGE_BUCKETS,
+    storageMarker,
+    uploadStorageObject,
+} from "../../lib/supabaseStorage.js";
 
 const backendDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 export const messageImageDirectory = path.join(backendDirectory, "uploads", "messages");
@@ -19,23 +29,9 @@ const supportedTypes = new Map([
     ["text/csv", { extension: ".csv", text: true }],
 ]);
 
-// Generate opaque filenames so the sender's original path/name is never used on disk.
+// Buffer the request briefly; persist it only after the controller verifies conversation membership.
 const messageFileUpload = multer({
-    storage: multer.diskStorage({
-        destination: async (_request, _file, callback) => {
-            try {
-                await mkdir(messageImageDirectory, { recursive: true });
-                callback(null, messageImageDirectory);
-            } catch (error) {
-                callback(error);
-            }
-        },
-        filename: (_request, file, callback) => {
-            const type = supportedTypes.get(file.mimetype);
-            if (!type) return callback(new Error("UNSUPPORTED_MESSAGE_FILE_TYPE"));
-            callback(null, `${randomUUID()}${type.extension}`);
-        },
-    }),
+    storage: multer.memoryStorage(),
     limits: { fileSize: maxMessageFileSize, files: 1, fields: 1, parts: 2 },
     fileFilter: (_request, file, callback) => {
         if (!supportedTypes.has(file.mimetype)) return callback(new Error("UNSUPPORTED_MESSAGE_FILE_TYPE"));
@@ -43,9 +39,9 @@ const messageFileUpload = multer({
     },
 }).single("file");
 
-// Check the actual file bytes before a message is allowed to reference the upload.
+// Validate actual bytes before any attachment reaches persistent storage.
 export function uploadMessageFile(request, response, next) {
-    messageFileUpload(request, response, async (uploadError) => {
+    messageFileUpload(request, response, (uploadError) => {
         if (uploadError) {
             const message = uploadError.code === "LIMIT_FILE_SIZE"
                 ? "Chat files must be 10 MB or smaller."
@@ -54,33 +50,58 @@ export function uploadMessageFile(request, response, next) {
         }
         if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
 
-        try {
-            const file = await open(request.file.path, "r");
-            const header = Buffer.alloc(16);
-            const { bytesRead } = await file.read(header, 0, header.length, 0);
-            await file.close();
-            const type = supportedTypes.get(request.file.mimetype);
-            const validText = type?.text && !header.subarray(0, bytesRead).includes(0);
-            if (!type || !(type.text ? validText : type.signature(header))) {
-                await unlink(request.file.path);
-                return response.status(400).json({ success: false, message: "The file contents do not match its file type." });
-            }
-            return next();
-        } catch {
-            await removeMessageImage(request.file.filename);
-            return response.status(400).json({ success: false, message: "The file could not be processed." });
+        const file = request.file;
+        const header = file.buffer.subarray(0, 16);
+        const type = supportedTypes.get(file.mimetype);
+        const validText = type?.text && !header.includes(0);
+        if (!type || !(type.text ? validText : type.signature(header))) {
+            return response.status(400).json({ success: false, message: "The file contents do not match its file type." });
         }
+        file.messageExtension = type.extension;
+        return next();
     });
 }
 
-// Remove only generated filenames with a supported extension from the private upload folder.
+// Store the file only after authorization; return the opaque name saved with the message row.
+export async function storeMessageImage(file, conversationId) {
+    if (!file?.buffer || !file.messageExtension) throw new Error("INVALID_MESSAGE_ATTACHMENT");
+    const generatedName = `${randomUUID()}${file.messageExtension}`;
+
+    if (isPersistentStorageRequired()) {
+        if (!isSupabaseStorageConfigured()) throw new Error("MESSAGE_STORAGE_NOT_CONFIGURED");
+        const objectPath = `conversations/${conversationId}/${generatedName}`;
+        await uploadStorageObject(STORAGE_BUCKETS.messages, objectPath, file.buffer, file.mimetype);
+        return storageMarker(STORAGE_BUCKETS.messages, objectPath);
+    }
+
+    await mkdir(messageImageDirectory, { recursive: true });
+    await writeFile(path.join(messageImageDirectory, generatedName), file.buffer, { flag: "wx" });
+    return generatedName;
+}
+
+// Remove a private Storage object or a local development file using only generated names.
 export async function removeMessageImage(fileName) {
+    const objectPath = parseStorageMarker(fileName, STORAGE_BUCKETS.messages);
+    if (objectPath) {
+        await deleteStorageObject(STORAGE_BUCKETS.messages, objectPath);
+        return;
+    }
     if (typeof fileName !== "string" || !/^[0-9a-f-]{36}\.(jpg|png|webp|pdf|txt|csv)$/i.test(fileName)) return;
     try {
         await unlink(path.join(messageImageDirectory, fileName));
     } catch (error) {
         if (error.code !== "ENOENT") throw error;
     }
+}
+
+// Retrieve private files through the backend service key; clients never get a Storage URL.
+export async function readMessageImage(fileName) {
+    const objectPath = parseStorageMarker(fileName, STORAGE_BUCKETS.messages);
+    if (objectPath) return downloadStorageObject(STORAGE_BUCKETS.messages, objectPath);
+    if (typeof fileName !== "string" || !/^[0-9a-f-]{36}\.(jpg|png|webp|pdf|txt|csv)$/i.test(fileName)) {
+        throw new Error("INVALID_MESSAGE_ATTACHMENT_NAME");
+    }
+    return readFile(path.join(messageImageDirectory, fileName));
 }
 
 // The stored MIME type is selected from the allowlist and extension, never user input.
