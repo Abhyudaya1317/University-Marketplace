@@ -8,6 +8,7 @@ import { SellerProfile } from './sellers/seller-profile';
 import { Dashboard } from './dashboard/dashboard';
 import { MyOrders } from './orders/my-orders';
 import { Messages } from './messages/messages';
+import { SavedCollections } from './saved/saved-collections';
 
 // Keep page URLs and their feature components together in one route list.
 export const routes: Routes = [
@@ -52,6 +53,16 @@ export const routes: Routes = [
   {
     path: 'items-selling',
     component: Dashboard,
+  },
+  {
+    path: 'wishlist',
+    component: SavedCollections,
+    data: { collection: 'wishlist' },
+  },
+  {
+    path: 'followed-sellers',
+    component: SavedCollections,
+    data: { collection: 'following' },
   },
   {
     path: 'orders',

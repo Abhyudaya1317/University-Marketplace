@@ -102,6 +102,12 @@
           <textarea id="description" name="description" required minlength="5" maxlength="1500" rows="4"
             [(ngModel)]="description" placeholder="Describe its condition and useful details."></textarea>
         </div>
+      <div class="field">
+        <label for="hashtags">Hashtags <span>(optional)</span></label>
+        <input id="hashtags" name="hashtags" type="text" maxlength="400" autocomplete="off"
+          [(ngModel)]="hashtags" placeholder="#winterfit, #campusfashion, #project" />
+        <small>Use up to 10 keywords separated by spaces or commas. Shoppers can find your listing by searching a hashtag.</small>
+      </div>
 
         <div class="form-field">
           <label for="price">Price</label>

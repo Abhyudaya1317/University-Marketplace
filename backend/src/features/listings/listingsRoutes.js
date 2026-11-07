@@ -2,6 +2,7 @@ import express from "express";
 import { requireAuth } from "../../middleware/requireAuth.js";
 import {
     createListing,
+    getSavedListings,
     getPublicListingDetails,
     getListingFavorite,
     getSavedListingIds,
@@ -23,6 +24,7 @@ const router = express.Router();
 
 // Public product details use an individual seller listing ID, never the shared product ID.
 router.get("/public/:listingId", getPublicListingDetails);
+router.get("/saved", requireAuth, getSavedListings);
 
 // A signed-in seller creates one priced offer for a shared product.
 router.post("/", requireAuth, uploadListingPhoto, createListing);

@@ -167,6 +167,10 @@
 .product-field.description-field dd {
   padding-top: 3px;
 }
+.product-field.hashtag-field { align-items: start; }
+.listing-hashtags { display: flex; flex-wrap: wrap; gap: 6px; }
+.listing-hashtags a { padding: 4px 7px; border: 1px solid #000080; background: #fff; color: #000080; font: 7px/1.5 var(--pixel, monospace); text-decoration: none; }
+.listing-hashtags a:hover { background: #e7ecff; }
 .product-field .price-tag {
   display: inline-block;
   padding: 6px 10px;
@@ -226,9 +230,19 @@
 }
 .detail-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin: 16px 0;
 }
+.archive-listing-button { border-color: #000080; background: #000080; color: #fff; }
+.archive-listing-button:disabled { cursor: wait; opacity: .6; }
+.archive-modal-backdrop { position: fixed; z-index: 400; inset: 0; display: grid; place-items: center; padding: 18px; background: #080817c9; }
+.archive-modal { display: grid; gap: 12px; width: min(100%, 480px); padding: 20px; border: 3px solid #777; background: #c0c0c0; box-shadow: 7px 7px #080817; }
+.archive-modal .eyebrow { margin: 0; color: #000080; font: 8px/1.6 var(--pixel, monospace); }
+.archive-modal h2 { margin: 0; color: #080817; font: 700 clamp(16px, 4vw, 22px)/1.5 var(--pixel, monospace); }
+.archive-modal > p:not(.eyebrow) { margin: 0; color: #333; font-size: 14px; line-height: 1.6; }
+.archive-error { color: #b32e20 !important; font-weight: 700; }
+.archive-modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; margin-top: 4px; }
 .wishlist-button,
 .primary-button {
   display: inline-flex;

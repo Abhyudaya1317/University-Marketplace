@@ -9,6 +9,26 @@ export const CLOTHING_GENDERS = new Set(["MEN", "WOMEN", "UNISEX", "OTHER"]);
 export const FOOD_CONDITIONS = new Set(["FRESH", "PACKAGED", "OPENED", "PREPARED", "FROZEN", "CUSTOM"]);
 export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", ...FOOD_CONDITIONS]);
 
+// Keep seller-entered search tags small, unique, and safe to render as plain text.
+export function validateListingHashtags(value) {
+    if (value === undefined || value === null || value === "") return null;
+    if (typeof value !== "string") return "Enter hashtags as text separated by spaces or commas.";
+    const rawTags = value.split(/[\s,]+/u).filter(Boolean);
+    const tags = rawTags.map((tag) => tag.replace(/^#+/u, "").normalize("NFKC").toLocaleLowerCase("en"));
+    if (new Set(tags).size > 10) return "Use no more than 10 hashtags per listing.";
+    if (tags.some((tag) => !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,29}$/u.test(tag))) {
+        return "Each hashtag must start with a letter or number and contain only letters, numbers, underscores, or hyphens (30 characters max).";
+    }
+    return null;
+}
+
+export function normalizeListingHashtags(value) {
+    if (typeof value !== "string") return [];
+    return [...new Set(value.split(/[\s,]+/u)
+        .filter(Boolean)
+        .map((tag) => tag.replace(/^#+/u, "").normalize("NFKC").toLocaleLowerCase("en")))];
+}
+
 // Re-check category-specific filters against each listing returned from storage.
 export function matchesExploreFilters(listing, { category = "", gender = "", proteinOnly = false } = {}) {
     if (category && listing.product.category !== category) return false;

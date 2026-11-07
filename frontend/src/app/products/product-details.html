@@ -80,6 +80,16 @@
                 }
               </dd>
             </div>
+            @if (item.hashtags.length) {
+              <div class="product-field hashtag-field">
+                <dt>Hashtags</dt>
+                <dd class="listing-hashtags">
+                  @for (tag of item.hashtags; track tag) {
+                    <a [routerLink]="['/explore']" [queryParams]="{ search: '#' + tag }">#{{ tag }}</a>
+                  }
+                </dd>
+              </div>
+            }
             <div class="product-field">
               <dt>Pickup location</dt>
               <dd>{{ item.location }}</dd>
@@ -113,6 +123,8 @@
                 [routerLink]="['/sell']"
                 [queryParams]="{ edit: item.id }"
               >Edit listing</a>
+              <button type="button" class="wishlist-button archive-listing-button"
+                (click)="askToArchive()">Archive listing</button>
             }
             <button
               type="button"
@@ -235,4 +247,21 @@
       <app-product-engagement [offers]="engagementOffers()" [listingId]="item.id" />
     }
   </main>
+  @if (archiveDialogOpen()) {
+    <div class="archive-modal-backdrop" (click)="cancelArchive()">
+      <section class="archive-modal" role="dialog" aria-modal="true" aria-labelledby="archive-listing-title"
+        (click)="$event.stopPropagation()" (keydown.escape)="cancelArchive()">
+        <p class="eyebrow">LISTING ARCHIVE</p>
+        <h2 id="archive-listing-title">Archive this listing?</h2>
+        <p>It will disappear from Explore and your public profile. You can restore it later from Items I’m selling.</p>
+        @if (archiveError()) { <p class="archive-error" role="alert">{{ archiveError() }}</p> }
+        <div class="archive-modal-actions">
+          <button type="button" class="wishlist-button" (click)="cancelArchive()" [disabled]="archiving()">Keep listing</button>
+          <button type="button" class="wishlist-button archive-listing-button" (click)="confirmArchive()" [disabled]="archiving()">
+            {{ archiving() ? 'Archiving…' : 'Confirm archive' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 </div>

@@ -102,6 +102,7 @@ model Listing {
   sellerId       Int
   title          String
   description    String
+  hashtags       String[]        @default([])
   price          Decimal         @db.Decimal(10, 2)
   phoneNumber    String
   photoUrl       String?

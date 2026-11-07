@@ -1,0 +1,2 @@
+ALTER TABLE "Listing"
+ADD COLUMN "hashtags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

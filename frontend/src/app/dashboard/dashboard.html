@@ -67,7 +67,7 @@
                       ><span>followers</span>
                     </div>
                     <div>
-                      <strong>{{ favoriteSellers().length }}</strong
+                      <strong>{{ currentProfile.followingCount }}</strong
                       ><span>following</span>
                     </div>
                   </div>
@@ -176,7 +176,7 @@
           <div>
             <p class="eyebrow">SELLER CONTROL PANEL</p>
             <h1>Items I’m selling</h1>
-            <p>Manage active listings, your archive, saved sellers, and saved offers.</p>
+            <p>Manage active listings, buyer requests, and your archive.</p>
           </div>
           <a class="text-link" routerLink="/dashboard">← Back to profile</a>
         </header>
@@ -533,104 +533,6 @@
           </div>
         }
 
-        <section class="dashboard-section" aria-labelledby="saved-sellers-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">PEOPLE TO FOLLOW</p>
-              <h2 id="saved-sellers-title">Saved sellers</h2>
-            </div>
-            <span class="section-count">{{ favoriteSellers().length }}</span>
-          </div>
-          @if (favoriteSellers().length === 0) {
-            <div class="empty-state">
-              <h3>No saved sellers yet</h3>
-              <p>Open a seller profile and save it to find that seller again here.</p>
-              <a class="text-link" routerLink="/explore">Browse campus products →</a>
-            </div>
-          } @else {
-            <div class="saved-grid">
-              @for (favorite of favoriteSellers(); track favorite.sellerId) {
-                <a class="saved-card" [routerLink]="['/sellers', favorite.sellerId]">
-                  <span class="item-mark" aria-hidden="true">{{
-                    favorite.sellerName.charAt(0)
-                  }}</span
-                  ><span class="saved-copy"
-                    ><strong>{{ favorite.sellerName }}</strong>
-                    @if (favorite.latestListing) {
-                      <small
-                        >Latest: {{ favorite.latestListing.product.name }} · ₹{{
-                          favorite.latestListing.price
-                        }}</small
-                      >
-                    } @else {
-                      <small>No active listing right now</small>
-                    }
-                    <small>Saved {{ favorite.savedAt | date: 'mediumDate' }}</small></span
-                  ><span class="card-arrow" aria-hidden="true">→</span>
-                </a>
-              }
-            </div>
-          }
-        </section>
-
-        <section class="dashboard-section" aria-labelledby="saved-offers-title">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">YOUR SHORTLIST</p>
-              <h2 id="saved-offers-title">Saved offers</h2>
-            </div>
-            <span class="section-count">{{ savedListings().length }}</span>
-          </div>
-          @if (savedListings().length === 0) {
-            <div class="empty-state">
-              <h3>No saved offers yet</h3>
-              <p>
-                Open a product and tap the heart on a seller’s individual offer to keep it here.
-              </p>
-              <a class="text-link" routerLink="/explore">Browse campus products →</a>
-            </div>
-          } @else {
-            <div class="saved-grid">
-              @for (favorite of savedListings(); track favorite.listingId) {
-                <article class="saved-product-card">
-                  <a class="saved-product-link" [routerLink]="['/products', favorite.listingId]">
-                    @if (favorite.photoUrl) {
-                      <img
-                        class="saved-product-photo"
-                        [src]="favorite.photoUrl"
-                        [alt]="favorite.title + ' product photo'"
-                        loading="lazy"
-                      />
-                    } @else {
-                      <span class="saved-product-photo saved-product-placeholder" aria-hidden="true"
-                        >✳</span
-                      >
-                    }
-                    <span class="saved-copy"
-                      ><strong>{{ favorite.title }}</strong
-                      ><small>{{ favorite.product.category.replaceAll('_', ' ') }}</small
-                      ><small>{{ favorite.description }}</small
-                      ><small
-                        >₹{{ favorite.price }} · Saved
-                        {{ favorite.savedAt | date: 'mediumDate' }}</small
-                      ></span
-                    >
-                  </a>
-                  <a class="text-link" [routerLink]="['/sellers', favorite.sellerId]">
-                    Seller: {{ favorite.sellerName }}
-                  </a>
-                  <button
-                    class="remove-saved-product"
-                    type="button"
-                    (click)="removeSavedListing(favorite.listingId)"
-                  >
-                    Remove
-                  </button>
-                </article>
-              }
-            </div>
-          }
-        </section>
       }
     }
   </main>

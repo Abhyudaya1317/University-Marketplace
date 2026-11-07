@@ -10,6 +10,7 @@ interface ExploreListing {
   sellerId: string;
   sellerName: string;
   title: string;
+  hashtags: string[];
   category: string;
   description: string;
   price: string;
@@ -318,7 +319,7 @@ export class Explore {
   }
 
   private cacheKey(params: HttpParams): string {
-    return `campusx:explore:v1:${params.toString() || 'all'}`;
+    return `campusx:explore:v2:${params.toString() || 'all'}`;
   }
 
   private readCache(key: string): ExploreResponse | null {

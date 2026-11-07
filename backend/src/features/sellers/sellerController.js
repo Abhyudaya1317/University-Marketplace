@@ -96,7 +96,7 @@ export async function getSellerProfile(request, response) {
     }
 }
 
-// Show the signed-in user's listings and saved sellers together on their dashboard.
+// Keep the seller dashboard payload focused on the profile and own listings.
 export async function getSellerDashboard(request, response) {
     try {
         const [account, reviewSummary] = await Promise.all([
@@ -108,7 +108,7 @@ export async function getSellerDashboard(request, response) {
                     fullName: true,
                     avatarUrl: true,
                     bio: true,
-                    _count: { select: { savedBy: true } },
+                    _count: { select: { savedBy: true, savedSellers: true } },
                     listings: {
                         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
                         select: {
@@ -128,44 +128,6 @@ export async function getSellerDashboard(request, response) {
                             customCondition: true,
                             createdAt: true,
                             product: { select: { id: true, name: true, category: true } }
-                        }
-                    },
-                    savedSellers: {
-                        orderBy: { createdAt: "desc" },
-                        select: {
-                            createdAt: true,
-                            seller: {
-                                select: {
-                                    id: true,
-                                    fullName: true,
-                                    avatarUrl: true,
-                                    listings: {
-                                        ...activeListingSelection,
-                                        take: 1
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    savedListings: {
-                        orderBy: { createdAt: "desc" },
-                        select: {
-                            createdAt: true,
-                            listing: {
-                                select: {
-                                    id: true,
-                                    description: true,
-                                    price: true,
-                                    photoUrl: true,
-                                    photoUrl2: true,
-                                    photoUrl3: true,
-                                    photoUrl4: true,
-                                    sellerId: true,
-                                    title: true,
-                                    seller: { select: { fullName: true, avatarUrl: true } },
-                                    product: { select: { id: true, name: true, category: true } }
-                                }
-                            }
                         }
                     }
                 }
@@ -191,7 +153,7 @@ export async function getSellerDashboard(request, response) {
                 bio: account.bio,
                 activeListingCount: account.listings.filter((listing) => listing.status === "ACTIVE").length,
                 followerCount: account._count.savedBy,
-                followingCount: account.savedSellers.length,
+                followingCount: account._count.savedSellers,
                 archivedListingCount: account.listings.filter((listing) => listing.status === "ARCHIVED").length,
                 averageRating: reviewSummary._avg.rating === null ? null : Number(reviewSummary._avg.rating.toFixed(1)),
                 reviewCount: reviewSummary._count._all
@@ -213,35 +175,58 @@ export async function getSellerDashboard(request, response) {
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 createdAt: listing.createdAt
-            })),
-            favoriteSellers: account.savedSellers.map((favorite) => ({
-                sellerId: favorite.seller.id,
-                sellerName: favorite.seller.fullName || "CampusX Member",
-                sellerAvatarUrl: favorite.seller.avatarUrl,
-                savedAt: favorite.createdAt,
-                latestListing: favorite.seller.listings[0] ? {
-                    product: favorite.seller.listings[0].product,
-                    price: favorite.seller.listings[0].price.toFixed(2)
-                } : null
-            })),
-            savedListings: account.savedListings.map((favorite) => ({
-                savedAt: favorite.createdAt,
-                listingId: favorite.listing.id,
-                sellerId: favorite.listing.sellerId,
-                sellerName: favorite.listing.seller.fullName || "CampusX Member",
-                title: favorite.listing.title,
-                sellerAvatarUrl: favorite.listing.seller.avatarUrl,
-                product: favorite.listing.product,
-                description: favorite.listing.description,
-                price: favorite.listing.price.toFixed(2),
-                photoUrl: favorite.listing.photoUrl,
-                photoUrl2: favorite.listing.photoUrl2,
-                photoUrl3: favorite.listing.photoUrl3,
-                photoUrl4: favorite.listing.photoUrl4
             }))
         });
     } catch {
         return response.status(500).json({ success: false, message: "We could not load your dashboard." });
+    }
+}
+
+// Return followed seller profiles and one active listing for their dedicated page.
+export async function getFollowedSellers(request, response) {
+    try {
+        const favorites = await prisma.sellerFavorite.findMany({
+            where: { fanId: request.user.id },
+            orderBy: { createdAt: "desc" },
+            select: {
+                createdAt: true,
+                seller: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        avatarUrl: true,
+                        listings: {
+                            ...activeListingSelection,
+                            take: 1,
+                            select: {
+                                title: true,
+                                price: true,
+                                photoUrl: true,
+                                product: { select: { id: true, name: true, category: true } }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        return response.json({
+            success: true,
+            sellers: favorites.map(({ createdAt, seller }) => ({
+                sellerId: seller.id,
+                sellerName: seller.fullName || "CampusX Member",
+                sellerAvatarUrl: seller.avatarUrl,
+                savedAt: createdAt,
+                latestListing: seller.listings[0] ? {
+                    title: seller.listings[0].title,
+                    price: seller.listings[0].price.toFixed(2),
+                    photoUrl: seller.listings[0].photoUrl,
+                    product: seller.listings[0].product
+                } : null
+            }))
+        });
+    } catch (error) {
+        console.error("Followed sellers read failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not load followed sellers." });
     }
 }
 

@@ -40,31 +40,6 @@ interface DashboardResponse {
     archivedAt: string | null;
     createdAt: string;
   }>;
-  favoriteSellers: Array<{
-    sellerId: string;
-    sellerName: string;
-    sellerAvatarUrl: string | null;
-    savedAt: string;
-    latestListing: {
-      product: { id: string; name: string; category: string };
-      price: string;
-    } | null;
-  }>;
-  savedListings: Array<{
-    savedAt: string;
-    listingId: string;
-    sellerId: string;
-    sellerName: string;
-    title: string;
-    sellerAvatarUrl: string | null;
-    product: { id: string; name: string; category: string };
-    description: string;
-    price: string;
-    photoUrl: string | null;
-    photoUrl2: string | null;
-    photoUrl3: string | null;
-    photoUrl4: string | null;
-  }>;
   message?: string;
 }
 
@@ -99,7 +74,7 @@ interface SellerChatThread {
   }>;
 }
 
-// Give a signed-in user one place to find their current listings and saved sellers.
+// Give a signed-in seller one place to manage their listings and buyer requests.
 @Component({
   selector: 'app-dashboard',
   imports: [DatePipe, FormsModule, RouterLink, AccountNavigation],
@@ -134,8 +109,6 @@ export class Dashboard {
     this.listings().filter((listing) => listing.status === 'ACTIVE'),
   );
   protected readonly profile = signal<DashboardResponse['profile'] | null>(null);
-  protected readonly favoriteSellers = signal<DashboardResponse['favoriteSellers']>([]);
-  protected readonly savedListings = signal<DashboardResponse['savedListings']>([]);
   protected readonly requests = signal<SellerRequest[]>([]);
   protected readonly sellerRequestsLoaded = signal(false);
   protected readonly sellerRequestsFailed = signal(false);
@@ -169,6 +142,9 @@ export class Dashboard {
 
   // Load account-owned records through the session-protected dashboard endpoint.
   constructor() {
+    if (this.route.snapshot.queryParamMap.get('notice') === 'archived') {
+      this.managementNotice.set('Listing moved to your archive.');
+    }
     this.http.get<DashboardResponse>('/api/sellers/dashboard').subscribe({
       next: (response) => {
         this.signedIn.set(true);
@@ -176,8 +152,6 @@ export class Dashboard {
         this.profileNameDraft.set(response.profile?.fullName ?? '');
         this.profileBioDraft.set(response.profile?.bio ?? '');
         this.listings.set(response.myListings ?? []);
-        this.favoriteSellers.set(response.favoriteSellers ?? []);
-        this.savedListings.set(response.savedListings ?? []);
         this.loading.set(false);
         if (this.itemsRoute) this.loadSellerRequests();
       },
@@ -185,7 +159,7 @@ export class Dashboard {
         this.signedIn.set(response.status !== 401);
         this.error.set(
           response.status === 401
-            ? 'Sign in to see your listings and saved sellers.'
+            ? 'Sign in to view your dashboard.'
             : (response.error?.message ?? 'Your dashboard could not be loaded. Please try again.'),
         );
         this.loading.set(false);
@@ -314,16 +288,6 @@ export class Dashboard {
 
   protected stockValue(listing: DashboardResponse['myListings'][number]): number {
     return this.stockDrafts()[listing.id] ?? listing.quantityAvailable;
-  }
-
-  // Remove one saved seller offer without changing other offers in the same product group.
-  protected removeSavedListing(listingId: string): void {
-    this.http.delete(`/api/listings/${listingId}/favorite`).subscribe({
-      next: () =>
-        this.savedListings.update((items) => items.filter((item) => item.listingId !== listingId)),
-      error: (response: HttpErrorResponse) =>
-        this.error.set(response.error?.message ?? 'The saved offer could not be removed.'),
-    });
   }
 
   // Open the archive confirmation instead of changing listing state immediately.

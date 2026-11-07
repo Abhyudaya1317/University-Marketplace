@@ -1,6 +1,6 @@
 // Handle seller-owned listing edits, archival, restoration, and guarded deletion.
 import { prisma } from "../../lib/prisma.js";
-import { normalizeProductName, validateListingDetails } from "./listingsValidation.js";
+import { normalizeListingHashtags, normalizeProductName, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
 import { listingPhotoUrl, removeListingPhotos, removeListingPhotoByUrl } from "./listingPhotoUpload.js";
 
 // Return only the owner's active listing data needed to prefill the existing sell form.
@@ -17,7 +17,7 @@ export async function getListingForEdit(request, response) {
                 id: true, title: true, description: true, price: true, quantityAvailable: true,
                 phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                 condition: true, customCondition: true,
-                clothingGender: true, proteinGrams: true,
+                clothingGender: true, proteinGrams: true, hashtags: true,
                 product: { select: { category: true } }
             }
         });
@@ -41,7 +41,8 @@ export async function getListingForEdit(request, response) {
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
-                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null
+                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                hashtags: listing.hashtags
             }
         });
     } catch (error) {
@@ -68,6 +69,12 @@ export async function updateListing(request, response) {
     if (validationMessage) {
         await removeListingPhotos(uploadedPhotos);
         return response.status(400).json({ success: false, message: validationMessage });
+    }
+
+    const hashtagValidationMessage = validateListingHashtags(request.body?.hashtags);
+    if (hashtagValidationMessage) {
+        await removeListingPhotos(uploadedPhotos);
+        return response.status(400).json({ success: false, message: hashtagValidationMessage });
     }
 
     const name = request.body.name.trim();
@@ -97,6 +104,7 @@ export async function updateListing(request, response) {
                     productId: product.id,
                     title: name,
                     description,
+                    hashtags: normalizeListingHashtags(request.body?.hashtags),
                     price,
                     phoneNumber: request.body.phoneNumber.trim(),
                     quantityAvailable: Number(request.body.quantityAvailable),
@@ -119,7 +127,7 @@ export async function updateListing(request, response) {
                     id: true, title: true, description: true, price: true, quantityAvailable: true,
                     photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                     location: true, condition: true, customCondition: true, clothingGender: true,
-                    proteinGrams: true, product: { select: { id: true, name: true, category: true } }
+                    proteinGrams: true, hashtags: true, product: { select: { id: true, name: true, category: true } }
                 }
             });
             return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2, current.photoUrl3, current.photoUrl4] };
@@ -154,7 +162,8 @@ export async function updateListing(request, response) {
                 condition: updatedListing.listing.condition,
                 customCondition: updatedListing.listing.customCondition,
                 clothingGender: updatedListing.listing.clothingGender,
-                proteinGrams: updatedListing.listing.proteinGrams?.toFixed(2) ?? null
+                proteinGrams: updatedListing.listing.proteinGrams?.toFixed(2) ?? null,
+                hashtags: updatedListing.listing.hashtags
             }
         });
     } catch (error) {

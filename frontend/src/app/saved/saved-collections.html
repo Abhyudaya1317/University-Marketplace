@@ -1,0 +1,101 @@
+<div class="saved-page">
+  <header class="saved-header">
+    <a class="brand" routerLink="/" aria-label="UniBee home"><span class="brand-mark">✦</span><span>UNIBEE<sup>’26</sup></span></a>
+    <app-account-navigation />
+  </header>
+  <main class="saved-content">
+    <a class="back-link" routerLink="/explore">← Back to Explore</a>
+    <section class="saved-heading">
+      <div>
+        <p class="eyebrow">YOUR COLLECTIONS</p>
+        <h1>{{ title() }}</h1>
+        <p>{{ isFollowing ? 'Keep up with campus sellers you follow.' : 'The individual listings you have saved.' }}</p>
+      </div>
+      <span class="collection-count">{{ isFollowing ? sellers().length : listings().length }}</span>
+    </section>
+
+    @if (loading()) {
+      <p class="collection-state" role="status">Loading {{ title().toLowerCase() }}…</p>
+    } @else if (error()) {
+      <section class="collection-empty" role="alert">
+        <h2>Could not load this collection</h2>
+        <p>{{ error() }}</p>
+        <a class="collection-button" routerLink="/explore">Browse Explore</a>
+      </section>
+    } @else {
+      @if (notice()) { <p class="collection-notice" role="status">{{ notice() }}</p> }
+      @if (isFollowing) {
+        @if (sellers().length === 0) {
+          <section class="collection-empty">
+            <h2>No followed sellers yet</h2>
+            <p>Open a seller profile and choose Follow to add them here.</p>
+            <a class="collection-button" routerLink="/explore">Explore listings</a>
+          </section>
+        } @else {
+          <section class="collection-list" aria-label="Followed sellers">
+            @for (seller of sellers(); track seller.sellerId) {
+              <article class="seller-card">
+                <a class="seller-profile-link" [routerLink]="['/sellers', seller.sellerId]">
+                  @if (seller.sellerAvatarUrl) {
+                    <img class="seller-avatar" [src]="seller.sellerAvatarUrl" [alt]="seller.sellerName" loading="lazy" />
+                  } @else {
+                    <span class="seller-avatar seller-avatar-fallback" aria-hidden="true">{{ seller.sellerName.charAt(0) }}</span>
+                  }
+                  <span class="seller-copy">
+                    <strong>{{ seller.sellerName }}</strong>
+                    @if (seller.latestListing) {
+                      <small>Latest: {{ seller.latestListing.title }} · ₹{{ seller.latestListing.price }}</small>
+                    } @else {
+                      <small>No active listings right now</small>
+                    }
+                    <small>Following since {{ seller.savedAt | date: 'mediumDate' }}</small>
+                  </span>
+                </a>
+                <button class="collection-button quiet-button" type="button" (click)="unfollowSeller(seller.sellerId)" [disabled]="busyId() !== null">
+                  {{ isBusy(seller.sellerId) ? 'Removing…' : 'Unfollow' }}
+                </button>
+              </article>
+            }
+          </section>
+        }
+      } @else {
+        @if (listings().length === 0) {
+          <section class="collection-empty">
+            <h2>Your wishlist is empty</h2>
+            <p>Open any listing and choose Save item to keep it here.</p>
+            <a class="collection-button" routerLink="/explore">Browse listings</a>
+          </section>
+        } @else {
+          <section class="wishlist-grid" aria-label="Wishlist listings">
+            @for (listing of listings(); track listing.listingId) {
+              <article class="wishlist-card">
+                <a class="wishlist-main" [routerLink]="['/products', listing.listingId]">
+                  @if (listing.photoUrl) {
+                    <img class="wishlist-photo" [src]="listing.photoUrl" [alt]="listing.title + ' product photo'" loading="lazy" />
+                  } @else {
+                    <span class="wishlist-photo photo-placeholder" aria-hidden="true">✳</span>
+                  }
+                  <span class="wishlist-copy">
+                    <small class="category-label">{{ listing.category.replaceAll('_', ' ') }}</small>
+                    <strong>{{ listing.title }}</strong>
+                    <span class="wishlist-price">₹{{ listing.price }}</span>
+                    <small>Seller: {{ listing.sellerName }}</small>
+                    <span class="wishlist-tags">
+                      @for (tag of listing.hashtags; track tag) { <span>#{{ tag }}</span> }
+                    </span>
+                  </span>
+                </a>
+                <div class="wishlist-actions">
+                  <a class="text-link" [routerLink]="['/sellers', listing.sellerId]">View seller</a>
+                  <button class="collection-button quiet-button" type="button" (click)="removeListing(listing.listingId)" [disabled]="busyId() !== null">
+                    {{ isBusy(listing.listingId) ? 'Removing…' : 'Remove' }}
+                  </button>
+                </div>
+              </article>
+            }
+          </section>
+        }
+      }
+    }
+  </main>
+</div>

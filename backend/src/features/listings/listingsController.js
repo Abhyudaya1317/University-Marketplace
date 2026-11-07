@@ -1,12 +1,12 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
-import { CLOTHING_GENDERS, isValidQuantity, matchesExploreFilters, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails } from "./listingsValidation.js";
+import { CLOTHING_GENDERS, isValidQuantity, matchesExploreFilters, normalizeListingHashtags, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
 import { productNamesMatch } from "./productGrouping.js";
 import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
 export async function createListing(request, response) {
-    const { name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition } = request.body ?? {};
+    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition } = request.body ?? {};
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
@@ -24,6 +24,12 @@ export async function createListing(request, response) {
         await removeListingPhotos(uploadedPhotos);
         return response.status(400).json({ success: false, message: validationMessage });
     }
+    const hashtagValidationMessage = validateListingHashtags(rawHashtags);
+    if (hashtagValidationMessage) {
+        await removeListingPhotos(uploadedPhotos);
+        return response.status(400).json({ success: false, message: hashtagValidationMessage });
+    }
+    const hashtags = normalizeListingHashtags(rawHashtags);
 
     try {
         const normalizedName = normalizeProductName(trimmedName);
@@ -41,6 +47,7 @@ export async function createListing(request, response) {
                     sellerId: request.user.id,
                     title: trimmedName,
                     description: trimmedDescription,
+                    hashtags,
                     price: priceText,
                     phoneNumber: phoneNumber.trim(),
                     quantityAvailable: Number(quantityAvailable),
@@ -69,6 +76,7 @@ export async function createListing(request, response) {
                 title: listing.title,
                 product: listing.product,
                 description: listing.description,
+                hashtags: listing.hashtags,
                 price: listing.price.toFixed(2),
                 photoUrl: listing.photoUrl,
                 photoUrl2: listing.photoUrl2,
@@ -170,6 +178,7 @@ export async function getExploreProducts(request, response) {
                 customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
+                hashtags: true,
                 createdAt: true,
                 product: { select: { category: true } },
                 seller: { select: { fullName: true } }
@@ -183,13 +192,14 @@ export async function getExploreProducts(request, response) {
             matchesExploreFilters(listing, { category, gender, proteinOnly })
         );
         const matchingListings = search
-            ? filteredListings.filter((listing) => productSearchMatches(search, listing.title))
+            ? filteredListings.filter((listing) => productSearchMatches(search, listing.title, listing.hashtags))
             : filteredListings;
         const results = matchingListings.map((listing) => ({
             id: listing.id,
             sellerId: listing.sellerId,
             sellerName: listing.seller.fullName || "CampusX Member",
             title: listing.title,
+            hashtags: listing.hashtags,
             category: listing.product.category,
             price: listing.price.toFixed(2),
             quantityAvailable: listing.quantityAvailable,
@@ -224,9 +234,18 @@ export async function getExploreProducts(request, response) {
 }
 
 // Match every typed word to a listing title, retaining the existing close-keyword behavior.
-function productSearchMatches(search, title) {
-    return normalizeProductName(search).split(" ").filter(Boolean)
-        .every((word) => productNamesMatch(word, title));
+function productSearchMatches(search, title, hashtags = []) {
+    const queryTokens = search.trim().split(/[\s,]+/u).filter(Boolean);
+    const normalizedTags = new Set((hashtags ?? []).map((tag) =>
+        tag.normalize("NFKC").replace(/^#+/u, "").toLocaleLowerCase("en")
+    ));
+    return queryTokens.every((token) => {
+        // Keep hashtag punctuation intact so #campus-project and #campus_project stay searchable.
+        const hashtagKeyword = token.normalize("NFKC").replace(/^#+/u, "").toLocaleLowerCase("en");
+        const titleWords = normalizeProductName(token).split(" ").filter(Boolean);
+        const matchesTitle = titleWords.length > 0 && titleWords.every((word) => productNamesMatch(word, title));
+        return matchesTitle || normalizedTags.has(hashtagKeyword);
+    });
 }
 
 // Return one public listing by its own ID, including only safe seller identity and reputation.
@@ -244,6 +263,7 @@ export async function getPublicListingDetails(request, response) {
                 sellerId: true,
                 title: true,
                 description: true,
+                hashtags: true,
                 price: true,
                 quantityAvailable: true,
                 photoUrl: true,
@@ -274,6 +294,7 @@ export async function getPublicListingDetails(request, response) {
                 id: listing.id,
                 title: listing.title,
                 description: listing.description,
+                hashtags: listing.hashtags,
                 price: listing.price.toFixed(2),
                 quantityAvailable: listing.quantityAvailable,
                 photoUrl: listing.photoUrl,
@@ -299,6 +320,48 @@ export async function getPublicListingDetails(request, response) {
         });
     } catch {
         return response.status(500).json({ success: false, message: "We could not load this listing right now." });
+    }
+}
+
+// Return this account's saved active offers without loading the rest of seller inventory.
+export async function getSavedListings(request, response) {
+    try {
+        const favorites = await prisma.listingFavorite.findMany({
+            where: { userId: request.user.id, listing: { status: "ACTIVE" } },
+            orderBy: { createdAt: "desc" },
+            select: {
+                createdAt: true,
+                listing: {
+                    select: {
+                        id: true, sellerId: true, title: true, description: true, hashtags: true,
+                        price: true, photoUrl: true, condition: true, customCondition: true,
+                        product: { select: { category: true } },
+                        seller: { select: { fullName: true, avatarUrl: true } }
+                    }
+                }
+            }
+        });
+        return response.json({
+            success: true,
+            listings: favorites.map(({ createdAt, listing }) => ({
+                savedAt: createdAt,
+                listingId: listing.id,
+                sellerId: listing.sellerId,
+                sellerName: listing.seller.fullName || "CampusX Member",
+                sellerAvatarUrl: listing.seller.avatarUrl,
+                title: listing.title,
+                description: listing.description,
+                hashtags: listing.hashtags,
+                price: listing.price.toFixed(2),
+                photoUrl: listing.photoUrl,
+                condition: listing.condition,
+                customCondition: listing.customCondition,
+                category: listing.product.category
+            }))
+        });
+    } catch (error) {
+        console.error("Saved listings read failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not load your wishlist." });
     }
 }
 

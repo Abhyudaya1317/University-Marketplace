@@ -29,6 +29,7 @@ interface EditListingResponse {
     name: string;
     category: string;
     description: string;
+    hashtags: string[];
     price: string;
     quantityAvailable: number;
     phoneNumber: string;
@@ -82,6 +83,7 @@ export class CreateListing implements OnDestroy {
   protected name = '';
   protected category = 'CLOTHING';
   protected description = '';
+  protected hashtags = '';
   protected price: number | string = '';
   protected quantityAvailable = 1;
   protected phoneNumber = '';
@@ -182,6 +184,7 @@ export class CreateListing implements OnDestroy {
     formData.append('name', this.name);
     formData.append('category', this.category);
     formData.append('description', this.description);
+    formData.append('hashtags', this.hashtags);
     formData.append('price', String(this.price));
     formData.append('quantityAvailable', String(this.quantityAvailable));
     formData.append('phoneNumber', this.phoneNumber);
@@ -211,6 +214,7 @@ export class CreateListing implements OnDestroy {
         this.name = '';
         this.category = 'CLOTHING';
         this.description = '';
+        this.hashtags = '';
         this.price = '';
         this.quantityAvailable = 1;
         this.phoneNumber = '';
@@ -522,6 +526,7 @@ export class CreateListing implements OnDestroy {
           this.name = listing.name;
           this.category = listing.category;
           this.description = listing.description;
+          this.hashtags = (listing.hashtags ?? []).map((tag) => `#${tag}`).join(', ');
           this.price = listing.price;
           this.quantityAvailable = listing.quantityAvailable;
           this.phoneNumber = listing.phoneNumber;

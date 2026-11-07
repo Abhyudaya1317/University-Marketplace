@@ -11,6 +11,7 @@ interface ListingDetails {
   id: string;
   title: string;
   description: string;
+  hashtags: string[];
   price: string;
   quantityAvailable: number;
   photoUrl: string | null;
@@ -65,6 +66,9 @@ export class ProductDetails {
   protected readonly quantity = signal(1);
   protected readonly buyerMessage = signal('');
   protected readonly submittingOrder = signal(false);
+  protected readonly archiveDialogOpen = signal(false);
+  protected readonly archiving = signal(false);
+  protected readonly archiveError = signal('');
   protected readonly orderFeedback = signal('');
   protected readonly requestSubmitted = signal(false);
   protected readonly startingConversation = signal(false);
@@ -294,5 +298,33 @@ export class ProductDetails {
   // Compare normalized IDs because the API may serialize database IDs as numbers or strings.
   protected isOwnListing(item: ListingDetails): boolean {
     return this.currentUserId() !== null && String(this.currentUserId()) === String(item.seller.id);
+  }
+
+  // Ask the owner before removing this listing from public search and seller pages.
+  protected askToArchive(): void {
+    this.archiveError.set('');
+    this.archiveDialogOpen.set(true);
+  }
+
+  protected cancelArchive(): void {
+    if (!this.archiving()) this.archiveDialogOpen.set(false);
+  }
+
+  protected confirmArchive(): void {
+    const item = this.listing();
+    if (!item || !this.isOwnListing(item) || this.archiving()) return;
+    this.archiving.set(true);
+    this.archiveError.set('');
+    this.http.patch<{ success: boolean }>(`/api/listings/${item.id}/archive`, {}).subscribe({
+      next: () => {
+        this.archiveDialogOpen.set(false);
+        this.archiving.set(false);
+        void this.router.navigate(['/items-selling'], { queryParams: { notice: 'archived' } });
+      },
+      error: (response: HttpErrorResponse) => {
+        this.archiveError.set(response.error?.message ?? 'This listing could not be archived.');
+        this.archiving.set(false);
+      },
+    });
   }
 }
