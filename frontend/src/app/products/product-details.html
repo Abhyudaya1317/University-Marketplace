@@ -107,6 +107,13 @@
             >
           </a>
           <div class="detail-actions">
+            @if (isOwnListing(item)) {
+              <a
+                class="wishlist-button"
+                [routerLink]="['/sell']"
+                [queryParams]="{ edit: item.id }"
+              >Edit listing</a>
+            }
             <button
               type="button"
               class="wishlist-button"
@@ -117,7 +124,7 @@
             >
               {{ saved() ? '♥ Saved' : '♡ Save item' }}
             </button>
-            @if (currentUserId() !== null && currentUserId() !== item.seller.id) {
+            @if (currentUserId() !== null && !isOwnListing(item)) {
               <button
                 type="button"
                 class="wishlist-button"
@@ -149,7 +156,7 @@
               }
             </p>
           }
-          @if (currentUserId() !== item.seller.id && item.quantityAvailable > 0) {
+          @if (!isOwnListing(item) && item.quantityAvailable > 0) {
             @if (!sessionCheckComplete()) {
               <p class="feedback" role="status">Checking your sign-in before enabling requests…</p>
             } @else if (currentUserId() === null) {

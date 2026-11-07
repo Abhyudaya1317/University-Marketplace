@@ -76,7 +76,7 @@ export class ProductDetails {
   constructor() {
     this.http.get<{ user?: { id: string } }>('/api/auth/me').subscribe({
       next: (response) => {
-        this.currentUserId.set(response.user?.id ?? null);
+        this.currentUserId.set(response.user?.id == null ? null : String(response.user.id));
         this.sessionCheckComplete.set(true);
       },
       error: (response: HttpErrorResponse) => {
@@ -289,5 +289,10 @@ export class ProductDetails {
   protected stockLabel(quantity: number): string {
     if (quantity === 0) return 'Out of stock';
     return quantity <= 2 ? `Few left · ${quantity} available` : `In stock · ${quantity} available`;
+  }
+
+  // Compare normalized IDs because the API may serialize database IDs as numbers or strings.
+  protected isOwnListing(item: ListingDetails): boolean {
+    return this.currentUserId() !== null && String(this.currentUserId()) === String(item.seller.id);
   }
 }
