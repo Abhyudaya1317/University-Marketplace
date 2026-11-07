@@ -27,6 +27,8 @@
           <a routerLink="/messages">MESSAGES</a>
           <a routerLink="/items-selling">ITEMS I’M SELLING</a>
         </nav>
+        <div class="profile-console-body">
+          <p class="profile-handle">@CAMPUSX_{{ currentSeller.id }}</p>
       <div class="profile-heading">
         @if (currentSeller.avatarUrl) {
           <img
@@ -77,6 +79,7 @@
           </div>
         }
       </div>
+        </div>
       </section>
 
       @if (notice()) {

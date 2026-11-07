@@ -97,6 +97,7 @@ export class CreateListing implements OnDestroy {
     { value: 'ELECTRONICS', label: 'Electronics' },
     { value: 'BEAUTY', label: 'Beauty products' },
     { value: 'ARTWORK', label: 'Artwork' },
+    { value: 'PROJECTS', label: 'Projects' },
     { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment' },
     { value: 'MUSICAL_INSTRUMENTS', label: 'Musical instruments' },
     { value: 'ROOM_DECOR', label: 'Room decorations' },

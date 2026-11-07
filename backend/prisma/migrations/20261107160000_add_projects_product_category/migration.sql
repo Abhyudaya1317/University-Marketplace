@@ -1,0 +1,1 @@
+ALTER TYPE "ProductCategory" ADD VALUE 'PROJECTS';

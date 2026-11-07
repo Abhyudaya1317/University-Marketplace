@@ -59,7 +59,12 @@ export class Home {
     for (const listing of this.listings()) {
       if (!unique.has(listing.category)) unique.set(listing.category, listing);
     }
-    return [...unique.keys()].slice(0, 8);
+    const categories = [...unique.keys()].slice(0, 8);
+    if (!categories.includes('PROJECTS')) {
+      if (categories.length === 8) categories[7] = 'PROJECTS';
+      else categories.push('PROJECTS');
+    }
+    return categories;
   });
   protected readonly featuredListing = computed(() => {
     const liveListings = this.listings();
