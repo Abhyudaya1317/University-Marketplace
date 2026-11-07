@@ -27,7 +27,13 @@ interface ExploreResponse {
   success: boolean;
   listings: ExploreListing[];
   suggestions?: Array<{ id: string; name: string; category: string }>;
+  nextCursor?: string | null;
   message?: string;
+}
+
+interface ExploreCacheEntry {
+  savedAt: number;
+  response: ExploreResponse;
 }
 
 // Keep search, optional filters, and individual listing results in one feature component.
@@ -43,6 +49,11 @@ export class Explore {
   protected readonly listings = signal<ExploreListing[]>([]);
   protected readonly suggestions = signal<NonNullable<ExploreResponse['suggestions']>>([]);
   protected readonly loading = signal(true);
+  protected readonly refreshing = signal(false);
+  protected readonly loadingMore = signal(false);
+  protected readonly hasLoadedData = signal(false);
+  protected readonly refreshNotice = signal('');
+  protected readonly nextCursor = signal<string | null>(null);
   protected readonly error = signal('');
   protected readonly showSuggestions = signal(false);
   protected readonly searchText = signal('');
@@ -233,32 +244,106 @@ export class Explore {
     return this.selectedCategory() === 'FOOD';
   }
 
-  private loadListings(): void {
+  protected loadMoreListings(): void {
+    const cursor = this.nextCursor();
+    if (!cursor || this.loadingMore() || this.refreshing()) return;
+    this.loadListings(cursor, true);
+  }
+
+  private loadListings(cursor?: string, append = false): void {
     const requestId = ++this.latestRequest;
-    this.loading.set(true);
-    this.error.set('');
+    this.loadingMore.set(append);
+    let params = this.buildListingParams();
+    if (!append) {
+      const cached = this.readCache(this.cacheKey(params));
+      if (cached) {
+        this.applyResponse(cached);
+        this.hasLoadedData.set(true);
+        this.loading.set(false);
+      } else {
+        this.nextCursor.set(null);
+        this.loading.set(!this.hasLoadedData());
+      }
+      this.refreshing.set(true);
+      this.refreshNotice.set(this.hasLoadedData() ? 'Updating listings…' : '');
+      this.error.set('');
+    }
+    if (cursor) params = params.set('cursor', cursor);
+    const cacheKey = this.cacheKey(params);
+    this.http.get<ExploreResponse>('/api/products', { params }).subscribe({
+      next: (response) => {
+        if (requestId !== this.latestRequest) return;
+        if (append) {
+          const existing = this.listings();
+          const seen = new Set(existing.map((listing) => String(listing.id)));
+          this.listings.set([...existing, ...(response.listings ?? []).filter((listing) => !seen.has(String(listing.id)))]);
+        } else {
+          this.applyResponse(response);
+          this.writeCache(cacheKey, response);
+        }
+        this.nextCursor.set(response.nextCursor ?? null);
+        this.randomizedIds.set([]);
+        this.hasLoadedData.set(true);
+        this.loading.set(false);
+        this.refreshing.set(false);
+        this.loadingMore.set(false);
+        this.refreshNotice.set('');
+      },
+      error: (response: HttpErrorResponse) => {
+        if (requestId !== this.latestRequest) return;
+        if (append) {
+          this.refreshNotice.set('More listings could not be loaded. Please try again.');
+        } else if (this.hasLoadedData()) {
+          this.refreshNotice.set('Could not refresh listings. Showing the last loaded results.');
+        } else {
+          this.error.set(response.error?.message ?? 'Products could not be loaded. Please try again.');
+        }
+        this.loading.set(false);
+        this.refreshing.set(false);
+        this.loadingMore.set(false);
+      },
+    });
+  }
+
+  private buildListingParams(): HttpParams {
     let params = new HttpParams();
     const search = this.searchText().trim();
     if (search) params = params.set('search', search);
     if (this.selectedCategory()) params = params.set('category', this.selectedCategory());
     if (this.selectedGender()) params = params.set('gender', this.selectedGender());
     if (this.proteinOnly() && this.selectedCategory() === 'FOOD') params = params.set('proteinOnly', 'true');
-    this.http.get<ExploreResponse>('/api/products', { params }).subscribe({
-      next: (response) => {
-        if (requestId !== this.latestRequest) return;
-        this.listings.set(response.listings ?? []);
-        this.suggestions.set(response.suggestions ?? []);
-        this.randomizedIds.set([]);
-        this.loading.set(false);
-      },
-      error: (response: HttpErrorResponse) => {
-        if (requestId !== this.latestRequest) return;
-        this.listings.set([]);
-        this.error.set(
-          response.error?.message ?? 'Products could not be loaded. Please try again.',
-        );
-        this.loading.set(false);
-      },
-    });
+    if (!search) params = params.set('limit', '24');
+    return params;
+  }
+
+  private cacheKey(params: HttpParams): string {
+    return `campusx:explore:v1:${params.toString() || 'all'}`;
+  }
+
+  private readCache(key: string): ExploreResponse | null {
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      const entry = JSON.parse(raw) as ExploreCacheEntry;
+      if (!entry?.response || Date.now() - entry.savedAt > 5 * 60 * 1000) return null;
+      return entry.response;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeCache(key: string, response: ExploreResponse): void {
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ savedAt: Date.now(), response } satisfies ExploreCacheEntry));
+    } catch {
+      // Browsing still works when storage is unavailable or full.
+    }
+  }
+
+  private applyResponse(response: ExploreResponse): void {
+    this.listings.set(response.listings ?? []);
+    this.suggestions.set(response.suggestions ?? []);
+    this.nextCursor.set(response.nextCursor ?? null);
+    this.randomizedIds.set([]);
   }
 }

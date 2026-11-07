@@ -212,20 +212,34 @@ export class Dashboard {
       this.profileNotice.set('Keep your bio to 300 characters or fewer.');
       return;
     }
+    const previousProfile = this.profile();
+    if (!previousProfile) return;
+    const submittedBio = bio || null;
     this.profileSaving.set(true);
-    this.profileNotice.set('');
+    this.profile.update((profile) => profile ? { ...profile, fullName, bio: submittedBio } : profile);
+    this.profileEditOpen.set(false);
+    this.profileNotice.set('Saving your profile in the background…');
     this.http.patch<{ user: { fullName: string; bio: string | null } }>('/api/auth/profile', { fullName, bio }).subscribe({
       next: (response) => {
         this.profile.update((profile) =>
           profile ? { ...profile, fullName: response.user.fullName, bio: response.user.bio } : profile,
         );
-        this.profileNameDraft.set(response.user.fullName);
-        this.profileBioDraft.set(response.user.bio ?? '');
+        if (this.profileNameDraft().trim() === fullName) this.profileNameDraft.set(response.user.fullName);
+        if (this.profileBioDraft().trim() === bio) this.profileBioDraft.set(response.user.bio ?? '');
         this.profileNotice.set('Profile updated.');
-        this.profileEditOpen.set(false);
         this.profileSaving.set(false);
       },
       error: (response: HttpErrorResponse) => {
+        this.profile.update((profile) => profile ? {
+          ...profile,
+          fullName: previousProfile.fullName,
+          bio: previousProfile.bio,
+        } : profile);
+        if (!this.profileEditOpen()) {
+          this.profileNameDraft.set(fullName);
+          this.profileBioDraft.set(bio);
+        }
+        this.profileEditOpen.set(true);
         this.profileNotice.set(
           response.error?.message ?? 'Your profile name could not be updated.',
         );

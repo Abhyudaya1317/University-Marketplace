@@ -400,6 +400,20 @@ nav {
   color: #77756e;
   text-align: center;
 }
+.feed-status {
+  margin: 0 0 12px;
+  color: #77756e;
+  font-size: 13px;
+}
+.load-more-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+.load-more-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
 .state-card {
   margin: 25px 0;
   padding: 30px;

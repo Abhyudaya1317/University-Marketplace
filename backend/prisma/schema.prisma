@@ -128,6 +128,7 @@ model Listing {
   // These indexes support finding product offers sorted by price and seller listings.
   @@index([productId, status, price])
   @@index([sellerId, createdAt])
+  @@index([status, price, createdAt(sort: Desc), id(sort: Desc)])
 }
 
 // Keep one private buyer-seller conversation per buyer and listing.

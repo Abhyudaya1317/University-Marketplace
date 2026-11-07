@@ -115,12 +115,16 @@ export async function updateListingStock(request, response) {
     }
 }
 
-// Return every in-stock seller listing separately so Explore cards use listing IDs.
+// Return a fast, cacheable page of in-stock seller listings for Explore.
 export async function getExploreProducts(request, response) {
     const search = typeof request.query.search === "string" ? request.query.search.trim().slice(0, 100) : "";
     const category = typeof request.query.category === "string" ? request.query.category.trim().toUpperCase() : "";
     const gender = typeof request.query.gender === "string" ? request.query.gender.trim().toUpperCase() : "";
     const proteinOnly = request.query.proteinOnly === "true";
+    const pageSize = 24;
+    const cursorId = typeof request.query.cursor === "string" && /^\d+$/.test(request.query.cursor)
+        ? Number(request.query.cursor)
+        : null;
 
     // Reject unknown category values rather than silently returning confusing results.
     if (category && !PRODUCT_CATEGORIES.has(category)) {
@@ -132,9 +136,12 @@ export async function getExploreProducts(request, response) {
     if (proteinOnly && category !== "FOOD") {
         return response.status(400).json({ success: false, message: "The protein-only filter is available for food listings." });
     }
+    if (request.query.cursor !== undefined && (!Number.isSafeInteger(cursorId) || cursorId < 1 || search)) {
+        return response.status(400).json({ success: false, message: "This listing page cursor is invalid." });
+    }
 
     try {
-        // Search text narrows the selected filters; gender remains enforced during search too.
+        // Search keeps the existing fuzzy matching behavior; regular browsing reads one indexed page.
         const browsingCategory = category;
         const listings = await prisma.listing.findMany({
             where: {
@@ -145,30 +152,34 @@ export async function getExploreProducts(request, response) {
                 ...(proteinOnly ? { proteinGrams: { gt: 0 } } : {})
             },
             orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+            ...(!search ? {
+                take: pageSize + 1,
+                ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {})
+            } : {}),
             select: {
                 id: true,
                 sellerId: true,
                 title: true,
-                description: true,
                 price: true,
                 quantityAvailable: true,
                 photoUrl: true,
                 photoUrl2: true,
                 photoUrl3: true,
                 photoUrl4: true,
-                location: true,
                 condition: true,
                 customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
                 createdAt: true,
-                product: { select: { id: true, category: true } },
-                seller: { select: { fullName: true, avatarUrl: true } }
+                product: { select: { category: true } },
+                seller: { select: { fullName: true } }
             }
         });
 
+        const hasMore = !search && listings.length > pageSize;
+        const pageListings = hasMore ? listings.slice(0, pageSize) : listings;
         // Re-check category-specific filters in memory as a safety net as well as in SQL.
-        const filteredListings = listings.filter((listing) =>
+        const filteredListings = pageListings.filter((listing) =>
             matchesExploreFilters(listing, { category, gender, proteinOnly })
         );
         const matchingListings = search
@@ -178,23 +189,17 @@ export async function getExploreProducts(request, response) {
             id: listing.id,
             sellerId: listing.sellerId,
             sellerName: listing.seller.fullName || "CampusX Member",
-            sellerAvatarUrl: listing.seller.avatarUrl,
             title: listing.title,
             category: listing.product.category,
-            productId: listing.product.id,
-            description: listing.description,
             price: listing.price.toFixed(2),
             quantityAvailable: listing.quantityAvailable,
             photoUrl: listing.photoUrl,
             photoUrl2: listing.photoUrl2,
             photoUrl3: listing.photoUrl3,
             photoUrl4: listing.photoUrl4,
-            location: listing.location,
             condition: listing.condition,
             customCondition: listing.customCondition,
-            clothingGender: listing.clothingGender,
-            proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
-            createdAt: listing.createdAt
+            clothingGender: listing.clothingGender
         }));
 
         const suggestions = search
@@ -204,7 +209,13 @@ export async function getExploreProducts(request, response) {
             ])).values()].slice(0, 6)
             : [];
 
-        return response.json({ success: true, listings: results, suggestions });
+        response.set("Cache-Control", "public, max-age=0, s-maxage=15, stale-while-revalidate=45");
+        return response.json({
+            success: true,
+            listings: results,
+            suggestions,
+            nextCursor: hasMore ? String(pageListings.at(-1)?.id ?? "") || null : null
+        });
     } catch (error) {
         // Log only Prisma's safe error code/name; never expose database details to clients or logs.
         console.error("Product feed query failed:", error?.code ?? error?.name ?? "UNKNOWN");
