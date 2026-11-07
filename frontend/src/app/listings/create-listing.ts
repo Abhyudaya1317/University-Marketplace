@@ -1,4 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { DecimalPipe } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -46,7 +47,7 @@ interface EditListingResponse {
 // Keep the seller form, its validation, and its API request in a feature folder.
 @Component({
   selector: 'app-create-listing',
-  imports: [FormsModule, RouterLink],
+  imports: [DecimalPipe, FormsModule, RouterLink],
   templateUrl: './create-listing.html',
   styleUrl: './create-listing.css'
 })
@@ -65,11 +66,17 @@ export class CreateListing implements OnDestroy {
   protected readonly photoPreviews = signal<string[]>([]);
   protected readonly photoError = signal('');
   protected readonly photoProcessing = signal(false);
+  protected readonly cropIndex = signal<number | null>(null);
+  protected readonly cropSourceUrl = signal('');
+  protected readonly cropZoom = signal(1);
+  protected readonly cropPan = signal({ x: 0, y: 0 });
+  protected readonly cropProcessing = signal(false);
   protected readonly isEditing = signal(false);
   protected readonly loadingListing = signal(false);
   protected readonly currentPhotoUrls = signal<string[]>([]);
 
   @ViewChild('photoInput') private photoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('cropCanvas') private cropCanvas?: ElementRef<HTMLCanvasElement>;
 
   // Keep values as form fields until the backend validates and stores them.
   protected name = '';
@@ -87,6 +94,9 @@ export class CreateListing implements OnDestroy {
   private selectedPhotos: File[] = [];
   private previewUrls: string[] = [];
   private photoSelectionGeneration = 0;
+  private cropSourceImage: HTMLImageElement | null = null;
+  private draggedPhotoIndex: number | null = null;
+  private cropPointer: { id: number; x: number; y: number } | null = null;
 
   // Use the same controlled category values the backend accepts.
   protected readonly categories = [
@@ -132,6 +142,10 @@ export class CreateListing implements OnDestroy {
     }
     if (this.photoProcessing()) {
       this.error.set('Wait for photo preparation to finish before publishing.');
+      return;
+    }
+    if (this.cropIndex() !== null) {
+      this.error.set('Finish or cancel the photo crop before publishing.');
       return;
     }
     if (this.condition === 'CUSTOM' && this.customCondition.trim().length < 2) {
@@ -232,9 +246,11 @@ export class CreateListing implements OnDestroy {
   protected async selectPhotos(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
+    input.value = '';
     const selectionGeneration = ++this.photoSelectionGeneration;
     this.photoError.set('');
     this.photoProcessing.set(false);
+    this.closePhotoCrop();
     this.clearSelectedPhotos();
     if (files.length < 2 || files.length > 4) {
       this.photoError.set('Choose 2, 3, or 4 product photos.');
@@ -269,12 +285,207 @@ export class CreateListing implements OnDestroy {
     }
   }
 
+  // Reorder selected photos before sending; the first photo is stored as the cover image.
+  protected movePhoto(fromIndex: number, toIndex: number): void {
+    if (toIndex < 0 || toIndex >= this.selectedPhotos.length || fromIndex === toIndex) return;
+    const photos = [...this.selectedPhotos];
+    const urls = [...this.previewUrls];
+    const [photo] = photos.splice(fromIndex, 1);
+    const [url] = urls.splice(fromIndex, 1);
+    photos.splice(toIndex, 0, photo);
+    urls.splice(toIndex, 0, url);
+    this.selectedPhotos = photos;
+    this.previewUrls = urls;
+    this.photoPreviews.set([...urls]);
+  }
+
+  // Support drag-and-drop reordering in addition to the keyboard-friendly move buttons.
+  protected startPhotoDrag(index: number, event: DragEvent): void {
+    this.draggedPhotoIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(index));
+    }
+  }
+
+  protected allowPhotoDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  }
+
+  protected dropPhoto(index: number, event: DragEvent): void {
+    event.preventDefault();
+    if (this.draggedPhotoIndex !== null) this.movePhoto(this.draggedPhotoIndex, index);
+    this.draggedPhotoIndex = null;
+  }
+
+  protected clearPhotoDrag(): void {
+    this.draggedPhotoIndex = null;
+  }
+
+  // Open a square crop editor for one prepared photo without changing the others.
+  protected openPhotoCrop(index: number): void {
+    const sourceUrl = this.previewUrls[index];
+    if (!sourceUrl || !this.selectedPhotos[index]) return;
+    this.cropSourceImage = null;
+    this.cropIndex.set(index);
+    this.cropSourceUrl.set(sourceUrl);
+    this.cropZoom.set(1);
+    this.cropPan.set({ x: 0, y: 0 });
+    this.photoError.set('');
+  }
+
+  protected onCropSourceLoad(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image.naturalWidth || !image.naturalHeight || image.src !== this.cropSourceUrl()) return;
+    this.cropSourceImage = image;
+    this.drawCropPreview();
+  }
+
+  protected onCropZoomChange(event: Event): void {
+    this.cropZoom.set(Number((event.target as HTMLInputElement).value));
+    this.drawCropPreview();
+  }
+
+  protected resetPhotoCrop(): void {
+    this.cropZoom.set(1);
+    this.cropPan.set({ x: 0, y: 0 });
+    this.drawCropPreview();
+  }
+
+  protected startCropPan(event: PointerEvent): void {
+    if (!this.cropSourceImage) return;
+    event.preventDefault();
+    (event.currentTarget as HTMLCanvasElement).setPointerCapture(event.pointerId);
+    this.cropPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  }
+
+  protected moveCropPan(event: PointerEvent): void {
+    if (!this.cropPointer || this.cropPointer.id !== event.pointerId) return;
+    const deltaX = event.clientX - this.cropPointer.x;
+    const deltaY = event.clientY - this.cropPointer.y;
+    this.cropPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    this.cropPan.update((pan) => ({ x: pan.x + deltaX, y: pan.y + deltaY }));
+    this.drawCropPreview();
+  }
+
+  protected endCropPan(event: PointerEvent): void {
+    if (this.cropPointer?.id === event.pointerId) this.cropPointer = null;
+  }
+
+  protected handleCropKeydown(event: KeyboardEvent): void {
+    const step = event.shiftKey ? 24 : 8;
+    const delta = ({
+      ArrowLeft: { x: -step, y: 0 },
+      ArrowRight: { x: step, y: 0 },
+      ArrowUp: { x: 0, y: -step },
+      ArrowDown: { x: 0, y: step },
+    } as const)[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    this.cropPan.update((pan) => ({ x: pan.x + delta.x, y: pan.y + delta.y }));
+    this.drawCropPreview();
+  }
+
+  // Encode the visible square crop and replace only the selected photo in the upload order.
+  protected async applyPhotoCrop(): Promise<void> {
+    const index = this.cropIndex();
+    const image = this.cropSourceImage;
+    const canvas = this.cropCanvas?.nativeElement;
+    if (index === null || !image || !canvas) return;
+
+    this.cropProcessing.set(true);
+    this.photoProcessing.set(true);
+    try {
+      const outputSize = 1024;
+      const output = document.createElement('canvas');
+      output.width = outputSize;
+      output.height = outputSize;
+      const context = output.getContext('2d');
+      if (!context) throw new Error('PHOTO_CANVAS_UNAVAILABLE');
+
+      const scale = Math.max(outputSize / image.naturalWidth, outputSize / image.naturalHeight) * this.cropZoom();
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      const displayWidth = canvas.clientWidth || 360;
+      const pan = this.cropPan();
+      const x = this.clampCropOffset((outputSize - width) / 2 + pan.x * outputSize / displayWidth, outputSize - width);
+      const y = this.clampCropOffset((outputSize - height) / 2 + pan.y * outputSize / displayWidth, outputSize - height);
+      context.drawImage(image, x, y, width, height);
+
+      const blob = await new Promise<Blob | null>((resolve) => output.toBlob(resolve, 'image/webp', 0.9));
+      if (!blob) throw new Error('PHOTO_ENCODING_FAILED');
+      const oldPhoto = this.selectedPhotos[index];
+      const baseName = oldPhoto.name.replace(/\.[^.]+$/, '') || 'product-photo';
+      const croppedPhoto = new File([blob], `${baseName}-cropped.webp`, {
+        type: 'image/webp',
+        lastModified: oldPhoto.lastModified,
+      });
+      const optimizedPhoto = await optimizePhotoForUpload(croppedPhoto);
+
+      const photos = [...this.selectedPhotos];
+      const urls = [...this.previewUrls];
+      photos[index] = optimizedPhoto;
+      URL.revokeObjectURL(urls[index]);
+      urls[index] = URL.createObjectURL(optimizedPhoto);
+      this.selectedPhotos = photos;
+      this.previewUrls = urls;
+      this.photoPreviews.set([...urls]);
+      this.closePhotoCrop();
+    } catch {
+      this.error.set('This photo could not be cropped. The original is still selected; try again or cancel.');
+    } finally {
+      this.cropProcessing.set(false);
+      this.photoProcessing.set(false);
+    }
+  }
+
+  protected closePhotoCrop(): void {
+    this.cropIndex.set(null);
+    this.cropSourceUrl.set('');
+    this.cropSourceImage = null;
+    this.cropPointer = null;
+  }
+
+  // Draw a centered square preview and clamp panning so empty space never enters the crop.
+  private drawCropPreview(): void {
+    const canvas = this.cropCanvas?.nativeElement;
+    const image = this.cropSourceImage;
+    if (!canvas || !image) return;
+
+    const size = 720;
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight) * this.cropZoom();
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    const displayWidth = canvas.clientWidth || 360;
+    const pan = this.cropPan();
+    const centerX = (size - width) / 2;
+    const centerY = (size - height) / 2;
+    const x = this.clampCropOffset(centerX + pan.x * size / displayWidth, size - width);
+    const y = this.clampCropOffset(centerY + pan.y * size / displayWidth, size - height);
+    this.cropPan.set({
+      x: (x - centerX) * displayWidth / size,
+      y: (y - centerY) * displayWidth / size,
+    });
+    context.clearRect(0, 0, size, size);
+    context.drawImage(image, x, y, width, height);
+  }
+
+  private clampCropOffset(offset: number, minimum: number): number {
+    return Math.min(0, Math.max(minimum, offset));
+  }
+
   // Release browser preview URLs whenever the selected files change.
   private clearSelectedPhotos(): void {
     this.previewUrls.forEach((url) => URL.revokeObjectURL(url));
     this.previewUrls = [];
     this.selectedPhotos = [];
     this.photoPreviews.set([]);
+    this.closePhotoCrop();
   }
 
   // Release the browser's temporary preview URL when the seller leaves this page.
