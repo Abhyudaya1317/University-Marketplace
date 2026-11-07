@@ -657,11 +657,12 @@ body .details-page .details-header { background: #c0c0c0 !important; }
 body .details-page .back-link {
   padding: 9px 12px;
   border: 2px outset #fff;
-  background: #fff34d;
-  color: #080817;
+  background: #000080;
+  color: #fff !important;
   font: 8px/1.7 var(--pixel);
   box-shadow: 3px 3px 0 #080817;
 }
+body .details-page .back-link:hover { background: #1148ff; color: #fff !important; }
 body .details-page .listing-detail { gap: 22px; }
 body .details-page .photo-panel {
   background: #55f5e9 !important;
@@ -1062,12 +1063,15 @@ body .dashboard-page .profile-summary { display: grid; grid-template-columns: 15
 body .dashboard-page .profile-avatar, body .seller-page .profile-avatar { grid-area: avatar; width: 150px; height: 150px; border: 3px solid #fff; outline: 2px solid #777; border-radius: 50% !important; object-fit: cover; }
 body .dashboard-page .profile-avatar-fallback { display: grid; place-items: center; background: #eee; color: #000080; font-size: 54px; font-weight: 700; }
 body .dashboard-page .profile-summary-main { display: contents; }
+body .dashboard-page .profile-identity { grid-area: avatar; display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 8px; }
 body :is(.dashboard-page,.seller-page) .profile-stats { grid-area: stats; display: flex; justify-content: space-around; gap: 12px; }
 body :is(.dashboard-page,.seller-page) .profile-stats > div { display: grid; min-width: 76px; justify-items: center; gap: 4px; }
 body :is(.dashboard-page,.seller-page) .profile-stats strong { color: #080817; font: 700 20px/1.3 var(--body); }
 body :is(.dashboard-page,.seller-page) .profile-stats span { color: #333; font-size: 15px; }
 body .dashboard-page .profile-action { grid-area: action; min-height: 42px; padding: 0 15px; border: 2px outset #fff; background: #c0c0c0; color: #000080; cursor: pointer; font: 8px/1.5 var(--pixel); white-space: nowrap; }
 body .dashboard-page .profile-display-name { grid-area: name; }
+body .dashboard-page .profile-display-name .profile-bio { max-width: 680px; margin: 8px 0; color: var(--navy); font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+body .dashboard-page .profile-identity .profile-bio-prompt { padding: 0; border: 0; background: transparent; box-shadow: none !important; color: var(--navy); cursor: pointer; font: inherit; font-size: 12px; text-decoration: underline; }
 body :is(.dashboard-page,.seller-page) .profile-display-name h1, body .seller-page .profile-copy h1 { margin: 0; color: #080817; font: 700 23px/1.35 var(--body); letter-spacing: 0; }
 body :is(.dashboard-page,.seller-page) .profile-display-name p, body .seller-page .profile-copy > p:last-child { margin: 4px 0 0; color: #555; font-size: 14px; }
 body .dashboard-page .profile-name-form { margin-top: 16px; padding: 12px; border: 2px inset #fff; background: #d6d6d2; }
@@ -1080,6 +1084,7 @@ body .seller-page .profile-copy h1 { grid-area: name; }
 body .seller-page .profile-copy > p:last-child { grid-area: note; }
 body .seller-page .profile-heading .save-button { grid-area: action; min-height: 42px; align-self: center; padding: 0 14px; border: 2px outset #fff; border-radius: 0; background: #c0c0c0; color: #000080; box-shadow: 3px 3px 0 #080817; font: 8px/1.5 var(--pixel); white-space: nowrap; }
 body .seller-page .profile-heading .save-button:hover, body .dashboard-page .profile-action:hover { background: #fff; }
+body .seller-page .profile-copy .seller-bio { max-width: 600px; margin: 12px 0 0; color: #080817; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 body :is(.dashboard-page,.seller-page) .profile-gallery-section { margin-top: 20px; }
 body :is(.dashboard-page,.seller-page) .profile-photo-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; }
 body :is(.dashboard-page,.seller-page) .profile-photo-tile { position: relative; display: block; overflow: hidden; aspect-ratio: 1; border: 2px solid #777; background: #d6d6d2; }

@@ -15,6 +15,7 @@ interface DashboardResponse {
     email: string;
     fullName: string;
     avatarUrl: string | null;
+    bio: string | null;
     activeListingCount: number;
     followerCount: number;
     followingCount: number;
@@ -151,6 +152,7 @@ export class Dashboard {
   protected readonly deleteDialogListingId = signal<string | null>(null);
   protected readonly managementBusyId = signal<string | null>(null);
   protected readonly profileNameDraft = signal('');
+  protected readonly profileBioDraft = signal('');
   protected readonly profileNotice = signal('');
   protected readonly profileSaving = signal(false);
   protected readonly profilePhotoUploading = signal(false);
@@ -171,6 +173,7 @@ export class Dashboard {
         this.signedIn.set(true);
         this.profile.set(response.profile ?? null);
         this.profileNameDraft.set(response.profile?.fullName ?? '');
+        this.profileBioDraft.set(response.profile?.bio ?? '');
         this.listings.set(response.myListings ?? []);
         this.favoriteSellers.set(response.favoriteSellers ?? []);
         this.savedListings.set(response.savedListings ?? []);
@@ -196,22 +199,28 @@ export class Dashboard {
     });
   }
 
-  // Save only the current account's public display name through the protected profile endpoint.
-  protected saveProfileName(): void {
+  // Save the current account's public display name and bio through the protected profile endpoint.
+  protected saveProfile(): void {
     const fullName = this.profileNameDraft().trim();
+    const bio = this.profileBioDraft().trim();
     if (fullName.length < 2 || fullName.length > 100) {
       this.profileNotice.set('Enter a name between 2 and 100 characters.');
       return;
     }
+    if (bio.length > 300) {
+      this.profileNotice.set('Keep your bio to 300 characters or fewer.');
+      return;
+    }
     this.profileSaving.set(true);
     this.profileNotice.set('');
-    this.http.patch<{ user: { fullName: string } }>('/api/auth/profile', { fullName }).subscribe({
+    this.http.patch<{ user: { fullName: string; bio: string | null } }>('/api/auth/profile', { fullName, bio }).subscribe({
       next: (response) => {
         this.profile.update((profile) =>
-          profile ? { ...profile, fullName: response.user.fullName } : profile,
+          profile ? { ...profile, fullName: response.user.fullName, bio: response.user.bio } : profile,
         );
         this.profileNameDraft.set(response.user.fullName);
-        this.profileNotice.set('Profile name updated.');
+        this.profileBioDraft.set(response.user.bio ?? '');
+        this.profileNotice.set('Profile updated.');
         this.profileEditOpen.set(false);
         this.profileSaving.set(false);
       },
@@ -229,11 +238,6 @@ export class Dashboard {
     const input = event.target as HTMLInputElement;
     const photo = input.files?.[0];
     if (!photo || this.profilePhotoUploading()) return;
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(photo.type)) {
-      this.profileNotice.set('Choose a JPG, PNG, or WebP image.');
-      input.value = '';
-      return;
-    }
     if (photo.size > 5 * 1024 * 1024) {
       this.profileNotice.set('Profile photos must be 5 MB or smaller.');
       input.value = '';
@@ -261,7 +265,21 @@ export class Dashboard {
 
   // Open or close the small editor behind the profile's Edit your profile button.
   protected toggleProfileEdit(): void {
-    this.profileEditOpen.update((isOpen) => !isOpen);
+    if (!this.profileEditOpen()) {
+      this.profileNameDraft.set(this.profile()?.fullName ?? '');
+      this.profileBioDraft.set(this.profile()?.bio ?? '');
+      this.profileEditOpen.set(true);
+    } else {
+      this.profileEditOpen.set(false);
+    }
+    this.profileNotice.set('');
+  }
+
+  // Open the profile editor when a seller chooses the blue prompt beneath an empty avatar bio.
+  protected openBioEditor(): void {
+    this.profileBioDraft.set(this.profile()?.bio ?? '');
+    this.profileNameDraft.set(this.profile()?.fullName ?? '');
+    this.profileEditOpen.set(true);
     this.profileNotice.set('');
   }
 

@@ -12,7 +12,7 @@ import {
 } from "./authSecurity.js";
 import { isEmailDeliveryConfigured, sendPasswordResetCode } from "./emailService.js";
 import { normalizeFrontendReturnUrl } from "./authReturnUrl.js";
-import { profilePhotoUrl, removeProfilePhoto, removeProfilePhotoByUrl } from "./profilePhotoUpload.js";
+import { profilePhotoUrl, removeUploadedProfilePhoto, removeProfilePhotoByUrl } from "./profilePhotoUpload.js";
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 const RESEND_WAIT_MS = 60 * 1000;
@@ -404,7 +404,8 @@ export async function getCurrentUser(request, response) {
             id: session.user.id,
             email: session.user.email,
             fullName: session.user.fullName,
-            avatarUrl: session.user.avatarUrl
+            avatarUrl: session.user.avatarUrl,
+            bio: session.user.bio
         } });
     } catch {
         return response.status(500).json({ success: false, message: "We could not check your sign-in." });
@@ -413,16 +414,31 @@ export async function getCurrentUser(request, response) {
 
 // Let a signed-in account maintain its own display name without exposing edit access to others.
 export async function updateCurrentProfile(request, response) {
-    const fullName = normalizeFullName(request.body?.fullName);
-    if (!fullName) {
-        return response.status(400).json({ success: false, message: "Enter a name between 2 and 100 characters." });
+    const hasFullName = Object.hasOwn(request.body ?? {}, "fullName");
+    const hasBio = Object.hasOwn(request.body ?? {}, "bio");
+    const data = {};
+    if (hasFullName) {
+        const fullName = normalizeFullName(request.body.fullName);
+        if (!fullName) {
+            return response.status(400).json({ success: false, message: "Enter a name between 2 and 100 characters." });
+        }
+        data.fullName = fullName;
+    }
+    if (hasBio) {
+        if (typeof request.body.bio !== "string" || request.body.bio.trim().length > 300) {
+            return response.status(400).json({ success: false, message: "Keep your bio to 300 characters or fewer." });
+        }
+        data.bio = request.body.bio.trim() || null;
+    }
+    if (!Object.keys(data).length) {
+        return response.status(400).json({ success: false, message: "Update your name or bio before saving." });
     }
 
     try {
         const user = await prisma.user.update({
             where: { id: request.user.id },
-            data: { fullName },
-            select: { id: true, email: true, fullName: true, avatarUrl: true }
+            data,
+            select: { id: true, email: true, fullName: true, avatarUrl: true, bio: true }
         });
         return response.json({ success: true, user });
     } catch {
@@ -433,7 +449,7 @@ export async function updateCurrentProfile(request, response) {
 // Save one authenticated user's photo and keep provider photos untouched on disk.
 export async function updateCurrentProfilePhoto(request, response) {
     if (!request.file) return response.status(400).json({ success: false, message: "Choose a profile photo to upload." });
-    const avatarUrl = profilePhotoUrl(request.file.filename);
+    const avatarUrl = request.file.publicUrl ?? profilePhotoUrl(request.file.filename);
     let user;
     try {
         const currentUser = await prisma.user.findUnique({
@@ -443,7 +459,7 @@ export async function updateCurrentProfilePhoto(request, response) {
         user = await prisma.user.update({
             where: { id: request.user.id },
             data: { avatarUrl },
-            select: { id: true, email: true, fullName: true, avatarUrl: true },
+            select: { id: true, email: true, fullName: true, avatarUrl: true, bio: true },
         });
         if (currentUser?.avatarUrl && currentUser.avatarUrl !== avatarUrl) {
             try {
@@ -453,7 +469,7 @@ export async function updateCurrentProfilePhoto(request, response) {
             }
         }
     } catch (error) {
-        await removeProfilePhoto(request.file.path);
+        await removeUploadedProfilePhoto(request.file);
         console.error("Profile photo update failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not update your profile photo. Please try again." });
     }

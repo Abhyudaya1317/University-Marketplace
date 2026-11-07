@@ -105,6 +105,14 @@
   color: #77736d;
   font-size: 14px;
 }
+.profile-copy .seller-bio {
+  max-width: 600px;
+  margin-top: 12px;
+  color: #080817;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .profile-actions {
   display: flex;
   flex-wrap: wrap;

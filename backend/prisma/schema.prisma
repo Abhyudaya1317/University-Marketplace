@@ -16,6 +16,7 @@ model User {
   email            String            @unique
   fullName         String?           @db.VarChar(100)
   avatarUrl        String?           @db.VarChar(500)
+  bio              String?           @db.VarChar(300)
   passwordHash     String?
   createdAt        DateTime          @default(now())
   freeListingsUsed Int               @default(0)

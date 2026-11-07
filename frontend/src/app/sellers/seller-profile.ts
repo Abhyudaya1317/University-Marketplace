@@ -14,6 +14,7 @@ interface SellerProfileResponse {
     id: string;
     fullName: string;
     avatarUrl: string | null;
+    bio: string | null;
     activeListingCount: number;
     followerCount: number;
     followingCount: number;

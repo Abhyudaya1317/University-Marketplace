@@ -51,6 +51,9 @@
           } @else {
             <p>LPU marketplace member</p>
           }
+          @if (currentSeller.bio) {
+            <p class="seller-bio">{{ currentSeller.bio }}</p>
+          }
         </div>
         @if (isOwnProfile()) {
           <a class="save-button secondary" routerLink="/dashboard">EDIT YOUR PROFILE</a>

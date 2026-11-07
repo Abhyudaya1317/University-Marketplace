@@ -38,17 +38,24 @@
             <div class="profile-console-body">
               <p class="profile-handle">@CAMPUSX_{{ currentProfile.id }}</p>
               <div class="profile-summary">
-                @if (currentProfile.avatarUrl) {
-                  <img
-                    class="profile-avatar"
-                    [src]="currentProfile.avatarUrl"
-                    [alt]="currentProfile.fullName + ' profile photo'"
-                  />
-                } @else {
-                  <span class="profile-avatar profile-avatar-fallback" aria-hidden="true">{{
-                    currentProfile.fullName.charAt(0)
-                  }}</span>
-                }
+                <div class="profile-identity">
+                  @if (currentProfile.avatarUrl) {
+                    <img
+                      class="profile-avatar"
+                      [src]="currentProfile.avatarUrl"
+                      [alt]="currentProfile.fullName + ' profile photo'"
+                    />
+                  } @else {
+                    <span class="profile-avatar profile-avatar-fallback" aria-hidden="true">{{
+                      currentProfile.fullName.charAt(0)
+                    }}</span>
+                  }
+                  @if (!currentProfile.bio) {
+                    <button class="profile-bio-prompt" type="button" (click)="openBioEditor()">
+                      Add a bio
+                    </button>
+                  }
+                </div>
                 <div class="profile-summary-main">
                   <div class="profile-stats" aria-label="Profile statistics">
                     <div>
@@ -70,6 +77,9 @@
                 </div>
                 <div class="profile-display-name">
                   <h1 id="my-profile-title">{{ currentProfile.fullName || 'UniBee Member' }}</h1>
+                  @if (currentProfile.bio) {
+                    <p class="profile-bio">{{ currentProfile.bio }}</p>
+                  }
                   @if (currentProfile.reviewCount > 0) {
                     <p>
                       {{ currentProfile.averageRating }} / 5 ·
@@ -81,7 +91,7 @@
                 </div>
               </div>
               @if (profileEditOpen()) {
-                <form class="profile-name-form" (ngSubmit)="saveProfileName()">
+                <form class="profile-name-form" (ngSubmit)="saveProfile()">
                   <label for="profile-photo">Profile photo</label>
                   <input
                     id="profile-photo"
@@ -102,8 +112,21 @@
                     [ngModel]="profileNameDraft()"
                     (ngModelChange)="profileNameDraft.set($event)"
                   />
+                  <div class="profile-bio-editor">
+                    <label for="profile-bio">Bio</label>
+                    <textarea
+                      id="profile-bio"
+                      name="profileBio"
+                      maxlength="300"
+                      rows="3"
+                      [ngModel]="profileBioDraft()"
+                      (ngModelChange)="profileBioDraft.set($event)"
+                      placeholder="Tell people a little about yourself."
+                    ></textarea>
+                    <small>Up to 300 characters · visible on your public profile</small>
+                  </div>
                   <button type="submit" [disabled]="profileSaving()">
-                    {{ profileSaving() ? 'Saving…' : 'Save name' }}
+                    {{ profileSaving() ? 'Saving…' : 'Save profile changes' }}
                   </button>
                 </form>
               }

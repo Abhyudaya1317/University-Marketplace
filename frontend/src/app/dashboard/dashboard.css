@@ -70,6 +70,8 @@
 .profile-name-form { display: grid; gap: 8px; }
 .profile-name-form .profile-photo-input { min-height: 42px; padding: 8px; }
 .profile-name-form > small { margin-bottom: 8px; color: #555; }
+.profile-bio-editor { display: grid; flex: 1 1 100%; gap: 7px; }
+.profile-bio-editor textarea { width: min(100%, 680px); min-height: 86px; padding: 9px; border: 2px inset #fff; color: #080817; font: inherit; resize: vertical; }
 .profile-details span + span {
   padding-left: 12px;
   border-left: 1px solid #ebe5da;
@@ -101,6 +103,16 @@
   cursor: pointer;
   font: inherit;
   font-weight: 700;
+}
+.profile-bio-prompt {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none !important;
+  color: #000080;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
 }
 .dashboard-content {
   width: min(1000px, calc(100% - 40px));

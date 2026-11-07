@@ -42,6 +42,7 @@ export async function getSellerProfile(request, response) {
                     id: true,
                     fullName: true,
                     avatarUrl: true,
+                    bio: true,
                     listings: activeListingSelection,
                     _count: { select: { savedBy: true, savedSellers: true } }
                 }
@@ -63,6 +64,7 @@ export async function getSellerProfile(request, response) {
                 id: seller.id,
                 fullName: seller.fullName || "CampusX Member",
                 avatarUrl: seller.avatarUrl,
+                bio: seller.bio,
                 activeListingCount: seller.listings.length,
                 followerCount: seller._count.savedBy,
                 followingCount: seller._count.savedSellers,
@@ -105,6 +107,7 @@ export async function getSellerDashboard(request, response) {
                     email: true,
                     fullName: true,
                     avatarUrl: true,
+                    bio: true,
                     _count: { select: { savedBy: true } },
                     listings: {
                         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
@@ -185,6 +188,7 @@ export async function getSellerDashboard(request, response) {
                 email: account.email,
                 fullName: account.fullName || "CampusX Member",
                 avatarUrl: account.avatarUrl,
+                bio: account.bio,
                 activeListingCount: account.listings.filter((listing) => listing.status === "ACTIVE").length,
                 followerCount: account._count.savedBy,
                 followingCount: account.savedSellers.length,
