@@ -7,7 +7,7 @@
     <app-account-navigation />
   </header>
 
-  <main class="dashboard-content">
+  <main class="dashboard-content" [class.profile-page]="!itemsRoute">
     @if (loading()) {
       <p class="state-message" role="status">Loading your dashboard…</p>
     } @else if (!signedIn()) {
