@@ -1,5 +1,6 @@
 // Configure Express once so both local HTTP and Vercel use the same application.
 // Deployment verification marker: this comment intentionally changes no runtime behavior.
+// Backend redeployment check: this comment-only marker also has no runtime effect.
 import "dotenv/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
