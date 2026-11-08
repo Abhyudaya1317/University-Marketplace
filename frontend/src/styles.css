@@ -1831,8 +1831,7 @@ body .account-navigation > .account-menu {
   align-self: center;
 }
 body .account-navigation > a[href='/explore'],
-body .account-navigation > .account-button,
-body .account-navigation > .account-menu > summary {
+body .account-navigation > .account-button {
   box-sizing: border-box;
   display: inline-flex !important;
   min-height: 40px !important;
@@ -1853,17 +1852,109 @@ body .account-navigation > .account-menu > summary {
   white-space: nowrap;
 }
 body .account-navigation > a[href='/explore']:hover,
-body .account-navigation > .account-button:hover,
-body .account-navigation > .account-menu > summary:hover {
+body .account-navigation > .account-button:hover {
   background: var(--navy) !important;
   color: #fff !important;
 }
 body .account-navigation > a[href='/explore']:focus-visible,
-body .account-navigation > .account-button:focus-visible,
-body .account-navigation > .account-menu > summary:focus-visible {
+body .account-navigation > .account-button:focus-visible {
   outline: 3px solid #fff !important;
+  outline-offset: 2px;
+}
+body .account-navigation > .account-menu > summary {
+  box-sizing: border-box;
+  display: inline-flex !important;
+  min-height: 40px !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0 clamp(6px, 1.2vw, 12px) !important;
+  border: 2px outset #fff !important;
+  background: var(--os-gray) !important;
+  color: var(--deep-navy) !important;
+  box-shadow: 2px 2px 0 var(--deep-navy) !important;
+  font: clamp(7px, 0.85vw, 9px)/1.35 var(--pixel) !important;
+  text-align: center;
+  white-space: nowrap;
+}
+body .account-navigation > .account-menu > summary:hover {
+  background: #d6d6d2 !important;
+}
+body .account-navigation > .account-menu > summary:focus-visible {
+  outline: 3px solid var(--electric-blue) !important;
   outline-offset: 2px;
 }
 body .account-navigation > .account-menu[open] > summary {
   border-style: inset !important;
+}
+
+/* Keep seller controls readable and grouped consistently on the inventory page. */
+body .dashboard-page .items-selling-page .management-button,
+body .dashboard-page .items-selling-page .stock-editor button,
+body .dashboard-page .items-selling-page .request-actions button {
+  box-sizing: border-box;
+  min-height: 44px !important;
+  padding: 0 12px !important;
+  border: 2px outset #fff !important;
+  box-shadow: 3px 3px 0 var(--deep-navy) !important;
+  font: 700 clamp(13px, 3.2vw, 15px)/1.3 var(--body) !important;
+  text-align: center;
+}
+body .dashboard-page .items-selling-page .management-button:not(.delete-button),
+body .dashboard-page .items-selling-page .stock-editor button,
+body .dashboard-page .items-selling-page .request-actions button:not(.decline-button) {
+  background: var(--electric-blue) !important;
+  color: #fff !important;
+}
+body .dashboard-page .items-selling-page .management-button:not(.delete-button):hover,
+body .dashboard-page .items-selling-page .stock-editor button:hover,
+body .dashboard-page .items-selling-page .request-actions button:not(.decline-button):hover {
+  background: var(--navy) !important;
+}
+body .dashboard-page .items-selling-page .management-button:disabled,
+body .dashboard-page .items-selling-page .stock-editor button:disabled,
+body .dashboard-page .items-selling-page .request-actions button:disabled {
+  opacity: .65;
+}
+
+@media (max-width: 760px) {
+  body .dashboard-page .items-selling-page .listing-owner-tools {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    width: 100%;
+  }
+  body .dashboard-page .items-selling-page .listing-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+  }
+  body .dashboard-page .items-selling-page .listing-actions > .management-button {
+    width: 100%;
+    min-width: 0;
+  }
+  body .dashboard-page .items-selling-page .stock-editor {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 84px;
+    gap: 8px;
+    width: 100%;
+  }
+  body .dashboard-page .items-selling-page .stock-editor label {
+    grid-column: 1 / -1;
+    font-size: 14px;
+  }
+  body .dashboard-page .items-selling-page .stock-editor input {
+    box-sizing: border-box;
+    width: 100% !important;
+    min-height: 44px;
+  }
+  body .dashboard-page .items-selling-page .stock-editor button {
+    width: 100%;
+    min-width: 0;
+  }
+  body .dashboard-page .items-selling-page .request-details {
+    width: 100%;
+  }
 }
