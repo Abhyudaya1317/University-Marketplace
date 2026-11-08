@@ -28,6 +28,14 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Use the UniBee mascot as the pointer across every application route. */
+:root { --unibee-cursor: url('/images/unibee-cursor.png') 24 46, auto; }
+html, body, body * { cursor: var(--unibee-cursor) !important; }
+input, textarea, [contenteditable]:not([contenteditable='false']) { cursor: text !important; }
+.crop-viewport canvas { cursor: grab !important; }
+.crop-viewport canvas:active { cursor: grabbing !important; }
+
 body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--teal); background-image: linear-gradient(#00008038 1px, transparent 1px), linear-gradient(90deg, #00008038 1px, transparent 1px), repeating-linear-gradient(0deg, #00000008 0 1px, transparent 1px 4px); background-size: 30px 30px, 30px 30px, 100% 4px; }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
