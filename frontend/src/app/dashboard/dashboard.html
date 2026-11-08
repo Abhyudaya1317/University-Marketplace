@@ -63,14 +63,16 @@
                       ><span>listings</span>
                     </div>
                     <div>
-                      <a class="profile-followers-link" routerLink="/followed-sellers" aria-label="View followed sellers">
+                      <a class="profile-followers-link" routerLink="/followers" aria-label="View your followers">
                         <strong>{{ currentProfile.followerCount }}</strong>
                         <span>followers</span>
                       </a>
                     </div>
                     <div>
-                      <strong>{{ currentProfile.followingCount }}</strong
-                      ><span>following</span>
+                      <a class="profile-followers-link" routerLink="/followed-sellers" aria-label="View followed sellers">
+                        <strong>{{ currentProfile.followingCount }}</strong>
+                        <span>following</span>
+                      </a>
                     </div>
                   </div>
                   <button class="profile-action" type="button" (click)="toggleProfileEdit()">

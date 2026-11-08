@@ -65,6 +65,11 @@ export const routes: Routes = [
     data: { collection: 'following' },
   },
   {
+    path: 'followers',
+    component: SavedCollections,
+    data: { collection: 'followers' },
+  },
+  {
     path: 'orders',
     component: MyOrders,
   },

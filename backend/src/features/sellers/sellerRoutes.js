@@ -2,6 +2,7 @@ import express from "express";
 import { requireAuth } from "../../middleware/requireAuth.js";
 import {
     getFavoriteStatus,
+    getFollowers,
     getFollowedSellers,
     getSellerDashboard,
     getSellerProfile,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.get("/dashboard", requireAuth, getSellerDashboard);
 router.get("/following", requireAuth, getFollowedSellers);
+router.get("/followers", requireAuth, getFollowers);
 router.get("/:sellerId/favorite", requireAuth, getFavoriteStatus);
 router.put("/:sellerId/favorite", requireAuth, saveFavoriteSeller);
 router.delete("/:sellerId/favorite", requireAuth, removeFavoriteSeller);

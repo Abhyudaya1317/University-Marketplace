@@ -33,7 +33,14 @@ interface FollowedSeller {
   } | null;
 }
 
-// Give the two saved collections separate URLs while keeping their shared shell in one place.
+interface Follower {
+  followerId: number | string;
+  followerName: string;
+  followerAvatarUrl: string | null;
+  followedAt: string;
+}
+
+// Give each account collection its own URL while keeping the shared page shell in one place.
 @Component({
   selector: 'app-saved-collections',
   imports: [AccountNavigation, DatePipe, RouterLink],
@@ -45,11 +52,24 @@ export class SavedCollections {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  protected readonly collection = this.route.snapshot.data['collection'] === 'following' ? 'following' : 'wishlist';
+  protected readonly collection = ['following', 'followers'].includes(this.route.snapshot.data['collection'])
+    ? this.route.snapshot.data['collection'] as 'following' | 'followers'
+    : 'wishlist';
   protected readonly isFollowing = this.collection === 'following';
-  protected readonly title = computed(() => this.isFollowing ? 'Followed sellers' : 'Wishlist');
+  protected readonly isFollowers = this.collection === 'followers';
+  protected readonly title = computed(() => this.isFollowing ? 'Followed sellers' : this.isFollowers ? 'Followers' : 'Wishlist');
   protected readonly listings = signal<SavedListing[]>([]);
   protected readonly sellers = signal<FollowedSeller[]>([]);
+  protected readonly followers = signal<Follower[]>([]);
+  protected readonly people = computed<FollowedSeller[]>(() => this.isFollowers
+    ? this.followers().map((follower) => ({
+      sellerId: follower.followerId,
+      sellerName: follower.followerName,
+      sellerAvatarUrl: follower.followerAvatarUrl,
+      savedAt: follower.followedAt,
+      latestListing: null,
+    }))
+    : this.sellers());
   protected readonly loading = signal(true);
   protected readonly error = signal('');
   protected readonly notice = signal('');
@@ -61,6 +81,7 @@ export class SavedCollections {
 
   constructor() {
     if (this.isFollowing) this.loadFollowedSellers();
+    else if (this.isFollowers) this.loadFollowers();
     else this.loadWishlist();
   }
 
@@ -120,12 +141,23 @@ export class SavedCollections {
     });
   }
 
+  private loadFollowers(): void {
+    this.http.get<{ followers: Follower[] }>('/api/sellers/followers').subscribe({
+      next: (response) => {
+        this.followers.set(response.followers ?? []);
+        this.loading.set(false);
+      },
+      error: (response: HttpErrorResponse) => this.handleLoadError(response),
+    });
+  }
+
   private handleLoadError(response: HttpErrorResponse): void {
     this.loading.set(false);
     if (response.status === 401) {
       void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
-    this.error.set(response.error?.message ?? `Your ${this.isFollowing ? 'followed sellers' : 'wishlist'} could not be loaded.`);
+    const collection = this.isFollowers ? 'followers' : this.isFollowing ? 'followed sellers' : 'wishlist';
+    this.error.set(response.error?.message ?? `Your ${collection} could not be loaded.`);
   }
 }

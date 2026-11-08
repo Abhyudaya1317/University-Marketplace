@@ -9,9 +9,9 @@
       <div>
         <p class="eyebrow">YOUR COLLECTIONS</p>
         <h1>{{ title() }}</h1>
-        <p>{{ isFollowing ? 'Keep up with campus sellers you follow.' : 'The individual listings you have saved.' }}</p>
+        <p>{{ isFollowing ? 'Keep up with campus sellers you follow.' : isFollowers ? 'Students who follow your profile.' : 'The individual listings you have saved.' }}</p>
       </div>
-      <span class="collection-count">{{ isFollowing ? sellers().length : listings().length }}</span>
+      <span class="collection-count">{{ isFollowing ? sellers().length : isFollowers ? followers().length : listings().length }}</span>
     </section>
 
     @if (loading()) {
@@ -24,16 +24,22 @@
       </section>
     } @else {
       @if (notice()) { <p class="collection-notice" role="status">{{ notice() }}</p> }
-      @if (isFollowing) {
-        @if (sellers().length === 0) {
+      @if (isFollowing || isFollowers) {
+        @if (people().length === 0) {
           <section class="collection-empty">
-            <h2>No followed sellers yet</h2>
-            <p>Open a seller profile and choose Follow to add them here.</p>
-            <a class="collection-button" routerLink="/explore">Explore listings</a>
+            @if (isFollowers) {
+              <h2>No followers yet</h2>
+              <p>When someone follows your profile, they will appear here.</p>
+              <a class="collection-button" routerLink="/dashboard">Back to profile</a>
+            } @else {
+              <h2>No followed sellers yet</h2>
+              <p>Open a seller profile and choose Follow to add them here.</p>
+              <a class="collection-button" routerLink="/explore">Explore listings</a>
+            }
           </section>
         } @else {
-          <section class="collection-list" aria-label="Followed sellers">
-            @for (seller of sellers(); track seller.sellerId) {
+          <section class="collection-list" [attr.aria-label]="isFollowers ? 'Followers' : 'Followed sellers'">
+            @for (seller of people(); track seller.sellerId) {
               <article class="seller-card">
                 <a class="seller-profile-link" [routerLink]="['/sellers', seller.sellerId]">
                   @if (seller.sellerAvatarUrl) {
@@ -43,17 +49,21 @@
                   }
                   <span class="seller-copy">
                     <strong>{{ seller.sellerName }}</strong>
-                    @if (seller.latestListing) {
-                      <small>Latest: {{ seller.latestListing.title }} · ₹{{ seller.latestListing.price }}</small>
-                    } @else {
-                      <small>No active listings right now</small>
+                    @if (!isFollowers) {
+                      @if (seller.latestListing) {
+                        <small>Latest: {{ seller.latestListing.title }} · ₹{{ seller.latestListing.price }}</small>
+                      } @else {
+                        <small>No active listings right now</small>
+                      }
                     }
-                    <small>Following since {{ seller.savedAt | date: 'mediumDate' }}</small>
+                    <small>{{ isFollowers ? 'Following you since' : 'Following since' }} {{ seller.savedAt | date: 'mediumDate' }}</small>
                   </span>
                 </a>
-                <button class="collection-button quiet-button" type="button" (click)="unfollowSeller(seller.sellerId)" [disabled]="busyId() !== null">
-                  {{ isBusy(seller.sellerId) ? 'Removing…' : 'Unfollow' }}
-                </button>
+                @if (!isFollowers) {
+                  <button class="collection-button quiet-button" type="button" (click)="unfollowSeller(seller.sellerId)" [disabled]="busyId() !== null">
+                    {{ isBusy(seller.sellerId) ? 'Removing…' : 'Unfollow' }}
+                  </button>
+                }
               </article>
             }
           </section>

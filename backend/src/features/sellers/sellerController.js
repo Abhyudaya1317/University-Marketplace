@@ -230,6 +230,33 @@ export async function getFollowedSellers(request, response) {
     }
 }
 
+// Return the signed-in seller's followers without exposing their email addresses.
+export async function getFollowers(request, response) {
+    try {
+        const relationships = await prisma.sellerFavorite.findMany({
+            where: { sellerId: request.user.id },
+            orderBy: { createdAt: "desc" },
+            select: {
+                createdAt: true,
+                fan: { select: { id: true, fullName: true, avatarUrl: true } }
+            }
+        });
+
+        return response.json({
+            success: true,
+            followers: relationships.map(({ createdAt, fan }) => ({
+                followerId: fan.id,
+                followerName: fan.fullName || "CampusX Member",
+                followerAvatarUrl: fan.avatarUrl,
+                followedAt: createdAt
+            }))
+        });
+    } catch (error) {
+        console.error("Followers read failed:", error?.code ?? error?.name ?? "UNKNOWN");
+        return response.status(500).json({ success: false, message: "We could not load your followers." });
+    }
+}
+
 // Return whether the current user already follows a seller, without disclosing follower data.
 export async function getFavoriteStatus(request, response) {
     const sellerId = parseSellerId(request.params.sellerId);
