@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://university-marketplace-ahv2.vercel.app/api/:path*"
+      "destination": "https://university-marketplace-4t6q.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",

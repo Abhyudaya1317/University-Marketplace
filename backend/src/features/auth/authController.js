@@ -374,7 +374,25 @@ function safeProviderError(value) {
 function getGoogleConfiguration() {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const callbackUrl = process.env.GOOGLE_CALLBACK_URL;
+    let callbackUrl = process.env.GOOGLE_CALLBACK_URL;
+
+    // In production, complete OAuth on the same public domain that started sign-in.
+    // The frontend's /api rewrite forwards this path to the backend while keeping
+    // the temporary OAuth cookies available to the browser on that same domain.
+    if (process.env.FRONTEND_URL) {
+        try {
+            const frontendUrl = new URL(process.env.FRONTEND_URL);
+            if (frontendUrl.protocol === "https:") {
+                callbackUrl = new URL("/api/auth/google/callback", frontendUrl.origin).toString();
+            } else if (process.env.NODE_ENV === "production") {
+                return { googleClient: null, callbackUrl: null };
+            }
+        } catch {
+            return { googleClient: null, callbackUrl: null };
+        }
+    } else if (process.env.NODE_ENV === "production") {
+        return { googleClient: null, callbackUrl: null };
+    }
 
     if (!clientId || !clientSecret || !callbackUrl) return { googleClient: null, callbackUrl: null };
     return { googleClient: new OAuth2Client(clientId, clientSecret, callbackUrl), callbackUrl };

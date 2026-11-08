@@ -190,7 +190,7 @@ export class Auth {
     const messages: Record<string, string> = {
       google_sign_in_cancelled: 'Google sign-in was cancelled. Try again and approve the request.',
       google_state_cookie_missing:
-        'The Google sign-in session cookie was not returned. Use localhost for both app links and retry.',
+        'Google returned to a different domain, so the sign-in could not be verified. Set the backend FRONTEND_URL to this site and register this site’s /api/auth/google/callback address in Google OAuth.',
       google_state_mismatch:
         'Google sign-in could not verify the browser session. Restart both servers and try again.',
       google_code_missing:

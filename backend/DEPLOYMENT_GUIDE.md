@@ -63,7 +63,8 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 | `FRONTEND_URL` | Exact Angular production origin, including scheme and no path; used for CORS and OAuth failure redirects. |
 | `NODE_ENV` | Set to `production` in Vercel. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Required only for password-reset email delivery. |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Required only for Google sign-in; callback must match the URL registered with Google. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Required only for Google sign-in. |
+| `GOOGLE_CALLBACK_URL` | Required for local development. In production, the backend builds the callback from `FRONTEND_URL` so OAuth state and login cookies stay on the frontend domain. Register that exact callback URI in Google OAuth. |
 
 `PORT` is set by local hosting and is not a production Vercel setting. The inspected authentication uses opaque, database-backed cookies and session records; it does not use JWT. Orders currently use cash on delivery; no online payment provider or webhook is implemented in this backend. There is no `JWT_SECRET`, payment provider, Cloudinary, or frontend database variable used by the inspected backend. Never expose database or authentication secrets to Angular.
 
@@ -78,7 +79,7 @@ Set these in Vercel's backend project settings. `.env.example` contains placehol
 
 Vercel deploy status can be inspected through the linked Vercel project after a Git push.
 
-The Angular project is deployed separately. Update its existing `/api/:path*` rewrite to the backend's actual Vercel hostname after that hostname exists; keep the rewrite on the Angular origin so its current relative API calls and session cookies use one browser origin. Set backend `FRONTEND_URL` to the deployed Angular origin. For Google sign-in, set `GOOGLE_CALLBACK_URL` to `<Angular origin>/api/auth/google/callback` and register that exact URL in Google OAuth; the Angular `/api` rewrite forwards the callback to the backend and keeps its session cookie on the Angular origin. The backend hostname cannot be entered in the frontend configuration until Vercel assigns it.
+The Angular project is deployed separately. Update its existing `/api/:path*` rewrite to the backend's actual Vercel hostname; keep the rewrite on the Angular origin so relative API calls and cookies use one browser origin. Set backend `FRONTEND_URL` to the deployed Angular origin. In production, the backend uses `<FRONTEND_URL>/api/auth/google/callback` automatically. Register that exact URL in Google OAuth; the frontend `/api` rewrite forwards the callback to the backend without changing the browser-visible domain. Keep `GOOGLE_CALLBACK_URL` set to the local callback for local development.
 
 ## Production verification checklist
 
