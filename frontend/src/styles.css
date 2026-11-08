@@ -1819,3 +1819,51 @@ body .dashboard-page .profile-page .profile-followers-link:hover span {
     vertical-align: baseline;
   }
 }
+
+/* Keep Explore, Sign in, and Options equally legible and aligned in every header. */
+body .account-navigation {
+  align-items: center;
+}
+body .account-navigation > .account-menu {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+}
+body .account-navigation > a[href='/explore'],
+body .account-navigation > .account-button,
+body .account-navigation > .account-menu > summary {
+  box-sizing: border-box;
+  display: inline-flex !important;
+  min-height: 40px !important;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0 clamp(6px, 1.2vw, 12px) !important;
+  border: 2px outset #fff !important;
+  border-right: 2px outset #fff !important;
+  background: var(--electric-blue) !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 var(--deep-navy) !important;
+  font: clamp(7px, 0.85vw, 9px)/1.35 var(--pixel) !important;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+body .account-navigation > a[href='/explore']:hover,
+body .account-navigation > .account-button:hover,
+body .account-navigation > .account-menu > summary:hover {
+  background: var(--navy) !important;
+  color: #fff !important;
+}
+body .account-navigation > a[href='/explore']:focus-visible,
+body .account-navigation > .account-button:focus-visible,
+body .account-navigation > .account-menu > summary:focus-visible {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px;
+}
+body .account-navigation > .account-menu[open] > summary {
+  border-style: inset !important;
+}
