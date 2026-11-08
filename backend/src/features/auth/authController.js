@@ -464,7 +464,7 @@ export async function updateCurrentProfile(request, response) {
     }
 }
 
-// Save one authenticated user's photo and keep provider photos untouched on disk.
+// Save one authenticated user's photo and keep provider photos untouched on disk...
 export async function updateCurrentProfilePhoto(request, response) {
     if (!request.file) return response.status(400).json({ success: false, message: "Choose a profile photo to upload." });
     const avatarUrl = request.file.publicUrl ?? profilePhotoUrl(request.file.filename);

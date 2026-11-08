@@ -1,4 +1,5 @@
 // Configure Express once so both local HTTP and Vercel use the same application.
+// Deployment verification marker: this comment intentionally changes no runtime behavior.
 import "dotenv/config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
