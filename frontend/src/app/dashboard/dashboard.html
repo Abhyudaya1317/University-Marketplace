@@ -7,7 +7,7 @@
     <app-account-navigation />
   </header>
 
-  <main class="dashboard-content" [class.profile-page]="!itemsRoute">
+  <main class="dashboard-content" [class.profile-page]="!itemsRoute" [class.items-selling-page]="itemsRoute">
     @if (loading()) {
       <p class="state-message" role="status">Loading your dashboard…</p>
     } @else if (!signedIn()) {
@@ -63,8 +63,10 @@
                       ><span>listings</span>
                     </div>
                     <div>
-                      <strong>{{ currentProfile.followerCount }}</strong
-                      ><span>followers</span>
+                      <a class="profile-followers-link" routerLink="/followed-sellers" aria-label="View followed sellers">
+                        <strong>{{ currentProfile.followerCount }}</strong>
+                        <span>followers</span>
+                      </a>
                     </div>
                     <div>
                       <strong>{{ currentProfile.followingCount }}</strong
@@ -181,7 +183,7 @@
           <a class="text-link" routerLink="/dashboard">← Back to profile</a>
         </header>
 
-        <section class="dashboard-section" id="my-listings" aria-labelledby="my-listings-title">
+        <section class="dashboard-section active-listings-section" id="my-listings" aria-labelledby="my-listings-title">
           <div class="section-heading">
             <div class="section-heading-main">
               <div>
@@ -395,7 +397,7 @@
           }
         </section>
 
-        <section class="dashboard-section" aria-labelledby="archived-listings-title">
+        <section class="dashboard-section archived-listings-section" aria-labelledby="archived-listings-title">
           <div class="section-heading">
             <div>
               <p class="eyebrow">YOUR PRIVATE CATALOG</p>
