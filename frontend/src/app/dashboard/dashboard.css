@@ -2,7 +2,13 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #faf8f3;
+  background-color: var(--teal, #5b9e9c);
+  background-image:
+    linear-gradient(#00008038 1px, transparent 1px),
+    linear-gradient(90deg, #00008038 1px, transparent 1px),
+    repeating-linear-gradient(0deg, #00000008 0 1px, transparent 1px 4px);
+  background-size: 30px 30px, 30px 30px, 100% 4px;
+  background-attachment: fixed;
   color: #24251f;
 }
 .dashboard-header {
