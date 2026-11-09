@@ -84,10 +84,12 @@ export class Explore {
   protected readonly categories = [
     { value: 'CLOTHING', label: 'Clothing' },
     { value: 'ACCESSORIES', label: 'Accessories' },
+    { value: 'JEWELLERY', label: 'Jewellery' },
     { value: 'SHOES', label: 'Shoes' },
     { value: 'FOOD', label: 'Food' },
     { value: 'ELECTRONICS', label: 'Electronics' },
     { value: 'BEAUTY', label: 'Beauty products' },
+    { value: 'TEMPORARY_TATTOOS', label: 'Temporary tattoos' },
     { value: 'ARTWORK', label: 'Artwork' },
     { value: 'PROJECTS', label: 'Projects' },
     { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment' },
