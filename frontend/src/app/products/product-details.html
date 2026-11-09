@@ -71,6 +71,12 @@
                 <dd>{{ categoryLabel(item.clothingGender) }}</dd>
               </div>
             }
+            @if (item.category === 'POSTERS' && item.posterSize) {
+              <div class="product-field">
+                <dt>Poster size</dt>
+                <dd>{{ item.posterSize }}</dd>
+              </div>
+            }
             <div class="product-field description-field">
               <dt>Description</dt>
               <dd>

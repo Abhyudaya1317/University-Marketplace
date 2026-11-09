@@ -6,7 +6,7 @@ import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
 export async function createListing(request, response) {
-    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition } = request.body ?? {};
+    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, proteinGrams, posterSize, quantityAvailable, condition, customCondition } = request.body ?? {};
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
@@ -59,7 +59,8 @@ export async function createListing(request, response) {
                     condition,
                     customCondition: condition === "CUSTOM" ? customCondition.trim() : null,
                     clothingGender: category === "CLOTHING" ? clothingGender : null,
-                    proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null
+                    proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null,
+                    posterSize: category === "POSTERS" ? posterSize.trim() : null
                 },
                 include: { product: { select: { id: true, name: true, category: true } } }
             });
@@ -87,6 +88,7 @@ export async function createListing(request, response) {
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                posterSize: listing.posterSize,
                 status: listing.status,
                 quantityAvailable: Number.isSafeInteger(listing.quantityAvailable) ? listing.quantityAvailable : null,
                 createdAt: listing.createdAt
@@ -178,6 +180,7 @@ export async function getExploreProducts(request, response) {
                 customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
+                posterSize: true,
                 hashtags: true,
                 createdAt: true,
                 product: { select: { category: true } },
@@ -209,7 +212,8 @@ export async function getExploreProducts(request, response) {
             photoUrl4: listing.photoUrl4,
             condition: listing.condition,
             customCondition: listing.customCondition,
-            clothingGender: listing.clothingGender
+            clothingGender: listing.clothingGender,
+            posterSize: listing.posterSize
         }));
 
         const suggestions = search
@@ -275,6 +279,7 @@ export async function getPublicListingDetails(request, response) {
                 customCondition: true,
                 clothingGender: true,
                 proteinGrams: true,
+                posterSize: true,
                 createdAt: true,
                 product: { select: { id: true, category: true } },
                 seller: { select: { id: true, fullName: true, avatarUrl: true } }
@@ -306,6 +311,7 @@ export async function getPublicListingDetails(request, response) {
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                posterSize: listing.posterSize,
                 category: listing.product.category,
                 productId: listing.product.id,
                 createdAt: listing.createdAt,

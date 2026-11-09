@@ -20,6 +20,7 @@ const activeListingSelection = {
         location: true,
         clothingGender: true,
         proteinGrams: true,
+        posterSize: true,
         condition: true,
         customCondition: true,
         createdAt: true,
@@ -86,6 +87,7 @@ export async function getSellerProfile(request, response) {
                 location: listing.location,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                posterSize: listing.posterSize,
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 createdAt: listing.createdAt
@@ -126,6 +128,7 @@ export async function getSellerDashboard(request, response) {
                             archivedAt: true,
                             condition: true,
                             customCondition: true,
+                            posterSize: true,
                             createdAt: true,
                             product: { select: { id: true, name: true, category: true } }
                         }
@@ -174,6 +177,7 @@ export async function getSellerDashboard(request, response) {
                 archivedAt: listing.archivedAt,
                 condition: listing.condition,
                 customCondition: listing.customCondition,
+                posterSize: listing.posterSize,
                 createdAt: listing.createdAt
             }))
         });

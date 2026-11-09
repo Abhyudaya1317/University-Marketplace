@@ -81,6 +81,15 @@
           </div>
         }
 
+        @if (category === 'POSTERS') {
+          <div class="form-field">
+            <label for="poster-size">Poster size</label>
+            <input id="poster-size" name="posterSize" type="text" required maxlength="40"
+              [(ngModel)]="posterSize" placeholder="e.g. A3 or 30 × 40 cm">
+            <small>Include the size unit so buyers know how large the poster is.</small>
+          </div>
+        }
+
         @if (category === 'FOOD') {
           <div class="form-field">
             <label for="protein-rich">Is this a protein-rich food?</label>

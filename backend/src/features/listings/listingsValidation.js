@@ -1,7 +1,7 @@
 // Keep product categories controlled so filtering and grouping use consistent values.
 export const PRODUCT_CATEGORIES = new Set([
     "CLOTHING", "ACCESSORIES", "SHOES", "FOOD", "ELECTRONICS", "BEAUTY", "ARTWORK",
-    "PROJECTS", "SPORTS_EQUIPMENT", "MUSICAL_INSTRUMENTS", "ROOM_DECOR", "KITCHEN_ITEMS", "DAILY_USE", "OTHER"
+    "PROJECTS", "SPORTS_EQUIPMENT", "MUSICAL_INSTRUMENTS", "POSTERS", "KITCHEN_ITEMS", "DAILY_USE", "OTHER"
 ]);
 
 // Use one stable set of clothing values in forms, storage, and filters.
@@ -38,7 +38,7 @@ export function matchesExploreFilters(listing, { category = "", gender = "", pro
 }
 
 // Validate the listing fields shared by create and edit without trusting browser checks.
-export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, quantityAvailable, condition, customCondition }) {
+export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, posterSize, quantityAvailable, condition, customCondition }) {
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
@@ -52,6 +52,7 @@ export function validateListingDetails({ name, category, description, price, pho
     if (trimmedLocation.length < 2 || trimmedLocation.length > 120) return "Enter a campus pickup location between 2 and 120 characters.";
     if (category === "CLOTHING" && !CLOTHING_GENDERS.has(clothingGender)) return "Choose a gender option for this clothing listing.";
     if (category === "FOOD" && !isValidProteinGrams(proteinGrams)) return "Enter protein per serving in grams, from 0 to 5,000.";
+    if (category === "POSTERS" && (typeof posterSize !== "string" || posterSize.trim().length < 1 || posterSize.trim().length > 40)) return "Enter the poster size, for example A3 or 30 × 40 cm.";
     const allowedConditions = category === "FOOD"
         ? FOOD_CONDITIONS
         : new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", "CUSTOM"]);

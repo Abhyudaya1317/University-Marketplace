@@ -42,6 +42,7 @@ interface EditListingResponse {
     customCondition: string | null;
     clothingGender: string | null;
     proteinGrams: string | null;
+    posterSize: string | null;
   };
 }
 
@@ -91,6 +92,7 @@ export class CreateListing implements OnDestroy {
   protected clothingGender = '';
   protected proteinGrams: number | string = '';
   protected proteinRich = false;
+  protected posterSize = '';
   protected condition = 'GOOD';
   protected customCondition = '';
   private selectedPhotos: File[] = [];
@@ -112,7 +114,7 @@ export class CreateListing implements OnDestroy {
     { value: 'PROJECTS', label: 'Projects' },
     { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment' },
     { value: 'MUSICAL_INSTRUMENTS', label: 'Musical instruments' },
-    { value: 'ROOM_DECOR', label: 'Room decorations' },
+    { value: 'POSTERS', label: 'Posters' },
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
     { value: 'OTHER', label: 'Other' }
@@ -170,6 +172,10 @@ export class CreateListing implements OnDestroy {
       this.error.set('Enter a positive protein amount per serving.');
       return;
     }
+    if (this.category === 'POSTERS' && !this.posterSize.trim()) {
+      this.error.set('Enter the poster size, such as A3 or 30 × 40 cm.');
+      return;
+    }
     if (this.location.trim().length < 2) {
       this.error.set('Enter a campus pickup location.');
       return;
@@ -193,6 +199,7 @@ export class CreateListing implements OnDestroy {
     formData.append('customCondition', this.condition === 'CUSTOM' ? this.customCondition.trim() : '');
     if (this.category === 'CLOTHING') formData.append('clothingGender', this.clothingGender);
     if (this.category === 'FOOD') formData.append('proteinGrams', this.proteinRich ? String(this.proteinGrams) : '0');
+    if (this.category === 'POSTERS') formData.append('posterSize', this.posterSize.trim());
     for (const photo of this.selectedPhotos) formData.append('photos', photo);
 
     this.busy.set(true);
@@ -222,6 +229,7 @@ export class CreateListing implements OnDestroy {
         this.clothingGender = '';
         this.proteinGrams = '';
         this.proteinRich = false;
+        this.posterSize = '';
         this.condition = 'GOOD';
         this.clearSelectedPhotos();
         this.currentPhotoUrls.set([]);
@@ -504,6 +512,7 @@ export class CreateListing implements OnDestroy {
     this.clothingGender = '';
     this.proteinGrams = '';
     this.proteinRich = false;
+    this.posterSize = '';
     this.condition = value === 'FOOD' ? 'FRESH' : 'GOOD';
   }
 
@@ -537,6 +546,7 @@ export class CreateListing implements OnDestroy {
             : listing.condition;
           this.clothingGender = listing.clothingGender ?? '';
           this.proteinGrams = listing.proteinGrams ?? '';
+          this.posterSize = listing.posterSize ?? '';
           this.proteinRich = Number(listing.proteinGrams ?? 0) > 0;
           this.currentPhotoUrls.set([listing.photoUrl, listing.photoUrl2, listing.photoUrl3, listing.photoUrl4]
             .filter((url): url is string => Boolean(url)));

@@ -23,6 +23,7 @@ interface ListingDetails {
   customCondition: string | null;
   clothingGender: string | null;
   proteinGrams: string | null;
+  posterSize: string | null;
   category: string;
   createdAt: string;
   seller: {

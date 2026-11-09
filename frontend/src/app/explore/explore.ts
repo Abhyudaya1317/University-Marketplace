@@ -92,7 +92,7 @@ export class Explore {
     { value: 'PROJECTS', label: 'Projects' },
     { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment' },
     { value: 'MUSICAL_INSTRUMENTS', label: 'Musical instruments' },
-    { value: 'ROOM_DECOR', label: 'Room decorations' },
+    { value: 'POSTERS', label: 'Posters' },
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
     { value: 'OTHER', label: 'Other' },

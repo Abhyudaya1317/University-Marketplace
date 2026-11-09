@@ -112,6 +112,7 @@ model Listing {
   location       String          @default("LPU campus") @db.VarChar(120)
   clothingGender ClothingGender?
   proteinGrams   Decimal?        @db.Decimal(6, 2)
+  posterSize     String?         @db.VarChar(40)
   condition      ProductCondition @default(GOOD)
   customCondition String?        @db.VarChar(80)
   status         ListingStatus   @default(ACTIVE)
@@ -269,7 +270,7 @@ enum ProductCategory {
   PROJECTS
   SPORTS_EQUIPMENT
   MUSICAL_INSTRUMENTS
-  ROOM_DECOR
+  POSTERS
   KITCHEN_ITEMS
   DAILY_USE
   OTHER

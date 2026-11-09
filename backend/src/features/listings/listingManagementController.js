@@ -17,7 +17,7 @@ export async function getListingForEdit(request, response) {
                 id: true, title: true, description: true, price: true, quantityAvailable: true,
                 phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                 condition: true, customCondition: true,
-                clothingGender: true, proteinGrams: true, hashtags: true,
+                clothingGender: true, proteinGrams: true, posterSize: true, hashtags: true,
                 product: { select: { category: true } }
             }
         });
@@ -42,6 +42,7 @@ export async function getListingForEdit(request, response) {
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                posterSize: listing.posterSize,
                 hashtags: listing.hashtags
             }
         });
@@ -116,7 +117,8 @@ export async function updateListing(request, response) {
                     condition: request.body.condition,
                     customCondition: request.body.condition === "CUSTOM" ? request.body.customCondition.trim() : null,
                     clothingGender: request.body.category === "CLOTHING" ? request.body.clothingGender : null,
-                    proteinGrams: request.body.category === "FOOD" ? String(request.body.proteinGrams).trim() : null
+                    proteinGrams: request.body.category === "FOOD" ? String(request.body.proteinGrams).trim() : null,
+                    posterSize: request.body.category === "POSTERS" ? request.body.posterSize.trim() : null
                 }
             });
             if (changed.count !== 1) return { error: "NOT_FOUND" };
@@ -127,7 +129,7 @@ export async function updateListing(request, response) {
                     id: true, title: true, description: true, price: true, quantityAvailable: true,
                     photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                     location: true, condition: true, customCondition: true, clothingGender: true,
-                    proteinGrams: true, hashtags: true, product: { select: { id: true, name: true, category: true } }
+                    proteinGrams: true, posterSize: true, hashtags: true, product: { select: { id: true, name: true, category: true } }
                 }
             });
             return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2, current.photoUrl3, current.photoUrl4] };
@@ -163,6 +165,7 @@ export async function updateListing(request, response) {
                 customCondition: updatedListing.listing.customCondition,
                 clothingGender: updatedListing.listing.clothingGender,
                 proteinGrams: updatedListing.listing.proteinGrams?.toFixed(2) ?? null,
+                posterSize: updatedListing.listing.posterSize,
                 hashtags: updatedListing.listing.hashtags
             }
         });
