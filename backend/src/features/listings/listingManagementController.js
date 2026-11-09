@@ -61,9 +61,9 @@ export async function updateListing(request, response) {
         return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
     }
 
-    if (uploadedPhotos.length !== 0 && (uploadedPhotos.length < 2 || uploadedPhotos.length > 4)) {
+    if (uploadedPhotos.length !== 0 && uploadedPhotos.length > 4) {
         await removeListingPhotos(uploadedPhotos);
-        return response.status(400).json({ success: false, message: "Choose either no new photos or between 2 and 4 replacement photos." });
+        return response.status(400).json({ success: false, message: "Choose either no new photos or between 1 and 4 replacement photos." });
     }
 
     const validationMessage = validateListingDetails(request.body ?? {});

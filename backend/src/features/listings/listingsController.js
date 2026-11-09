@@ -12,9 +12,9 @@ export async function createListing(request, response) {
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
     const uploadedPhotos = request.files ?? [];
-    if (uploadedPhotos.length < 2 || uploadedPhotos.length > 4) {
+    if (uploadedPhotos.length < 1 || uploadedPhotos.length > 4) {
         await removeListingPhotos(uploadedPhotos);
-        return response.status(400).json({ success: false, message: "Choose between 2 and 4 product photos before publishing." });
+        return response.status(400).json({ success: false, message: "Choose between 1 and 4 product photos before publishing." });
     }
     const [photoUrl, photoUrl2, photoUrl3, photoUrl4] = uploadedPhotos.map(listingPhotoUrl);
 

@@ -147,12 +147,12 @@
         </div>
 
         <div class="form-field">
-          <label for="product-photo">Product photos (choose 2, 3, or 4)</label>
+          <label for="product-photo">Product photos (choose 1 to 4)</label>
           <input #photoInput id="product-photo" name="photos" type="file" accept="image/jpeg,image/png,image/webp"
             multiple [disabled]="busy() || photoProcessing()" [attr.aria-invalid]="photoError() ? 'true' : null"
             [attr.aria-describedby]="photoError() ? 'product-photo-help product-photo-error' : 'product-photo-help'"
             (change)="selectPhotos($event)">
-          <small id="product-photo-help">Choose 2, 3, or 4 JPG, PNG, or WebP photos · maximum 5 MB each. Drag the previews or use the move buttons to set their order; the first photo is the cover. Crop each photo before publishing. When editing, leave this empty to keep the current photos or select 2–4 replacements.</small>
+          <small id="product-photo-help">Choose 1 to 4 JPG, PNG, or WebP photos · maximum 5 MB each. Drag the previews or use the move buttons to set their order; the first photo is the cover. Crop each photo before publishing. When editing, leave this empty to keep the current photos or select 1–4 replacements.</small>
           @if (photoProcessing()) { <small role="status">Preparing photos for upload…</small> }
           @if (photoPreviews().length > 0) {
             <small role="status">{{ photoPreviews().length }} of 4 product photos selected.</small>

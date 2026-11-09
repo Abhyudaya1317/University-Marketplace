@@ -156,9 +156,9 @@ export class CreateListing implements OnDestroy {
       this.error.set('Describe the custom condition in at least 2 characters.');
       return;
     }
-    if ((!this.isEditing() && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4)) ||
-        (this.isEditing() && this.selectedPhotos.length !== 0 && (this.selectedPhotos.length < 2 || this.selectedPhotos.length > 4))) {
-      this.photoError.set(this.isEditing() ? 'Choose 2–4 photos to replace the current photos.' : 'Choose 2–4 product photos before publishing.');
+    if ((!this.isEditing() && (this.selectedPhotos.length < 1 || this.selectedPhotos.length > 4)) ||
+        (this.isEditing() && this.selectedPhotos.length !== 0 && this.selectedPhotos.length > 4)) {
+      this.photoError.set(this.isEditing() ? 'Choose 1–4 photos to replace the current photos.' : 'Choose 1–4 product photos before publishing.');
       this.photoInput?.nativeElement.focus();
       return;
     }
@@ -242,10 +242,7 @@ export class CreateListing implements OnDestroy {
         this.busy.set(false);
         const serverMessage = typeof response.error?.message === 'string' ? response.error.message : '';
         if (/photo|image|upload/i.test(serverMessage)) {
-          // Older backend deployments still return the former two-photo limit message.
-          this.photoError.set(/upload up to two|exactly two/i.test(serverMessage)
-            ? 'The photo service is using an older upload rule and needs its latest update.'
-            : serverMessage);
+          this.photoError.set(serverMessage);
           this.photoInput?.nativeElement.focus();
           return;
         }
@@ -254,7 +251,7 @@ export class CreateListing implements OnDestroy {
     });
   }
 
-  // Require two to four supported images and show every selection before publishing.
+  // Require one to four supported images and show every selection before publishing.
   protected async selectPhotos(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
@@ -264,8 +261,8 @@ export class CreateListing implements OnDestroy {
     this.photoProcessing.set(false);
     this.closePhotoCrop();
     this.clearSelectedPhotos();
-    if (files.length < 2 || files.length > 4) {
-      this.photoError.set('Choose 2, 3, or 4 product photos.');
+    if (files.length < 1 || files.length > 4) {
+      this.photoError.set('Choose between 1 and 4 product photos.');
       input.value = '';
       return;
     }
