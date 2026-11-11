@@ -56,17 +56,20 @@ export class Home {
   protected readonly searchDraft = signal('');
   protected readonly showFeatured = signal(true);
   protected readonly showDropNotice = signal(true);
-  protected readonly categories = computed(() => {
-    const unique = new Map<string, HomeListing>();
+  private readonly allCategories = [
+    'CLOTHING', 'ACCESSORIES', 'SHOES', 'FOOD', 'ELECTRONICS', 'BEAUTY',
+    'TEMPORARY_TATTOOS', 'ARTWORK', 'PROJECTS', 'SPORTS_EQUIPMENT',
+    'MUSICAL_INSTRUMENTS', 'POSTERS', 'KITCHEN_ITEMS', 'DAILY_USE', 'WAX_CANDLES',
+  ];
+  protected readonly categoryFilters = computed(() => {
+    const listingCounts = new Map<string, number>();
     for (const listing of this.listings()) {
-      if (!unique.has(listing.category)) unique.set(listing.category, listing);
+      listingCounts.set(listing.category, (listingCounts.get(listing.category) ?? 0) + 1);
     }
-    const categories = [...unique.keys()].slice(0, 8);
-    if (!categories.includes('PROJECTS')) {
-      if (categories.length === 8) categories[7] = 'PROJECTS';
-      else categories.push('PROJECTS');
-    }
-    return categories;
+
+    return this.allCategories
+      .map((value) => ({ value, hasListings: (listingCounts.get(value) ?? 0) > 0 }))
+      .sort((left, right) => Number(right.hasListings) - Number(left.hasListings));
   });
   protected readonly featuredListing = computed(() => {
     const liveListings = this.listings();

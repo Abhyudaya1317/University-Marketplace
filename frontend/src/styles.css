@@ -2041,54 +2041,8 @@ body .universe-shell .home-share-button {
 }
 body .universe-shell .home-share-button:hover { background: #000080; }
 
-/* Make supporting copy, controls, and the homepage marketplace filters readable
-   without changing the existing grid, card arrangement, or desktop/mobile flows. */
+/* Keep secondary copy in a consistent neutral gray. */
 :root { --unibee-readable-gray: #5f6368; }
-
-body :is(.universe-shell, .market-page, .details-page, .sell-page, .seller-page, .dashboard-page, .orders-page, .messages-page, .auth-shell) :is(
-  small,
-  time,
-  .hero-label,
-  .feed-heading p,
-  .feed-heading > a,
-  .feed-filters a,
-  .product-titlebar strong,
-  .home-product-image > span,
-  .product-category,
-  .seller-line,
-  .product-buy-line a,
-  .feed-state strong,
-  .feed-state a,
-  .footer-top nav a,
-  .footer-brand small,
-  .uptime,
-  .footer-bottom,
-  .system-strip,
-  .desktop-links a,
-  .toolbar-search label,
-  .toolbar-sell,
-  .account-navigation > a,
-  .account-navigation > button,
-  .account-menu > summary,
-  .listing-window-titlebar > strong,
-  .category-label,
-  .stock-label,
-  .seller-count,
-  .results-caption,
-  .status-pill,
-  .profile-handle,
-  .profile-window-menu a,
-  .order-copy small,
-  .randomize-button,
-  .protein-toggle,
-  .section-count,
-  .empty-note,
-  .signin-note,
-  .profile-photo-caption small
-) {
-  font-size: clamp(10px, calc(8px + 0.5vw), 14px) !important;
-  line-height: 1.45;
-}
 
 body :is(.universe-shell, .market-page, .details-page, .sell-page, .seller-page, .dashboard-page, .orders-page, .messages-page, .auth-shell) :is(
   small,
@@ -2111,42 +2065,12 @@ body :is(.universe-shell, .market-page, .details-page, .sell-page, .seller-page,
   color: var(--unibee-readable-gray);
 }
 
-/* Give the category filters room for their larger labels; they wrap on narrow
-   screens instead of forcing horizontal overflow. */
-body .universe-shell .feed-filters {
-  justify-content: flex-end;
-  gap: 10px;
-}
-body .universe-shell .feed-filters a {
-  min-height: 48px;
-  box-sizing: border-box;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 18px;
-  font-size: clamp(13px, 1.05vw, 16px) !important;
-  line-height: 1.35;
-  text-align: center;
-}
-
-@media (max-width: 800px) {
-  body .universe-shell .feed-filters {
-    justify-content: flex-start;
-    gap: 9px;
-  }
-  body .universe-shell .feed-filters a {
-    min-height: 46px;
-    max-width: 100%;
-    padding: 11px 14px;
-    font-size: 13px !important;
-    white-space: normal;
-  }
-}
-
-@media (max-width: 380px) {
-  body .universe-shell .feed-filters a {
-    min-height: 44px;
-    padding: 10px 11px;
-    font-size: 12px !important;
-  }
+/* Keep empty category filters visible after available categories, but mark them clearly. */
+body .universe-shell .feed-filters a.category-empty,
+body .universe-shell .feed-filters a.category-empty:hover {
+  border-color: #a5a5a5;
+  background: #dedede;
+  color: #707070;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
 }

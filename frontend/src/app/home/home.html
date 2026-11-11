@@ -74,7 +74,18 @@
 
     <section class="home-feed" aria-labelledby="feed-title">
       <div class="feed-heading"><div><p>/ MARKETPLACE_FEED</p><h2 id="feed-title">FRESH ON CAMPUS</h2></div><a routerLink="/explore">OPEN FULL MARKET →</a></div>
-      <div class="feed-filters"><a class="selected" routerLink="/explore">ALL</a>@for (category of categories().slice(0, 5); track category) { <a routerLink="/explore" [queryParams]="{ category }">{{ categoryLabel(category) }}</a> }</div>
+      <div class="feed-filters">
+        <a class="selected" routerLink="/explore">ALL</a>
+        @for (category of categoryFilters(); track category.value) {
+          <a
+            routerLink="/explore"
+            [queryParams]="{ category: category.value }"
+            [class.category-empty]="!category.hasListings"
+            [attr.title]="category.hasListings ? null : 'No listings in this category yet'"
+            [attr.aria-label]="categoryLabel(category.value) + (category.hasListings ? '' : ', no items listed yet')"
+          >{{ categoryLabel(category.value) }}</a>
+        }
+      </div>
       @if (listingError()) {
         <div class="feed-state"><strong>MARKET FEED UNAVAILABLE</strong><p>The marketplace API could not be reached. Try again in a moment.</p><a routerLink="/explore">OPEN MARKETPLACE</a></div>
       } @else if (homeFeed().length === 0) {
