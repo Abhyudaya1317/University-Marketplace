@@ -146,7 +146,7 @@
                 <span>_</span><span>□</span><span>×</span>
               </span>
             </div>
-            <div class="catalog-media">
+            <div class="catalog-media" (touchstart)="photoTouchStart(listing.id, $event)" (touchend)="photoTouchEnd(listing, $event)">
               <a class="catalog-photo-link" [routerLink]="['/products', listing.id]" [attr.aria-label]="'Open ' + listing.title">
                 @if (photoFor(listing); as photo) {
                   <img class="catalog-photo" [src]="photo" [alt]="listing.title + ' product photo'" loading="lazy" (error)="markPhotoUnavailable(listing.id)" />
@@ -173,9 +173,12 @@
                 }
               </div>
             }
-            <a class="seller-count" [routerLink]="['/sellers', listing.sellerId]">
-              <span>{{ listing.sellerName }} · Seller profile</span><span aria-hidden="true">→</span>
-            </a>
+            <div class="product-card-footer">
+              <a class="seller-count" [routerLink]="['/sellers', listing.sellerId]">
+                <span>{{ listing.sellerName }} · Seller profile</span><span aria-hidden="true">→</span>
+              </a>
+              <button class="listing-share-button" type="button" (click)="shareListing(listing, $event)">Share</button>
+            </div>
           </article>
         }
       </section>

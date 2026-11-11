@@ -6,6 +6,7 @@ import { interval } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountNavigation } from '../shared/account-navigation';
 import { RetroWindow } from '../shared/retro-window';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // Describe the small part of the backend response that this page reads.
 interface HealthResponse {
@@ -44,6 +45,7 @@ export class Home {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly interaction = inject(InteractionFeedback);
 
   // The template uses this state to show checking, online, or offline status.
   protected readonly backendState = signal<'checking' | 'online' | 'offline'>('checking');
@@ -75,6 +77,15 @@ export class Home {
   protected readonly homeFeed = computed(() => this.listings().slice(0, 4));
   protected readonly sellerCount = computed(() => new Set(this.listings().map((item) => item.sellerId)).size);
   protected readonly pickupAreaCount = computed(() => new Set(this.listings().map((item) => item.location).filter(Boolean)).size);
+
+  protected shareListing(item: HomeListing, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.interaction.openSharePrompt(
+      item.title,
+      new URL(`/products/${item.id}`, window.location.origin).toString(),
+    );
+  }
 
   // Ask the Express health endpoint whether the backend is reachable when the page opens.
   constructor() {

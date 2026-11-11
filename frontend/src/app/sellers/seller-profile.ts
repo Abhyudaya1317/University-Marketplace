@@ -339,6 +339,8 @@ export class SellerProfile {
         );
         this.interaction.showToast(
           this.isFavorite() ? 'Seller added to your saved sellers.' : 'Seller removed from your saved sellers.',
+          'success',
+          this.isFavorite() ? { label: 'See saved sellers', route: '/followed-sellers' } : undefined,
         );
         this.busy.set(false);
       },

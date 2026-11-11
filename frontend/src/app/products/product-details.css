@@ -79,6 +79,7 @@
   place-items: center;
   overflow: hidden;
   background: #fff;
+  touch-action: pan-y;
 }
 .paint-frame-image { display: block; width: 100%; height: auto; }
 .paint-product-image {

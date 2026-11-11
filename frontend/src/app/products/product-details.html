@@ -20,7 +20,7 @@
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
             <img class="paint-frame-image" src="/images/untitled-paint.png" alt="Untitled Paint window" />
-            <div class="paint-photo-viewport">
+            <div class="paint-photo-viewport" (touchstart)="photoTouchStart($event)" (touchend)="photoTouchEnd($event)">
               @if (activePhotoUrl(); as photoUrl) {
                 @if (isPhotoAvailable(photoUrl)) {
                   <img
@@ -142,6 +142,7 @@
             >
               {{ saved() ? '♥ Saved' : '♡ Save item' }}
             </button>
+            <button type="button" class="wishlist-button share-product-button" (click)="shareListing()">Share item</button>
             @if (!isOwnListing(item)) {
               <button
                 type="button"

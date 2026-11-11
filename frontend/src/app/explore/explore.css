@@ -408,6 +408,34 @@ nav {
   text-decoration: none;
 }
 .seller-count:hover span:first-child { text-decoration: underline; }
+.product-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: auto 14px 0;
+  padding-bottom: 14px;
+}
+
+.catalog-media { touch-action: pan-y; }
+.product-card-footer .seller-count {
+  min-width: 0;
+  flex: 1 1 auto;
+  width: auto;
+  margin: 0;
+  padding: 8px 0;
+}
+.listing-share-button {
+  min-height: 34px;
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 2px outset #fff;
+  background: #174bff;
+  color: #fff;
+  box-shadow: 2px 2px 0 #080817;
+  font: 700 8px/1.4 var(--pixel, monospace);
+  cursor: pointer;
+}
+.listing-share-button:hover { background: #000080; }
 
 /* Explain loading, errors, and empty searches without leaving a blank page. */
 .state-message {

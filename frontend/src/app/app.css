@@ -134,7 +134,7 @@
   animation: interaction-pop-in 130ms ease-out;
 }
 
-.action-toast > span {
+.action-toast > span:first-child {
   display: grid;
   width: 26px;
   height: 26px;
@@ -146,7 +146,38 @@
   font-weight: 900;
 }
 
-.action-toast-error > span {
+.action-toast-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit !important;
+  font: inherit !important;
+  box-shadow: none !important;
+}
+
+.action-toast-link {
+  flex: 0 0 auto;
+  border: 2px outset #fff;
+  padding: 6px 8px;
+  background: #174bff;
+  color: #fff;
+  box-shadow: 2px 2px 0 #080817;
+  font: 700 10px/1.3 var(--pixel, monospace);
+  cursor: pointer;
+}
+
+.share-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.share-dialog-actions .interaction-button { width: 100%; min-width: 0; }
+.share-dialog-actions .share-whatsapp { background: #168b50; color: #fff; }
+
+.action-toast-error > span:first-child {
   background: #fff34d;
 }
 
@@ -159,7 +190,9 @@
   .interaction-dialog-content { padding: 19px; }
   .interaction-dialog-actions { gap: 9px; }
   .interaction-button { flex-basis: 120px; min-height: 46px; padding: 9px 10px; font-size: 13px; }
-  .action-toast { right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); left: 12px; max-width: none; }
+  .action-toast { right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); left: 12px; max-width: none; flex-wrap: wrap; }
+  .action-toast-link { margin-left: 36px; }
+  .share-dialog-actions { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

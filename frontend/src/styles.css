@@ -2050,3 +2050,14 @@ body .universe-shell .stat-yellow {
   color: #fff !important;
 }
 body .universe-shell .hero h1 .floating-amp { color: #174bff !important; }
+body .universe-shell .home-share-button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 2px outset #fff;
+  background: #174bff;
+  color: #fff;
+  box-shadow: 2px 2px 0 #080817;
+  font: 700 8px/1.4 var(--pixel, monospace);
+  cursor: pointer;
+}
+body .universe-shell .home-share-button:hover { background: #000080; }

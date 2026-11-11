@@ -41,6 +41,30 @@
 @if (interaction.toast(); as toast) {
   <div class="action-toast" [class.action-toast-error]="toast.kind === 'error'" role="status" aria-live="polite">
     <span aria-hidden="true">{{ toast.kind === 'success' ? '✓' : '!' }}</span>
-    {{ toast.message }}
+    <span class="action-toast-copy">{{ toast.message }}</span>
+    @if (toast.action) {
+      <button class="action-toast-link" type="button" (click)="interaction.openToastAction()">{{ toast.action.label }} →</button>
+    }
+  </div>
+}
+
+@if (interaction.sharePrompt(); as share) {
+  <div class="interaction-backdrop" (click)="interaction.closeSharePrompt()">
+    <section class="interaction-dialog share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-listing-title" (click)="$event.stopPropagation()">
+      <header class="interaction-titlebar">
+        <strong>SHARE_LISTING.EXE</strong>
+        <button type="button" aria-label="Close share options" (click)="interaction.closeSharePrompt()">×</button>
+      </header>
+      <div class="interaction-dialog-content">
+        <p class="interaction-eyebrow">PASS THIS FIND ALONG</p>
+        <h2 id="share-listing-title">Share {{ share.title }}</h2>
+        <p>Send this listing to a friend or copy its link.</p>
+        <div class="share-dialog-actions">
+          <button type="button" class="interaction-button share-whatsapp" (click)="interaction.shareOnWhatsApp()">WhatsApp</button>
+          <button type="button" class="interaction-button interaction-primary" (click)="interaction.shareWithApps()">More apps</button>
+          <button type="button" class="interaction-button interaction-secondary" (click)="interaction.copyShareLink()">Copy link</button>
+        </div>
+      </div>
+    </section>
   </div>
 }

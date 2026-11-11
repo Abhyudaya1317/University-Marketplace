@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AccountNavigation } from '../shared/account-navigation';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // One Explore card represents one seller's listing, with its own ID and price.
 interface ExploreListing {
@@ -47,6 +48,7 @@ interface ExploreCacheEntry {
 export class Explore {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly interaction = inject(InteractionFeedback);
   protected readonly listings = signal<ExploreListing[]>([]);
   protected readonly suggestions = signal<NonNullable<ExploreResponse['suggestions']>>([]);
   protected readonly loading = signal(true);
@@ -65,6 +67,7 @@ export class Explore {
   protected readonly searchSubmitted = signal(false);
   protected readonly unavailablePhotoIds = signal<Set<string>>(new Set());
   protected readonly photoIndexes = signal<Record<string, number>>({});
+  private readonly photoTouchStartX: Record<string, number> = {};
   protected readonly visibleListings = computed(() => {
     // Keep the gender filter enforced in the UI as well as by the API response.
     const gender = this.selectedGender();
@@ -225,6 +228,31 @@ export class Explore {
     const count = this.photoCount(listing);
     if (count < 2) return;
     this.photoIndexes.update((indexes) => ({ ...indexes, [listing.id]: ((indexes[listing.id] ?? 0) + direction + count) % count }));
+  }
+
+  protected photoTouchStart(listingId: string, event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+    if (touch) this.photoTouchStartX[listingId] = touch.clientX;
+  }
+
+  protected photoTouchEnd(listing: ExploreListing, event: TouchEvent): void {
+    const startX = this.photoTouchStartX[listing.id];
+    delete this.photoTouchStartX[listing.id];
+    const endX = event.changedTouches[0]?.clientX;
+    if (startX === undefined || endX === undefined || Math.abs(endX - startX) < 40) return;
+    this.photoIndexes.update((indexes) => {
+      const count = this.photoCount(listing);
+      return { ...indexes, [listing.id]: ((indexes[listing.id] ?? 0) + (endX < startX ? 1 : -1) + count) % count };
+    });
+  }
+
+  protected shareListing(listing: ExploreListing, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.interaction.openSharePrompt(
+      listing.title,
+      new URL(`/products/${listing.id}`, window.location.origin).toString(),
+    );
   }
 
   private listingPhotos(listing: ExploreListing): string[] {

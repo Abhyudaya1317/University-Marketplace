@@ -75,6 +75,7 @@ export class ProductDetails {
   protected readonly orderFeedback = signal('');
   protected readonly requestSubmitted = signal(false);
   protected readonly startingConversation = signal(false);
+  private photoTouchStartX: number | null = null;
   protected readonly engagementOffers = computed(() => {
     const current = this.listing();
     return current ? [{ id: current.id, sellerId: current.seller.id, price: current.price }] : [];
@@ -160,7 +161,11 @@ export class ProductDetails {
         this.feedback.set(
           response.isSaved ? 'Saved to your wishlist.' : 'Removed from your wishlist.',
         );
-        this.interaction.showToast(response.isSaved ? 'Item saved to your wishlist.' : 'Item removed from your wishlist.');
+        this.interaction.showToast(
+          response.isSaved ? 'Item saved to your wishlist.' : 'Item removed from your wishlist.',
+          'success',
+          response.isSaved ? { label: 'See saved items', route: '/wishlist' } : undefined,
+        );
         this.saving.set(false);
       },
       error: (response: HttpErrorResponse) => {
@@ -193,7 +198,9 @@ export class ProductDetails {
     const phone = this.buyerPhone().trim();
     const phoneDigits = phone.replace(/\D/g, '').length;
     if (!/^[+\d\s().-]+$/.test(phone) || phoneDigits < 7 || phoneDigits > 15) {
-      this.orderFeedback.set('Enter a valid phone number so the seller can arrange pickup.');
+      const message = 'Enter a valid phone number so the seller can arrange pickup.';
+      this.orderFeedback.set(message);
+      this.interaction.showToast(message, 'error');
       return;
     }
     this.submittingOrder.set(true);
@@ -209,7 +216,10 @@ export class ProductDetails {
         next: () => {
           this.orderFeedback.set('Request sent. The seller can accept or decline it.');
           this.requestSubmitted.set(true);
-          this.interaction.showToast('Your request was sent to the seller.');
+          this.interaction.showToast('Your request was sent to the seller.', 'success', {
+            label: 'See your requests',
+            route: '/orders',
+          });
           this.submittingOrder.set(false);
         },
         error: (response: HttpErrorResponse) => {
@@ -284,6 +294,29 @@ export class ProductDetails {
     const count = this.productPhotos().length;
     if (count < 2) return;
     this.activePhotoIndex.update((index) => (index + direction + count) % count);
+  }
+
+  protected photoTouchStart(event: TouchEvent): void {
+    this.photoTouchStartX = event.changedTouches[0]?.clientX ?? null;
+  }
+
+  protected photoTouchEnd(event: TouchEvent): void {
+    const startX = this.photoTouchStartX;
+    this.photoTouchStartX = null;
+    const endX = event.changedTouches[0]?.clientX;
+    if (startX === null || endX === undefined) return;
+    const distance = endX - startX;
+    if (Math.abs(distance) < 40) return;
+    this.stepPhoto(distance < 0 ? 1 : -1);
+  }
+
+  protected shareListing(): void {
+    const listing = this.listing();
+    if (!listing) return;
+    this.interaction.openSharePrompt(
+      listing.title,
+      new URL(`/products/${listing.id}`, window.location.origin).toString(),
+    );
   }
 
   protected isPhotoAvailable(url: string): boolean {
