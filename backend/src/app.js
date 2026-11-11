@@ -17,6 +17,7 @@ import orderRoutes from "./features/orders/orderRoutes.js";
 import messagesRoutes from "./features/messages/messagesRoutes.js";
 import sellerRoutes from "./features/sellers/sellerRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
+import adminRoutes from "./features/admin/adminRoutes.js";
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use("/api/uploads/profiles", express.static(profileUploadDirectory, {
 // Preserve every existing route module and its public API path.
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/listings", listingsRoutes);
 app.use("/api/listings", reviewRoutes);
 app.use("/api/products", productsRoutes);

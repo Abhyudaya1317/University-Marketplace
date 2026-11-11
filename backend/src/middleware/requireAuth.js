@@ -13,7 +13,7 @@ export async function requireAuth(request, response, next) {
 
     try {
         const tokenHash = hashSessionToken(token);
-        const session = await prisma.loginSession.findUnique({ where: { tokenHash } });
+        const session = await prisma.loginSession.findUnique({ where: { tokenHash }, include: { user: { select: { id: true, bannedAt: true } } } });
 
         if (!session || session.expiresAt.getTime() <= Date.now()) {
             await prisma.loginSession.deleteMany({ where: { tokenHash } });
@@ -24,6 +24,17 @@ export async function requireAuth(request, response, next) {
                 path: "/"
             });
             return response.status(401).json({ success: false, message: "Your sign-in expired. Please sign in again." });
+        }
+
+        if (session.user.bannedAt) {
+            await prisma.loginSession.deleteMany({ where: { tokenHash } });
+            response.clearCookie(SESSION_COOKIE, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/"
+            });
+            return response.status(403).json({ success: false, message: "This account is suspended. Contact support if you think this is a mistake." });
         }
 
         request.user = { id: session.userId };

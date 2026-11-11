@@ -15,6 +15,9 @@
       </summary>
       <div class="account-menu-list" role="menu">
         <a role="menuitem" routerLink="/dashboard">Profile</a>
+        @if (isAdmin()) {
+          <a role="menuitem" routerLink="/admin">Admin console</a>
+        }
         <a role="menuitem" routerLink="/items-selling">
           Items I’m selling
           @if (pendingRequestCount() > 0) {

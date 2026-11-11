@@ -18,6 +18,8 @@ model User {
   avatarUrl        String?           @db.VarChar(500)
   bio              String?           @db.VarChar(300)
   passwordHash     String?
+  bannedAt         DateTime?
+  banReason        String?           @db.VarChar(250)
   createdAt        DateTime          @default(now())
   freeListingsUsed Int               @default(0)
   sessions         LoginSession[]

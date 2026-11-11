@@ -1,0 +1,84 @@
+<main class="admin-page">
+  <header class="admin-header">
+    <a class="brand" routerLink="/explore"><span class="brand-mark">✦</span> UNIBEE <sup>’26</sup></a>
+    <app-account-navigation />
+  </header>
+
+  <section class="admin-shell">
+    <div class="admin-titlebar"><strong>ADMIN_CONTROL_PANEL.EXE</strong><span>—　□　×</span></div>
+    <div class="admin-content">
+      <p class="eyebrow">SERVER-VERIFIED ADMIN ACCESS</p>
+      <div class="title-row">
+        <div><h1>Marketplace control</h1><p>Manage accounts and listings. Changes are recorded in the database and checked by the backend.</p></div>
+        <button class="retro-button" type="button" (click)="refreshAll()">↻ Refresh</button>
+      </div>
+
+      @if (access() === 'checking') {
+        <section class="state-panel">Checking administrator access…</section>
+      } @else if (access() === 'denied') {
+        <section class="state-panel"><h2>Administrator access required</h2><p>Sign in with the account whose email is configured in the backend’s <code>ADMIN_EMAILS</code> setting.</p><a routerLink="/auth">Go to sign in →</a></section>
+      } @else {
+        @if (overview(); as stats) {
+          <section class="stats-grid" aria-label="Marketplace totals">
+            <article><span>ACCOUNTS</span><strong>{{ stats.users }}</strong></article>
+            <article><span>SUSPENDED</span><strong>{{ stats.bannedUsers }}</strong></article>
+            <article><span>ACTIVE LISTINGS</span><strong>{{ stats.activeListings }}</strong></article>
+            <article><span>REMOVED LISTINGS</span><strong>{{ stats.removedListings }}</strong></article>
+            <article><span>ORDERS</span><strong>{{ stats.orders }}</strong></article>
+          </section>
+        }
+
+        <nav class="admin-tabs" aria-label="Admin sections">
+          <button type="button" [class.active]="tab() === 'users'" (click)="chooseTab('users')">Users</button>
+          <button type="button" [class.active]="tab() === 'listings'" (click)="chooseTab('listings')">Listings</button>
+        </nav>
+
+        @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        @if (loading()) { <p class="loading-note">Loading records…</p> }
+
+        @if (tab() === 'users') {
+          <section class="records-panel">
+            <div class="panel-heading"><div><p class="eyebrow">ACCOUNT DIRECTORY</p><h2>Users</h2></div><form class="search-form" (ngSubmit)="loadUsers()"><label class="visually-hidden" for="user-search">Search users</label><input id="user-search" name="userSearch" [(ngModel)]="userSearch" placeholder="Name or email"><button class="retro-button" type="submit">Search</button></form></div>
+            @if (users().length === 0 && !loading()) { <p class="empty-note">No matching user accounts.</p> }
+            <div class="record-list">
+              @for (user of users(); track user.id) {
+                <article class="user-row">
+                  <div class="avatar">@if (user.avatarUrl) { <img [src]="user.avatarUrl" [alt]="(user.fullName || user.email) + ' profile photo'"> } @else { <span>{{ (user.fullName || user.email).slice(0, 1).toUpperCase() }}</span> }</div>
+                  <div class="record-copy"><h3>{{ user.fullName || 'Unnamed user' }}</h3><p>{{ user.email }}</p><small>Joined {{ user.createdAt | date:'mediumDate' }} · {{ user.listingCount }} listings · ID {{ user.id }}</small>@if (user.bannedAt) { <p class="ban-note">Suspended {{ user.bannedAt | date:'mediumDate' }}@if (user.banReason) { · {{ user.banReason }}}</p> }</div>
+                  @if (user.bannedAt) { <button class="retro-button" type="button" (click)="unban(user)">Unban</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToBan(user)">Suspend</button> }
+                </article>
+              }
+            </div>
+          </section>
+        } @else {
+          <section class="records-panel">
+            <div class="panel-heading"><div><p class="eyebrow">MARKETPLACE INVENTORY</p><h2>Listings</h2></div><form class="search-form listing-search" (ngSubmit)="loadListings()"><label class="visually-hidden" for="listing-search">Search listings</label><input id="listing-search" name="listingSearch" [(ngModel)]="listingSearch" placeholder="Item or seller"><label class="visually-hidden" for="listing-status">Listing status</label><select id="listing-status" name="listingStatus" [(ngModel)]="listingStatus"><option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SOLD">Sold</option><option value="ARCHIVED">Archived</option><option value="HIDDEN">Hidden</option></select><button class="retro-button" type="submit">Search</button></form></div>
+            @if (listings().length === 0 && !loading()) { <p class="empty-note">No listings match these filters.</p> }
+            <div class="listing-list">
+              @for (listing of listings(); track listing.id) {
+                <article class="listing-row">
+                  <a class="listing-photo" [routerLink]="['/products', listing.id]">@if (listing.photoUrl) { <img [src]="listing.photoUrl" [alt]="listing.title"> } @else { <span>No photo</span> }</a>
+                  <div class="listing-copy"><span class="category-label">{{ listing.product.category }}</span><h3>{{ listing.title }}</h3><p>{{ listing.seller.fullName || listing.seller.email }} · {{ listing.seller.email }}</p><p class="listing-description">{{ listing.description }}</p><small>₹{{ listing.price }} · {{ listing.quantityAvailable }} available · {{ listing.status }} · {{ listing.orderCount }} orders</small></div>
+                  <div class="listing-actions"><button class="retro-button" type="button" (click)="startEdit(listing)">Edit</button>@if (listing.status === 'ARCHIVED' || listing.status === 'HIDDEN') { <button class="retro-button" type="button" (click)="restoreListing(listing)">Restore</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToRemove(listing)">Remove</button> }</div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </section>
+
+  @if (selectedBanUser(); as user) {
+    <div class="modal-backdrop" (click)="selectedBanUser.set(null)"><section class="retro-modal" role="dialog" aria-modal="true" aria-labelledby="ban-title" (click)="$event.stopPropagation()"><div class="admin-titlebar"><strong>ACCOUNT_ACCESS.EXE</strong><button type="button" aria-label="Close" (click)="selectedBanUser.set(null)">×</button></div><div class="modal-content"><h2 id="ban-title">Suspend {{ user.fullName || user.email }}?</h2><p>Their current sessions will be signed out. Their listings and marketplace history will remain stored.</p><label for="ban-reason">Reason (optional)</label><textarea id="ban-reason" name="banReason" maxlength="250" [(ngModel)]="banReason" placeholder="Short internal reason"></textarea><div class="modal-actions"><button class="retro-button" type="button" (click)="selectedBanUser.set(null)">Cancel</button><button class="retro-button danger-button" type="button" (click)="confirmBan()">Suspend account</button></div></div></section></div>
+  }
+
+  @if (removingListing(); as listing) {
+    <div class="modal-backdrop" (click)="removingListing.set(null)"><section class="retro-modal" role="dialog" aria-modal="true" aria-labelledby="remove-title" (click)="$event.stopPropagation()"><div class="admin-titlebar"><strong>LISTING_ARCHIVE.EXE</strong><button type="button" aria-label="Close" (click)="removingListing.set(null)">×</button></div><div class="modal-content"><h2 id="remove-title">Remove “{{ listing.title }}” from sale?</h2><p>This archives the listing so it is hidden from Explore and can be restored later. Existing order history is retained.</p><div class="modal-actions"><button class="retro-button" type="button" (click)="removingListing.set(null)">Keep listing</button><button class="retro-button danger-button" type="button" (click)="confirmRemove()">Archive listing</button></div></div></section></div>
+  }
+
+  @if (editingListing(); as listing) {
+    <div class="modal-backdrop edit-backdrop"><section class="retro-modal edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-title"><div class="admin-titlebar"><strong>EDIT_LISTING.EXE · {{ listing.id }}</strong><button type="button" aria-label="Close" (click)="editingListing.set(null); draft = null">×</button></div>@if (draft) { <form class="edit-form" (ngSubmit)="saveListing()"><h2 id="edit-title">Edit listing</h2><div class="form-grid"><label>Product name<input name="name" [(ngModel)]="draft.name" required maxlength="100"></label><label>Category<select name="category" [(ngModel)]="draft.category">@for (category of categories; track category) { <option [value]="category">{{ category }}</option> }</select></label><label>Price (₹)<input name="price" [(ngModel)]="draft.price" required inputmode="decimal"></label><label>Available quantity<input name="quantityAvailable" type="number" min="0" max="9999" [(ngModel)]="draft.quantityAvailable" required></label><label>Condition<select name="condition" [(ngModel)]="draft.condition">@for (condition of conditions; track condition) { <option [value]="condition">{{ condition }}</option> }</select></label><label>Custom condition<input name="customCondition" [(ngModel)]="draft.customCondition" maxlength="80"></label><label>Pickup location<input name="location" [(ngModel)]="draft.location" required maxlength="120"></label><label>Seller phone<input name="phoneNumber" [(ngModel)]="draft.phoneNumber" required></label><label>Clothing gender<select name="clothingGender" [(ngModel)]="draft.clothingGender"><option value="">Not applicable</option>@for (gender of genders; track gender) { <option [value]="gender">{{ gender }}</option> }</select></label><label>Food protein (g/serving)<input name="proteinGrams" [(ngModel)]="draft.proteinGrams" inputmode="decimal"></label><label>Poster size<input name="posterSize" [(ngModel)]="draft.posterSize" maxlength="40"></label><label>Search tags<input name="hashtags" [(ngModel)]="draft.hashtags" placeholder="tag-one, tag-two"></label></div><label>Description<textarea name="description" [(ngModel)]="draft.description" required maxlength="1500" rows="4"></textarea></label><details class="photo-links"><summary>Product photo links</summary><label>Photo 1<input name="photoUrl" [(ngModel)]="draft.photoUrl" maxlength="500"></label><label>Photo 2<input name="photoUrl2" [(ngModel)]="draft.photoUrl2" maxlength="500"></label><label>Photo 3<input name="photoUrl3" [(ngModel)]="draft.photoUrl3" maxlength="500"></label><label>Photo 4<input name="photoUrl4" [(ngModel)]="draft.photoUrl4" maxlength="500"></label></details><p class="form-hint">Photo links must be HTTPS or existing listing-upload paths. Use blank fields to remove a photo.</p><div class="modal-actions"><button class="retro-button" type="button" (click)="editingListing.set(null); draft = null">Cancel</button><button class="retro-button primary-admin-button" type="submit">Save changes</button></div></form> }</section></div>
+  }
+</main>

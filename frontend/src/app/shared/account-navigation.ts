@@ -7,7 +7,7 @@ import { interval } from 'rxjs';
 // Keep the account navigation in sync with the cookie-backed login session.
 interface AccountResponse {
   success: boolean;
-  user?: { id: string; email: string };
+  user?: { id: string; email: string; isAdmin?: boolean };
 }
 
 // Keep the seller's pending request total separate from their message unread total.
@@ -28,6 +28,7 @@ export class AccountNavigation {
 
   // A missing session is a normal public state, so failed checks show guest links.
   protected readonly signedIn = signal(false);
+  protected readonly isAdmin = signal(false);
   protected readonly signingOut = signal(false);
   protected readonly unreadCount = signal(0);
   protected readonly pendingRequestCount = signal(0);
@@ -53,10 +54,12 @@ export class AccountNavigation {
     this.http.get<AccountResponse>('/api/auth/me').subscribe({
       next: (response) => {
         this.signedIn.set(Boolean(response.user));
+        this.isAdmin.set(Boolean(response.user?.isAdmin));
         if (response.user) this.refreshNotificationCounts();
       },
       error: () => {
         this.signedIn.set(false);
+        this.isAdmin.set(false);
         this.unreadCount.set(0);
         this.pendingRequestCount.set(0);
       },
@@ -85,6 +88,7 @@ export class AccountNavigation {
     this.http.post('/api/auth/logout', {}).subscribe({
       next: () => {
         this.signedIn.set(false);
+        this.isAdmin.set(false);
         this.unreadCount.set(0);
         this.pendingRequestCount.set(0);
         this.signingOut.set(false);

@@ -9,6 +9,7 @@ import { Dashboard } from './dashboard/dashboard';
 import { MyOrders } from './orders/my-orders';
 import { Messages } from './messages/messages';
 import { SavedCollections } from './saved/saved-collections';
+import { AdminConsole } from './admin/admin-console';
 
 // Keep page URLs and their feature components together in one route list.
 export const routes: Routes = [
@@ -49,6 +50,10 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: Dashboard,
+  },
+  {
+    path: 'admin',
+    component: AdminConsole,
   },
   {
     path: 'items-selling',

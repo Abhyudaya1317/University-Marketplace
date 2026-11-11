@@ -13,6 +13,7 @@ import {
 import { isEmailDeliveryConfigured, sendPasswordResetCode } from "./emailService.js";
 import { normalizeFrontendReturnUrl } from "./authReturnUrl.js";
 import { profilePhotoUrl, removeUploadedProfilePhoto, removeProfilePhotoByUrl } from "./profilePhotoUpload.js";
+import { isAdminEmail } from "../../middleware/adminAccess.js";
 
 const CODE_LIFETIME_MS = 10 * 60 * 1000;
 const RESEND_WAIT_MS = 60 * 1000;
@@ -140,6 +141,9 @@ export async function signIn(request, response) {
 
         if (!user || !passwordMatches) {
             return response.status(401).json({ success: false, message: "Email or password is incorrect." });
+        }
+        if (user.bannedAt) {
+            return response.status(403).json({ success: false, message: "This account is suspended. Contact support if you think this is a mistake." });
         }
 
         await createUserSession(user, response);
@@ -333,6 +337,9 @@ export async function finishGoogleSignIn(request, response) {
         const googleName = normalizeFullName(profile.name);
         const googleAvatar = normalizeAvatarUrl(profile.picture);
         const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser?.bannedAt) {
+            return redirectAfterGoogleFailure(response, frontendUrl, "account_suspended", returnUrl);
+        }
         const user = existingUser
             ? await prisma.user.update({
                 where: { id: existingUser.id },
@@ -418,12 +425,18 @@ export async function getCurrentUser(request, response) {
             response.clearCookie(SESSION_COOKIE, sessionCookieOptions());
             return response.status(401).json({ success: false, message: "You are not signed in." });
         }
+        if (session.user.bannedAt) {
+            await prisma.loginSession.deleteMany({ where: { tokenHash } });
+            response.clearCookie(SESSION_COOKIE, sessionCookieOptions());
+            return response.status(403).json({ success: false, message: "This account is suspended. Contact support if you think this is a mistake." });
+        }
         return response.json({ success: true, user: {
             id: session.user.id,
             email: session.user.email,
             fullName: session.user.fullName,
             avatarUrl: session.user.avatarUrl,
-            bio: session.user.bio
+            bio: session.user.bio,
+            isAdmin: isAdminEmail(session.user.email)
         } });
     } catch {
         return response.status(500).json({ success: false, message: "We could not check your sign-in." });
