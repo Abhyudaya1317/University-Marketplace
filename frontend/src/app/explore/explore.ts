@@ -28,6 +28,7 @@ interface ExploreListing {
 interface ExploreResponse {
   success: boolean;
   listings: ExploreListing[];
+  availableCategories?: string[];
   suggestions?: Array<{ id: string; name: string; category: string }>;
   nextCursor?: string | null;
   message?: string;
@@ -101,6 +102,14 @@ export class Explore {
     { value: 'DAILY_USE', label: 'Daily-use products' },
     { value: 'WAX_CANDLES', label: 'Wax candles' },
   ];
+  protected readonly availableCategories = signal<string[]>([]);
+  protected readonly orderedCategories = computed(() => {
+    const available = new Set(this.availableCategories());
+    return [...this.categories].sort((left, right) =>
+      Number(available.has(right.value)) - Number(available.has(left.value)) ||
+      left.label.localeCompare(right.label),
+    );
+  });
 
   // Give each listing card a stable retro filename; its window controls remain decorative.
   protected listingWindowTitle(id: string): string {
@@ -152,6 +161,10 @@ export class Explore {
     this.proteinOnly.set(false);
     this.randomizedIds.set([]);
     this.loadListings();
+  }
+
+  protected categoryHasListings(value: string): boolean {
+    return this.availableCategories().includes(value);
   }
 
   // Apply a clothing gender immediately and request only listings for that value.
@@ -373,6 +386,7 @@ export class Explore {
 
   private applyResponse(response: ExploreResponse): void {
     this.listings.set(response.listings ?? []);
+    this.availableCategories.set(response.availableCategories ?? []);
     this.suggestions.set(response.suggestions ?? []);
     this.nextCursor.set(response.nextCursor ?? null);
     this.randomizedIds.set([]);

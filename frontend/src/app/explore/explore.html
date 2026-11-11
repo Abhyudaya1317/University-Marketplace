@@ -65,19 +65,6 @@
           }
         </div>
       </div>
-      <label class="category-field"
-        ><span>Category</span>
-        <select
-          name="category"
-          [ngModel]="selectedCategory()"
-          (ngModelChange)="onCategoryChange($event)"
-        >
-          <option value="">All categories</option>
-          @for (category of categories; track category.value) {
-            <option [value]="category.value">{{ category.label }}</option>
-          }
-        </select>
-      </label>
       @if (showClothingFilters) {
         <label class="detail-filter-field"
           ><span>Gender</span>
@@ -103,6 +90,27 @@
       }
       <button class="search-button" type="submit">Search</button>
     </form>
+
+    <nav class="explore-category-buttons" aria-label="Filter listings by category">
+      <button
+        type="button"
+        [class.active]="!selectedCategory()"
+        [attr.aria-pressed]="!selectedCategory()"
+        (click)="onCategoryChange('')"
+      >All</button>
+      @for (category of orderedCategories(); track category.value) {
+        <button
+          type="button"
+          [class.active]="selectedCategory() === category.value"
+          [class.category-empty]="!categoryHasListings(category.value)"
+          [disabled]="!categoryHasListings(category.value)"
+          [attr.aria-pressed]="selectedCategory() === category.value"
+          [attr.aria-label]="category.label + (categoryHasListings(category.value) ? '' : ', no listings yet')"
+          [attr.title]="categoryHasListings(category.value) ? category.label : 'No listings in this category yet'"
+          (click)="onCategoryChange(category.value)"
+        >{{ category.label }}</button>
+      }
+    </nav>
 
     @if (loading() && !hasLoadedData()) {
       <p class="state-message" role="status">Loading listings…</p>

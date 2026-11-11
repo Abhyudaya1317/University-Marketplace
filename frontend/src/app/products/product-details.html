@@ -134,7 +134,7 @@
             }
             <button
               type="button"
-              class="wishlist-button"
+              class="wishlist-button save-item-action"
               [class.is-saved]="saved()"
               [attr.aria-pressed]="saved()"
               (click)="toggleSaved()"
@@ -146,7 +146,7 @@
             @if (!isOwnListing(item)) {
               <button
                 type="button"
-                class="wishlist-button"
+                class="wishlist-button message-seller-action"
                 (click)="messageSeller()"
                 [disabled]="startingConversation()"
               >

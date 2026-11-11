@@ -334,7 +334,7 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 .hero h1 .sell-line { position: relative; }
 .hero h1 .floating-amp { position: absolute; left: calc(100% + 16px); bottom: -5px; color: var(--yellow); font: inherit; }
 .hero h1 .campus-word { color: var(--electric-blue); }
-.hero-description { max-width: 570px; margin: 28px 0 0; color: var(--deep-navy); font-size: 17px; font-weight: 600; line-height: 1.7; }
+.hero-description { max-width: 570px; margin: 28px 0 0; color: var(black); font-size: 17px; font-weight: 600; line-height: 1.7; }
 .hero-actions { display: flex; align-items: center; gap: 26px; margin-top: 34px; }
 @keyframes explore-link-glow {
   from { box-shadow: 3px 3px 0 var(--deep-navy), 0 0 7px rgb(23 75 255 / 38%); }
@@ -2029,6 +2029,7 @@ body .universe-shell .stat-yellow {
   color: #fff !important;
 }
 body .universe-shell .hero h1 .floating-amp { color: #174bff !important; }
+body .universe-shell .hero-description { color: #080817 !important; }
 body .universe-shell .home-share-button {
   min-height: 34px;
   padding: 6px 9px;
@@ -2063,6 +2064,78 @@ body :is(.universe-shell, .market-page, .details-page, .sell-page, .seller-page,
   p:not(.hero-label):not(.feed-heading p):not(.diagnostics-intro p)
 ) {
   color: var(--unibee-readable-gray);
+}
+
+/* Keep the home badge within the copy column so it never runs under the orb. */
+@media (max-width: 800px) {
+  body .universe-shell .hero-copy { z-index: 2; }
+  body .universe-shell .hero-label {
+    box-sizing: border-box;
+    max-width: calc(100% - 82px);
+    white-space: normal;
+    line-height: 1.6;
+  }
+  body .universe-shell .orb-one { top: 72px; right: 3%; width: 64px; height: 64px; }
+}
+
+/* Give category filters enough height and type size to read at a glance. */
+body .market-page .explore-category-buttons button {
+  min-height: 78px;
+  padding: 18px 26px;
+  font-size: clamp(15px, 1.15vw, 18px);
+}
+body .market-page .explore-category-buttons button.active {
+  background: #174bff;
+  color: #fff;
+}
+body .market-page .explore-category-buttons button.category-empty,
+body .market-page .explore-category-buttons button:disabled {
+  background: #dedede;
+  color: #707070;
+  text-decoration: line-through;
+}
+
+/* Make seller identity and the two important product actions easy to spot. */
+body .details-page .seller-link {
+  border: 2px solid #000080 !important;
+  background: #fff !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+}
+body .details-page .seller-link strong {
+  color: #000080 !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+}
+body .details-page .detail-actions .save-item-action {
+  border: 2px solid #000080 !important;
+  background: #fff !important;
+  color: #000080 !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+}
+body .details-page .detail-actions .save-item-action.is-saved {
+  background: #dce8ff !important;
+}
+body .details-page .detail-actions .message-seller-action {
+  border: 2px solid #000080 !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+}
+body .details-page .detail-actions .message-seller-action:hover:not(:disabled) {
+  background: #000080 !important;
+}
+
+@media (max-width: 760px) {
+  body .market-page .explore-category-buttons { gap: 9px; }
+  body .market-page .explore-category-buttons button {
+    min-height: 64px;
+    padding: 14px 16px;
+    font-size: clamp(13px, 3.5vw, 16px);
+  }
 }
 
 /* Keep empty category filters visible after available categories, but mark them clearly. */

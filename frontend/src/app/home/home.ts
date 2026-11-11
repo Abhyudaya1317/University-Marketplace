@@ -56,21 +56,6 @@ export class Home {
   protected readonly searchDraft = signal('');
   protected readonly showFeatured = signal(true);
   protected readonly showDropNotice = signal(true);
-  private readonly allCategories = [
-    'CLOTHING', 'ACCESSORIES', 'SHOES', 'FOOD', 'ELECTRONICS', 'BEAUTY',
-    'TEMPORARY_TATTOOS', 'ARTWORK', 'PROJECTS', 'SPORTS_EQUIPMENT',
-    'MUSICAL_INSTRUMENTS', 'POSTERS', 'KITCHEN_ITEMS', 'DAILY_USE', 'WAX_CANDLES',
-  ];
-  protected readonly categoryFilters = computed(() => {
-    const listingCounts = new Map<string, number>();
-    for (const listing of this.listings()) {
-      listingCounts.set(listing.category, (listingCounts.get(listing.category) ?? 0) + 1);
-    }
-
-    return this.allCategories
-      .map((value) => ({ value, hasListings: (listingCounts.get(value) ?? 0) > 0 }))
-      .sort((left, right) => Number(right.hasListings) - Number(left.hasListings));
-  });
   protected readonly featuredListing = computed(() => {
     const liveListings = this.listings();
     // Prefer a later real listing photo so the hero does not keep spotlighting the first upload.

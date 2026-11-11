@@ -188,6 +188,14 @@ export async function getExploreProducts(request, response) {
             }
         });
 
+        // Return only category availability for the Explore filter, not every listing.
+        const availableCategoryRows = await prisma.product.findMany({
+            where: { listings: { some: { status: "ACTIVE", quantityAvailable: { gt: 0 } } } },
+            select: { category: true },
+            distinct: ["category"]
+        });
+        const availableCategories = availableCategoryRows.map(({ category }) => category);
+
         const hasMore = !search && listings.length > pageSize;
         const pageListings = hasMore ? listings.slice(0, pageSize) : listings;
         // Re-check category-specific filters in memory as a safety net as well as in SQL.
@@ -227,6 +235,7 @@ export async function getExploreProducts(request, response) {
         return response.json({
             success: true,
             listings: results,
+            availableCategories,
             suggestions,
             nextCursor: hasMore ? String(pageListings.at(-1)?.id ?? "") || null : null
         });
