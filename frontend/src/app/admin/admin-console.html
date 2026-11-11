@@ -15,8 +15,10 @@
 
       @if (access() === 'checking') {
         <section class="state-panel">Checking administrator access…</section>
+      } @else if (access() === 'signed-out') {
+        <section class="state-panel"><h2>Sign in to continue</h2><p>You need an administrator account to open this console.</p><div class="admin-signin-actions"><a class="retro-button primary-admin-button" routerLink="/auth" [queryParams]="{ returnUrl: '/admin', mode: 'login' }">Sign in</a><a class="retro-button" routerLink="/auth" [queryParams]="{ returnUrl: '/admin', mode: 'signup' }">Sign up</a></div></section>
       } @else if (access() === 'denied') {
-        <section class="state-panel"><h2>Administrator access required</h2><p>Sign in with the account whose email is configured in the backend’s <code>ADMIN_EMAILS</code> setting.</p><a routerLink="/auth">Go to sign in →</a></section>
+        <section class="state-panel"><h2>Administrator access required</h2><p>This account does not have access to the admin console.</p><a routerLink="/explore">Return to Explore →</a></section>
       } @else {
         @if (overview(); as stats) {
           <section class="stats-grid" aria-label="Marketplace totals">

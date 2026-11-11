@@ -6,6 +6,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AccountNavigation } from '../shared/account-navigation';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // Keep the public seller data limited to active offers and public review totals.
 interface SellerProfileResponse {
@@ -70,6 +71,7 @@ export class SellerProfile {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly interaction = inject(InteractionFeedback);
 
   // Page state keeps loading, errors, seller details, and favorite status distinct.
   protected readonly loading = signal(true);
@@ -135,8 +137,8 @@ export class SellerProfile {
         .pipe(catchError(() => of(null))),
     }).subscribe(({ account, favorite }) => {
       const signedInUserId = account?.user?.id;
-      this.isSignedIn.set(typeof signedInUserId === 'number');
-      this.isOwnProfile.set(signedInUserId === this.sellerId);
+      this.isSignedIn.set(signedInUserId !== undefined && signedInUserId !== null);
+      this.isOwnProfile.set(signedInUserId != null && String(signedInUserId) === this.sellerId);
       this.isFavorite.set(favorite?.isFavorite ?? false);
       if (signedInUserId === this.sellerId) {
         void this.router.navigateByUrl('/dashboard');
@@ -234,7 +236,7 @@ export class SellerProfile {
   // Open a seller chat independently of listings, so buyers can still contact the seller.
   protected messageSeller(): void {
     if (!this.isSignedIn()) {
-      void this.router.navigate(['/auth'], { queryParams: { returnUrl: `/sellers/${this.sellerId}` } });
+      this.interaction.askToSignIn('Sign in or create an account to message this seller.', this.router.url);
       return;
     }
     if (!this.sellerId || this.messaging()) return;
@@ -254,10 +256,11 @@ export class SellerProfile {
         error: (response: HttpErrorResponse) => {
           this.messaging.set(false);
           if (response.status === 401) {
-            void this.router.navigate(['/auth'], { queryParams: { returnUrl: `/sellers/${this.sellerId}` } });
+            this.interaction.askToSignIn('Sign in or create an account to message this seller.', this.router.url);
             return;
           }
           this.notice.set(response.error?.message ?? 'We could not open a chat with this seller.');
+          this.interaction.showToast('We could not open a chat with this seller.', 'error');
         },
       });
   }
@@ -295,10 +298,12 @@ export class SellerProfile {
               : 'Request declined.',
           );
           this.requestBusyId.set(null);
+          this.interaction.showToast(action === 'accept' ? 'Buyer request accepted.' : 'Buyer request declined.');
           this.loadProfile();
         },
         error: (response: HttpErrorResponse) => {
           this.requestNotice.set(response.error?.message ?? 'We could not update this request.');
+          this.interaction.showToast('We could not update the buyer request.', 'error');
           this.requestBusyId.set(null);
         },
       });
@@ -306,7 +311,11 @@ export class SellerProfile {
 
   // Save or unsave this seller using the signed-in user's server-side relationship.
   protected toggleFavorite(): void {
-    if (!this.isSignedIn() || this.isOwnProfile() || this.busy()) return;
+    if (this.isOwnProfile() || this.busy()) return;
+    if (!this.isSignedIn()) {
+      this.interaction.askToSignIn('Sign in or create an account to follow this seller.', this.router.url);
+      return;
+    }
     const wasFavorite = this.isFavorite();
     this.busy.set(true);
     this.notice.set('');
@@ -328,12 +337,21 @@ export class SellerProfile {
             ? 'You are now following this seller.'
             : 'You unfollowed this seller.',
         );
+        this.interaction.showToast(
+          this.isFavorite() ? 'Seller added to your saved sellers.' : 'Seller removed from your saved sellers.',
+        );
         this.busy.set(false);
       },
       error: (response: HttpErrorResponse) => {
+        if (response.status === 401) {
+          this.interaction.askToSignIn('Sign in or create an account to follow this seller.', this.router.url);
+          this.busy.set(false);
+          return;
+        }
         this.notice.set(
           response.error?.message ?? 'We could not update your saved sellers. Please try again.',
         );
+        this.interaction.showToast('We could not update your saved sellers.', 'error');
         this.busy.set(false);
       },
     });

@@ -18,6 +18,9 @@
 .engagement-button:disabled, .text-button:disabled { cursor: wait; opacity: .6; }
 .signin-note { margin: 17px 0; }
 .signin-note a { color: #a95638; font-weight: 650; }
+.signin-action { min-height: 42px; margin: 0 0 16px; padding: 0 16px; border: 2px solid #080817; background: #174bff; color: #fff; box-shadow: 4px 4px 0 #080817; font: inherit; font-weight: 800; cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease; }
+.signin-action:hover { background: #000080; transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #080817; }
+.signin-action:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #080817; }
 .review-list, .question-list { display: grid; gap: 10px; }
 .review-card, .question-card { padding: 15px; border: 1px solid #eeece6; border-radius: 11px; background: #fff; }
 .review-topline { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

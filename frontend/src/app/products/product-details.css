@@ -56,6 +56,11 @@
   align-items: start;
   margin: 20px 0 50px;
 }
+.listing-detail.is-saved .detail-copy {
+  background: #fce8f6;
+  outline: 2px solid #f35bc7;
+  outline-offset: 4px;
+}
 .photo-panel {
   position: relative;
   display: block;
@@ -261,12 +266,25 @@
   cursor: pointer;
 }
 .wishlist-button.is-saved {
-  background: #fff;
+  background: #f35bc7;
+  color: #080817;
+  border-color: #080817;
 }
 .primary-button {
-  border-color: #000080;
-  background: #000080;
+  border: 2px solid #080817;
+  background: #174bff;
   color: #fff;
+  box-shadow: 4px 4px 0 #080817;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+.primary-button:hover:not(:disabled) {
+  background: #000080;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #080817;
+}
+.primary-button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #080817;
 }
 .request-form {
   display: grid;

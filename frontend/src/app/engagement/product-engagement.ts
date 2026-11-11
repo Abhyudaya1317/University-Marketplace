@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // Keep only public seller-offer details needed for choosing which listing to review.
 export interface EngagementOffer {
@@ -67,6 +68,7 @@ interface EngagementDeleteTarget {
 })
 export class ProductEngagement {
   private readonly http = inject(HttpClient);
+  private readonly interaction = inject(InteractionFeedback);
   private reviewEligibilityRequestKey = '';
   private reviewEligibilityResolvedKey = '';
   private reviewEligibilityGeneration = 0;
@@ -177,6 +179,10 @@ export class ProductEngagement {
 
   // Submit a question with the signed-in account's server-verified identity.
   protected submitQuestion(): void {
+    if (!this.currentUserId()) {
+      this.promptSignIn('Sign in or create an account to ask a question about this item.');
+      return;
+    }
     this.error.set('');
     this.success.set('');
     this.savingQuestion.set(true);
@@ -186,11 +192,18 @@ export class ProductEngagement {
         next: () => {
           this.questionDraft.set('');
           this.success.set('Your question was posted.');
+          this.interaction.showToast('Your question was posted.');
           this.savingQuestion.set(false);
           this.loadEngagement();
         },
         error: (response: HttpErrorResponse) => {
+          if (response.status === 401) {
+            this.promptSignIn('Sign in or create an account to ask a question about this item.');
+            this.savingQuestion.set(false);
+            return;
+          }
           this.error.set(response.error?.message ?? 'Your question could not be posted.');
+          this.interaction.showToast('Your question could not be posted.', 'error');
           this.savingQuestion.set(false);
         },
       });
@@ -198,6 +211,10 @@ export class ProductEngagement {
 
   // Submit or update the current seller's single answer for a question.
   protected submitAnswer(questionId: string): void {
+    if (!this.currentUserId()) {
+      this.promptSignIn('Sign in or create an account to reply to this question.');
+      return;
+    }
     this.error.set('');
     this.success.set('');
     this.savingAnswerId.set(questionId);
@@ -209,11 +226,18 @@ export class ProductEngagement {
         next: () => {
           this.answerDrafts.update((drafts) => ({ ...drafts, [questionId]: '' }));
           this.success.set('Your seller response was saved.');
+          this.interaction.showToast('Your answer was saved.');
           this.savingAnswerId.set(null);
           this.loadEngagement();
         },
         error: (response: HttpErrorResponse) => {
+          if (response.status === 401) {
+            this.promptSignIn('Sign in or create an account to reply to this question.');
+            this.savingAnswerId.set(null);
+            return;
+          }
           this.error.set(response.error?.message ?? 'Your response could not be saved.');
+          this.interaction.showToast('Your answer could not be saved.', 'error');
           this.savingAnswerId.set(null);
         },
       });
@@ -221,6 +245,10 @@ export class ProductEngagement {
 
   // Submit a community review for the selected seller's offer.
   protected submitReview(): void {
+    if (!this.currentUserId()) {
+      this.promptSignIn('Sign in or create an account to review this seller after a completed purchase.');
+      return;
+    }
     const listingId = this.listingId();
     if (!listingId) {
       this.error.set('Choose a seller offer to review.');
@@ -243,11 +271,18 @@ export class ProductEngagement {
         next: () => {
           this.reviewComment.set('');
           this.success.set('Your community review was saved.');
+          this.interaction.showToast('Your review was posted.');
           this.savingReview.set(false);
           this.loadEngagement();
         },
         error: (response: HttpErrorResponse) => {
+          if (response.status === 401) {
+            this.promptSignIn('Sign in or create an account to review this seller after a completed purchase.');
+            this.savingReview.set(false);
+            return;
+          }
           this.error.set(response.error?.message ?? 'Your review could not be saved.');
+          this.interaction.showToast('Your review could not be saved.', 'error');
           this.savingReview.set(false);
         },
       });
@@ -352,6 +387,11 @@ export class ProductEngagement {
   protected canCurrentUserAnswer(): boolean {
     const userId = this.currentUserId();
     return userId !== null && this.eligibleSellerIds().some((sellerId) => String(sellerId) === String(userId));
+  }
+
+  // Open the shared account prompt and return the visitor to this product afterward.
+  protected promptSignIn(message: string): void {
+    this.interaction.askToSignIn(message, `/products/${encodeURIComponent(this.listingId())}`);
   }
 
   // Keep star values numeric when the select field changes.

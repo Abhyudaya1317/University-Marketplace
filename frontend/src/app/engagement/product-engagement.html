@@ -9,7 +9,8 @@
       <span class="section-count">{{ listingReviews().length }} reviews</span>
     </div>
     @if (!currentUserId()) {
-      <p class="signin-note"><a routerLink="/auth">Sign in</a> to leave a review after a completed purchase.</p>
+      <p class="signin-note">Sign in to leave a review after a completed purchase.</p>
+      <button class="signin-action" type="button" (click)="promptSignIn('Sign in or create an account to review this seller after a completed purchase.')">Sign in or sign up to review</button>
     } @else if (!reviewableOffer()) {
       <p class="signin-note">You cannot review your own offers.</p>
     } @else if (reviewEligibilityError()) {
@@ -117,7 +118,8 @@
         </button>
       </form>
     } @else {
-      <p class="signin-note"><a routerLink="/auth">Sign in</a> to ask a question.</p>
+      <p class="signin-note">Sign in to ask a question about this item.</p>
+      <button class="signin-action" type="button" (click)="promptSignIn('Sign in or create an account to ask a question about this item.')">Sign in or sign up to ask</button>
     }
 
     @if (loading()) {

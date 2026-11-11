@@ -16,7 +16,7 @@
         <a routerLink="/explore">Return to Explore</a>
       </section>
     } @else if (listing(); as item) {
-      <section class="listing-detail">
+      <section class="listing-detail" [class.is-saved]="saved()">
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
             <img class="paint-frame-image" src="/images/untitled-paint.png" alt="Untitled Paint window" />
@@ -142,7 +142,7 @@
             >
               {{ saved() ? '♥ Saved' : '♡ Save item' }}
             </button>
-            @if (currentUserId() !== null && !isOwnListing(item)) {
+            @if (!isOwnListing(item)) {
               <button
                 type="button"
                 class="wishlist-button"
@@ -151,17 +151,6 @@
               >
                 {{ startingConversation() ? 'Opening chat…' : 'Message seller' }}
               </button>
-            } @else if (sessionError()) {
-              <p class="feedback" role="status">{{ sessionError() }}</p>
-            } @else if (currentUserId() === null && !sessionCheckComplete()) {
-              <span class="feedback" role="status">Checking sign-in…</span>
-            } @else if (currentUserId() === null) {
-              <a
-                class="wishlist-button"
-                routerLink="/auth"
-                [queryParams]="{ returnUrl: '/products/' + item.id }"
-                >Sign in to message</a
-              >
             }
           </div>
           @if (feedback()) {
@@ -185,11 +174,11 @@
                 @if (sessionError()) {
                   <p class="feedback" role="alert">{{ sessionError() }}</p>
                 }
-                <a
+                <button
+                  type="button"
                   class="primary-button"
-                  routerLink="/auth"
-                  [queryParams]="{ returnUrl: '/products/' + item.id }"
-                >Sign in to request</a>
+                  (click)="requestToBuy()"
+                >Sign in to request</button>
               </section>
             } @else if (requestSubmitted()) {
               <section class="request-form request-confirmation" role="status">

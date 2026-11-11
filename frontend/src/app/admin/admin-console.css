@@ -52,6 +52,9 @@
 .modal-content label, .edit-form label { display: grid; gap: 6px; font-weight: 700; }
 .modal-content textarea { width: 100%; resize: vertical; }
 .modal-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.admin-signin-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.admin-signin-actions a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border: 2px outset #fff; background: #174bff; color: #fff; font-weight: 800; text-decoration: none; box-shadow: 4px 4px 0 #080817; }
+.admin-signin-actions a + a { background: #fff; color: #000080; }
 .edit-backdrop { overflow-y: auto; align-items: start; }
 .edit-modal { width: min(850px, 100%); margin: 20px auto; }
 .edit-form { display: grid; gap: 14px; max-height: calc(100vh - 100px); overflow: auto; padding: 20px; }

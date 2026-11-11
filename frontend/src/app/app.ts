@@ -1,10 +1,14 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterLink, RouterOutlet } from '@angular/router';
+import { InteractionFeedback } from './shared/interaction-feedback';
 
 // Keep the root component small; routed pages are displayed inside its outlet.
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html'
+  imports: [RouterLink, RouterOutlet],
+  templateUrl: './app.html',
+  styleUrl: './app.css',
 })
-export class App {}
+export class App {
+  protected readonly interaction = inject(InteractionFeedback);
+}

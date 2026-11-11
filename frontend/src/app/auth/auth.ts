@@ -43,6 +43,10 @@ export class Auth {
 
   // Restore an existing cookie session and show any status returned by Google OAuth.
   constructor() {
+    if (this.route.snapshot.queryParamMap.get('mode') === 'signup') {
+      this.mode.set('signup');
+    }
+
     this.http.get<AccountResponse>('/api/auth/me').subscribe({
       next: (response) => {
         this.currentUser.set(response.user ?? null);

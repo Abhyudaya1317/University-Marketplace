@@ -1,2 +1,46 @@
 <!-- Routed feature pages appear here without adding page logic to the app shell. -->
 <router-outlet />
+
+<!-- Keep sign-in prompts and action feedback above every page in one shared app layer. -->
+@if (interaction.signInPrompt(); as prompt) {
+  <div class="interaction-backdrop" (click)="interaction.closeSignInPrompt()">
+    <section
+      class="interaction-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sign-in-prompt-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="interaction-titlebar">
+        <strong>ACCOUNT_REQUIRED.EXE</strong>
+        <button type="button" aria-label="Close" (click)="interaction.closeSignInPrompt()">×</button>
+      </header>
+      <div class="interaction-dialog-content">
+        <p class="interaction-eyebrow">UNIBEE MEMBERS</p>
+        <h2 id="sign-in-prompt-title">Sign in to continue</h2>
+        <p>{{ prompt.message }}</p>
+        <div class="interaction-dialog-actions">
+          <a
+            class="interaction-button interaction-primary"
+            routerLink="/auth"
+            [queryParams]="{ returnUrl: prompt.returnUrl, mode: 'login' }"
+            (click)="interaction.closeSignInPrompt()"
+          >Sign in</a>
+          <a
+            class="interaction-button interaction-secondary"
+            routerLink="/auth"
+            [queryParams]="{ returnUrl: prompt.returnUrl, mode: 'signup' }"
+            (click)="interaction.closeSignInPrompt()"
+          >Sign up</a>
+        </div>
+      </div>
+    </section>
+  </div>
+}
+
+@if (interaction.toast(); as toast) {
+  <div class="action-toast" [class.action-toast-error]="toast.kind === 'error'" role="status" aria-live="polite">
+    <span aria-hidden="true">{{ toast.kind === 'success' ? '✓' : '!' }}</span>
+    {{ toast.message }}
+  </div>
+}

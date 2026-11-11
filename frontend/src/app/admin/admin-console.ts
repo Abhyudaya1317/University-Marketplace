@@ -82,7 +82,7 @@ type AdminTab = 'users' | 'listings';
 export class AdminConsole {
   private readonly http = inject(HttpClient);
 
-  protected readonly access = signal<'checking' | 'allowed' | 'denied'>('checking');
+  protected readonly access = signal<'checking' | 'allowed' | 'signed-out' | 'denied'>('checking');
   protected readonly tab = signal<AdminTab>('users');
   protected readonly overview = signal<AdminOverview | null>(null);
   protected readonly users = signal<AdminUser[]>([]);
@@ -111,14 +111,19 @@ export class AdminConsole {
     // Check the server's account allowlist before requesting protected admin data.
     this.http.get<{ user?: { isAdmin?: boolean } }>('/api/auth/me').subscribe({
       next: (response) => {
-        if (!response.user?.isAdmin) {
+        if (!response.user) {
+          this.access.set('signed-out');
+          return;
+        }
+        if (!response.user.isAdmin) {
           this.access.set('denied');
           return;
         }
         this.access.set('allowed');
         this.refreshAll();
       },
-      error: () => this.access.set('denied'),
+      error: (error: HttpErrorResponse) =>
+        this.access.set(error.status === 401 ? 'signed-out' : 'denied'),
     });
   }
 

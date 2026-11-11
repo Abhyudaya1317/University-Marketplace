@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductEngagement } from '../engagement/product-engagement';
 import { AccountNavigation } from '../shared/account-navigation';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // Match the public listing detail response; the listing ID identifies one seller's offer.
 interface ListingDetails {
@@ -46,6 +47,7 @@ export class ProductDetails {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly interaction = inject(InteractionFeedback);
   protected readonly listing = signal<ListingDetails | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal('');
@@ -143,6 +145,10 @@ export class ProductDetails {
   protected toggleSaved(): void {
     const listing = this.listing();
     if (!listing || this.saving()) return;
+    if (!this.currentUserId()) {
+      this.interaction.askToSignIn('Sign in or create an account to save this item.', this.router.url);
+      return;
+    }
     this.saving.set(true);
     this.feedback.set('');
     const request = this.saved()
@@ -154,14 +160,19 @@ export class ProductDetails {
         this.feedback.set(
           response.isSaved ? 'Saved to your wishlist.' : 'Removed from your wishlist.',
         );
+        this.interaction.showToast(response.isSaved ? 'Item saved to your wishlist.' : 'Item removed from your wishlist.');
         this.saving.set(false);
       },
       error: (response: HttpErrorResponse) => {
+        if (response.status === 401) {
+          this.interaction.askToSignIn('Sign in or create an account to save this item.', this.router.url);
+          this.saving.set(false);
+          return;
+        }
         this.feedback.set(
-          response.status === 401
-            ? 'Sign in to save this listing.'
-            : (response.error?.message ?? 'Wishlist could not be updated.'),
+          response.error?.message ?? 'Wishlist could not be updated.',
         );
+        this.interaction.showToast('Wishlist could not be updated. Please try again.', 'error');
         this.saving.set(false);
       },
     });
@@ -172,7 +183,7 @@ export class ProductDetails {
     const listing = this.listing();
     if (!listing || this.submittingOrder()) return;
     if (!this.currentUserId()) {
-      void this.router.navigate(['/auth'], { queryParams: { returnUrl: this.router.url } });
+      this.interaction.askToSignIn('Sign in or create an account to send a request to this seller.', this.router.url);
       return;
     }
     if (!Number.isSafeInteger(this.quantity()) || this.quantity() < 1 || this.quantity() > listing.quantityAvailable) {
@@ -192,10 +203,17 @@ export class ProductDetails {
         next: () => {
           this.orderFeedback.set('Request sent. The seller can accept or decline it.');
           this.requestSubmitted.set(true);
+          this.interaction.showToast('Your request was sent to the seller.');
           this.submittingOrder.set(false);
         },
         error: (response: HttpErrorResponse) => {
+          if (response.status === 401) {
+            this.interaction.askToSignIn('Sign in or create an account to send a request to this seller.', this.router.url);
+            this.submittingOrder.set(false);
+            return;
+          }
           this.orderFeedback.set(response.error?.message ?? 'We could not send your request.');
+          this.interaction.showToast('We could not send your request. Please try again.', 'error');
           this.submittingOrder.set(false);
         },
       });
@@ -204,7 +222,11 @@ export class ProductDetails {
   // Open or resume a private chat for this exact listing after the server checks access.
   protected messageSeller(): void {
     const listing = this.listing();
-    if (!listing || !this.currentUserId() || this.startingConversation()) return;
+    if (!listing || this.startingConversation()) return;
+    if (!this.currentUserId()) {
+      this.interaction.askToSignIn('Sign in or create an account to message this seller.', this.router.url);
+      return;
+    }
     this.startingConversation.set(true);
     this.feedback.set('');
     this.http
@@ -218,6 +240,9 @@ export class ProductDetails {
           void this.router.navigate(['/messages', response.conversation.id]);
         },
         error: (response: HttpErrorResponse) => {
+          if (response.status === 401) {
+            this.interaction.askToSignIn('Sign in or create an account to message this seller.', this.router.url);
+          }
           this.feedback.set(this.chatErrorMessage(response));
           this.startingConversation.set(false);
         },

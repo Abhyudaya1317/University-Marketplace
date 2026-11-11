@@ -141,6 +141,11 @@
 .save-button:hover:not(:disabled) {
   background: #a84e32;
 }
+.save-button.is-following {
+  background: #fce8f6;
+  border-color: #f35bc7;
+  color: #080817;
+}
 .save-button:disabled {
   opacity: 0.65;
   cursor: wait;

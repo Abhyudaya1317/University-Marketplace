@@ -69,13 +69,9 @@
             >
               {{ messaging() ? 'OPENING CHAT…' : 'MESSAGE SELLER' }}
             </button>
-            @if (isSignedIn()) {
-              <button class="save-button" type="button" [disabled]="busy()" (click)="toggleFavorite()">
-                {{ busy() ? 'UPDATING…' : isFavorite() ? '✓ FOLLOWING' : '+ FOLLOW SELLER' }}
-              </button>
-            } @else {
-              <a class="save-button" routerLink="/auth">SIGN IN TO FOLLOW</a>
-            }
+            <button class="save-button" [class.is-following]="isFavorite()" type="button" [disabled]="busy()" (click)="toggleFavorite()">
+              {{ busy() ? 'UPDATING…' : isFavorite() ? '✓ FOLLOWING' : '+ FOLLOW SELLER' }}
+            </button>
           </div>
         }
       </div>
