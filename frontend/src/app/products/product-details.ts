@@ -190,12 +190,18 @@ export class ProductDetails {
       this.orderFeedback.set(`Choose a whole-number quantity from 1 to ${listing.quantityAvailable}.`);
       return;
     }
+    const phone = this.buyerPhone().trim();
+    const phoneDigits = phone.replace(/\D/g, '').length;
+    if (!/^[+\d\s().-]+$/.test(phone) || phoneDigits < 7 || phoneDigits > 15) {
+      this.orderFeedback.set('Enter a valid phone number so the seller can arrange pickup.');
+      return;
+    }
     this.submittingOrder.set(true);
     this.orderFeedback.set('');
     this.http
       .post<{ success: boolean; message?: string }>('/api/orders', {
         listingId: listing.id,
-        buyerPhone: this.buyerPhone().trim(),
+        buyerPhone: phone,
         quantity: this.quantity(),
         buyerMessage: this.buyerMessage().trim(),
       })
@@ -212,8 +218,11 @@ export class ProductDetails {
             this.submittingOrder.set(false);
             return;
           }
-          this.orderFeedback.set(response.error?.message ?? 'We could not send your request.');
-          this.interaction.showToast('We could not send your request. Please try again.', 'error');
+          const message = typeof response.error?.message === 'string'
+            ? response.error.message
+            : 'We could not send your request. Please try again.';
+          this.orderFeedback.set(message);
+          this.interaction.showToast(message, 'error');
           this.submittingOrder.set(false);
         },
       });

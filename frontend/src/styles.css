@@ -2002,3 +2002,51 @@ body .market-page .product-hashtags {
 .featured-photo img {
   object-fit: contain;
 }
+
+/* Make action results distinct without recoloring the listing details panel. */
+body .details-page .wishlist-button.is-saved {
+  background: #174bff !important;
+  border: 2px solid #000080 !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+}
+
+/* Give the sign-in and buyer-request actions a clear, larger call-to-action style. */
+body .details-page .primary-button,
+body .sell-page .primary-button,
+body .auth-card .primary-button {
+  min-height: 54px !important;
+  padding: 10px 20px !important;
+  border: 3px solid #080817 !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+  font: 800 18px/1.35 var(--body, Arial, sans-serif) !important;
+}
+
+body .details-page .request-form .primary-button { width: 100%; }
+body .details-page .primary-button:hover:not(:disabled),
+body .sell-page .primary-button:hover:not(:disabled),
+body .auth-card .primary-button:hover:not(:disabled) {
+  background: #000080 !important;
+}
+
+/* Make the saved-seller state visibly different from the follow action. */
+body .seller-page .profile-actions .save-button.is-following {
+  border: 2px solid #000080 !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+}
+
+/* The current homepage accent switches from bright yellow to CampusX blue. */
+body .universe-shell .hero-label,
+body .universe-shell .featured-photo b,
+body .universe-shell .notice-icon,
+body .universe-shell .ticker strong,
+body .universe-shell .home-product-window .product-category,
+body .universe-shell .stat-yellow {
+  background: #174bff !important;
+  color: #fff !important;
+}
+body .universe-shell .hero h1 .floating-amp { color: #174bff !important; }

@@ -142,9 +142,10 @@
   background: #a84e32;
 }
 .save-button.is-following {
-  background: #fce8f6;
-  border-color: #f35bc7;
-  color: #080817;
+  background: #174bff;
+  border: 2px solid #000080;
+  color: #fff;
+  box-shadow: 3px 3px 0 #080817;
 }
 .save-button:disabled {
   opacity: 0.65;

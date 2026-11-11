@@ -16,7 +16,7 @@
         <a routerLink="/explore">Return to Explore</a>
       </section>
     } @else if (listing(); as item) {
-      <section class="listing-detail" [class.is-saved]="saved()">
+      <section class="listing-detail">
         <div class="photo-panel">
           <div class="paint-screenshot" aria-label="Product photo shown in the supplied Paint screenshot">
             <img class="paint-frame-image" src="/images/untitled-paint.png" alt="Untitled Paint window" />
@@ -164,23 +164,7 @@
             </p>
           }
           @if (!isOwnListing(item) && item.quantityAvailable > 0) {
-            @if (!sessionCheckComplete()) {
-              <p class="feedback" role="status">Checking your sign-in before enabling requests…</p>
-            } @else if (currentUserId() === null) {
-              <section class="request-form request-signin">
-                <p class="eyebrow">CASH ON DELIVERY</p>
-                <h2>Request this item</h2>
-                <p>Sign in to choose a quantity and send a request to the seller.</p>
-                @if (sessionError()) {
-                  <p class="feedback" role="alert">{{ sessionError() }}</p>
-                }
-                <button
-                  type="button"
-                  class="primary-button"
-                  (click)="requestToBuy()"
-                >Sign in to request</button>
-              </section>
-            } @else if (requestSubmitted()) {
+            @if (requestSubmitted()) {
               <section class="request-form request-confirmation" role="status">
                 <p class="eyebrow">REQUEST SENT</p>
                 <h2>Waiting for the seller</h2>
@@ -188,7 +172,7 @@
                 <a class="primary-button" routerLink="/orders">View My Orders</a>
               </section>
             } @else {
-            <form id="request-form" class="request-form" (ngSubmit)="requestToBuy()">
+            <form id="request-form" class="request-form" novalidate (ngSubmit)="requestToBuy()">
               <p class="eyebrow">CASH ON DELIVERY</p>
               <h2>Request this item</h2>
               <p>The seller will review your request and arrange a time and place with you.</p>
