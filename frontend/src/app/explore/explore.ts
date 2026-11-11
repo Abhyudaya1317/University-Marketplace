@@ -84,7 +84,6 @@ export class Explore {
   protected readonly categories = [
     { value: 'CLOTHING', label: 'Clothing' },
     { value: 'ACCESSORIES', label: 'Accessories' },
-    { value: 'JEWELLERY', label: 'Jewellery' },
     { value: 'SHOES', label: 'Shoes' },
     { value: 'FOOD', label: 'Food' },
     { value: 'ELECTRONICS', label: 'Electronics' },
@@ -97,7 +96,7 @@ export class Explore {
     { value: 'POSTERS', label: 'Posters' },
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
-    { value: 'OTHER', label: 'Other' },
+    { value: 'WAX_CANDLES', label: 'Wax candles' },
   ];
 
   // Give each listing card a stable retro filename; its window controls remain decorative.

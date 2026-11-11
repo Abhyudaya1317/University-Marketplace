@@ -276,6 +276,7 @@ enum ProductCategory {
   KITCHEN_ITEMS
   DAILY_USE
   OTHER
+  WAX_CANDLES
 }
 
 // Only active offers appear in public product and price comparisons.

@@ -106,7 +106,6 @@ export class CreateListing implements OnDestroy {
   protected readonly categories = [
     { value: 'CLOTHING', label: 'Clothing' },
     { value: 'ACCESSORIES', label: 'Accessories' },
-    { value: 'JEWELLERY', label: 'Jewellery' },
     { value: 'SHOES', label: 'Shoes' },
     { value: 'FOOD', label: 'Food' },
     { value: 'ELECTRONICS', label: 'Electronics' },
@@ -119,7 +118,7 @@ export class CreateListing implements OnDestroy {
     { value: 'POSTERS', label: 'Posters' },
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
-    { value: 'OTHER', label: 'Other' }
+    { value: 'WAX_CANDLES', label: 'Wax candles' }
   ];
 
   // Check the HttpOnly session cookie on the server before showing the seller form.

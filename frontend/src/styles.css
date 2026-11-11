@@ -1990,3 +1990,15 @@ body .market-page .product-hashtags {
     width: 100%;
   }
 }
+
+/* Give the homepage spotlight a portrait canvas so tall item photos fit naturally. */
+.featured-photo {
+  box-sizing: border-box;
+  width: min(100%, 380px);
+  height: auto;
+  aspect-ratio: 4 / 5;
+  margin-inline: auto;
+}
+.featured-photo img {
+  object-fit: contain;
+}
