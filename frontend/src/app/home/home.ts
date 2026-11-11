@@ -14,7 +14,7 @@ interface HealthResponse {
   message: string;
 }
 
-// Use real marketplace listings for the featured window, directory, and homepage feed.
+// Use real marketplace listings for the featured window, filters, and homepage feed.
 interface HomeListing {
   id: string;
   sellerId: string;
