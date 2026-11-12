@@ -180,6 +180,48 @@
 .share-dialog-actions .interaction-button { width: 100%; min-width: 0; }
 .share-dialog-actions .share-whatsapp { background: #168b50; color: #fff; }
 
+.share-inbox-picker {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 13px;
+  border: 2px solid #777;
+  background: #d6d6d2;
+}
+
+.share-inbox-picker > label {
+  color: #000080;
+  font: 700 10px/1.5 var(--pixel, monospace);
+}
+
+.share-inbox-picker select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  border: 2px inset #fff;
+  padding: 8px 10px;
+  background: #fff;
+  color: #080817;
+  font: 15px/1.35 var(--body, Arial, sans-serif);
+}
+
+.share-inbox-status {
+  margin: 0;
+  color: #444;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.share-inbox-picker .share-send-button {
+  width: 100%;
+}
+
+.share-inbox-picker .share-send-button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.65);
+  opacity: .65;
+}
+
 .action-toast-error > span:first-child {
   background: #fff34d;
 }

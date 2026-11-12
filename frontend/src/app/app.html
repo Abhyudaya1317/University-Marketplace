@@ -58,7 +58,41 @@
       <div class="interaction-dialog-content">
         <p class="interaction-eyebrow">PASS THIS FIND ALONG</p>
         <h2 id="share-listing-title">Share {{ share.title }}</h2>
-        <p>Send this listing to a friend or copy its link.</p>
+        <p>Choose a conversation to send this listing privately, or share the link another way.</p>
+        <div class="share-inbox-picker">
+          <label for="share-conversation">Send to an inbox</label>
+          @if (interaction.shareInboxState() === 'loading') {
+            <p class="share-inbox-status" role="status">Loading your conversations…</p>
+          } @else if (interaction.shareInboxState() === 'signin') {
+            <p class="share-inbox-status">Sign in to send this listing in a chat.</p>
+            <a class="interaction-button interaction-secondary" routerLink="/auth" (click)="interaction.closeSharePrompt()">Sign in</a>
+          } @else if (interaction.shareInboxState() === 'error') {
+            <p class="share-inbox-status" role="status">Your conversations could not be loaded.</p>
+          } @else if (interaction.shareConversations().length === 0) {
+            <p class="share-inbox-status">No conversations yet. Start a chat with a seller or buyer first.</p>
+          } @else {
+            <select
+              id="share-conversation"
+              [value]="interaction.selectedShareConversationId()"
+              (change)="interaction.selectShareConversation($any($event.target).value)"
+            >
+              <option value="">Choose a conversation…</option>
+              @for (conversation of interaction.shareConversations(); track conversation.id) {
+                <option [value]="conversation.id">
+                  {{ conversation.otherUser.fullName }}{{ conversation.listing ? ' · ' + conversation.listing.title : ' · General chat' }}
+                </option>
+              }
+            </select>
+            <button
+              type="button"
+              class="interaction-button interaction-primary share-send-button"
+              [disabled]="!interaction.selectedShareConversationId() || interaction.sendingShareMessage()"
+              (click)="interaction.sendListingToConversation()"
+            >
+              {{ interaction.sendingShareMessage() ? 'Sending…' : 'Send in chat' }}
+            </button>
+          }
+        </div>
         <div class="share-dialog-actions">
           <button type="button" class="interaction-button share-whatsapp" (click)="interaction.shareOnWhatsApp()">WhatsApp</button>
           <button type="button" class="interaction-button interaction-primary" (click)="interaction.shareWithApps()">More apps</button>

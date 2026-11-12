@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 export interface SignInPrompt {
@@ -17,15 +18,29 @@ export interface ListingSharePrompt {
   url: string;
 }
 
+interface ShareConversation {
+  id: string;
+  otherUser: { fullName: string };
+  listing: { title: string } | null;
+}
+
+interface ShareInboxResponse {
+  conversations: ShareConversation[];
+}
+
 // Share one sign-in prompt and short-lived action toast across every routed page.
 @Injectable({ providedIn: 'root' })
 export class InteractionFeedback {
   readonly signInPrompt = signal<SignInPrompt | null>(null);
   readonly toast = signal<ActionToast | null>(null);
   readonly sharePrompt = signal<ListingSharePrompt | null>(null);
+  readonly shareConversations = signal<ShareConversation[]>([]);
+  readonly shareInboxState = signal<'idle' | 'loading' | 'ready' | 'signin' | 'error'>('idle');
+  readonly selectedShareConversationId = signal('');
+  readonly sendingShareMessage = signal(false);
   private toastTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(private readonly router: Router) {}
+  constructor(private readonly router: Router, private readonly http: HttpClient) {}
 
   // Remember where the visitor was so sign-in returns them to the interrupted action.
   askToSignIn(message: string, returnUrl: string): void {
@@ -61,10 +76,54 @@ export class InteractionFeedback {
 
   openSharePrompt(title: string, url: string): void {
     this.sharePrompt.set({ title, url });
+    this.shareConversations.set([]);
+    this.selectedShareConversationId.set('');
+    this.shareInboxState.set('loading');
+    this.http.get<ShareInboxResponse>('/api/messages').subscribe({
+      next: (response) => {
+        const conversations = response.conversations ?? [];
+        this.shareConversations.set(conversations);
+        this.shareInboxState.set('ready');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.shareInboxState.set(error.status === 401 || error.status === 403 ? 'signin' : 'error');
+      },
+    });
   }
 
   closeSharePrompt(): void {
     this.sharePrompt.set(null);
+    this.sendingShareMessage.set(false);
+  }
+
+  selectShareConversation(conversationId: string): void {
+    this.selectedShareConversationId.set(conversationId);
+  }
+
+  sendListingToConversation(): void {
+    const share = this.sharePrompt();
+    const conversationId = this.selectedShareConversationId();
+    if (!share || !conversationId || this.sendingShareMessage()) return;
+
+    this.sendingShareMessage.set(true);
+    const body = `I thought you might like this listing: ${share.title} — ${share.url}`;
+    this.http.post(`/api/messages/${conversationId}`, { body }).subscribe({
+      next: () => {
+        this.closeSharePrompt();
+        this.showToast('Listing sent in chat.', 'success', {
+          label: 'Open inbox',
+          route: `/messages/${conversationId}`,
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.sendingShareMessage.set(false);
+        if (error.status === 401 || error.status === 403) {
+          this.shareInboxState.set('signin');
+          return;
+        }
+        this.showToast(error.error?.message ?? 'The listing could not be sent. Please try again.', 'error');
+      },
+    });
   }
 
   shareOnWhatsApp(): void {

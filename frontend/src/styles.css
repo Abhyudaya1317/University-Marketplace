@@ -2142,15 +2142,15 @@ body .details-page .seller-link strong {
   font-weight: 800 !important;
 }
 body .details-page .detail-actions .save-item-action {
-  border: 2px solid #000080 !important;
-  background: #fff3a6 !important;
-  color: #000080 !important;
+  border: 2px solid #080817 !important;
+  background: #f35bc7 !important;
+  color: #080817 !important;
   box-shadow: 3px 3px 0 #080817 !important;
   font-size: 17px !important;
   font-weight: 800 !important;
 }
 body .details-page .detail-actions .save-item-action.is-saved {
-  background: #dce8ff !important;
+  background: #f35bc7 !important;
 }
 body .details-page .detail-actions .message-seller-action {
   border: 2px solid #000080 !important;
@@ -2163,6 +2163,47 @@ body .details-page .detail-actions .message-seller-action {
 body .details-page .detail-actions .message-seller-action:hover:not(:disabled) {
   background: #000080 !important;
 }
+
+/* Match the compact shared navigation to the raised Windows-style button reference. */
+body .account-navigation {
+  gap: 8px !important;
+}
+body .account-navigation > a[href='/explore'],
+body .universe-shell .account-navigation > a[href='/explore'] {
+  min-height: 40px !important;
+  padding-inline: 9px !important;
+  border: 2px outset #fff !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+  animation: none !important;
+}
+body .account-navigation > a[href='/explore']:hover,
+body .universe-shell .account-navigation > a[href='/explore']:hover {
+  background: #000080 !important;
+}
+body .account-navigation > a[href='/sell'],
+body .account-navigation > .account-button,
+body .account-navigation > .account-menu > summary,
+body .universe-shell .main-toolbar > .toolbar-sell {
+  min-height: 40px !important;
+  padding-inline: 9px !important;
+  border: 2px outset #fff !important;
+  background: #c0c0c0 !important;
+  color: #080817 !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+}
+body .account-navigation > a[href='/sell']:hover,
+body .account-navigation > .account-button:hover,
+body .account-navigation > .account-menu > summary:hover,
+body .universe-shell .main-toolbar > .toolbar-sell:hover {
+  background: #d6d6d2 !important;
+  color: #080817 !important;
+}
+
+/* Keep the status-bar clock bright and the new-listing notice heading dark. */
+body .system-strip time { color: #fff !important; }
+body .notice-body p strong { color: #080817 !important; }
 
 @media (max-width: 760px) {
   body .market-page .explore-category-buttons {
