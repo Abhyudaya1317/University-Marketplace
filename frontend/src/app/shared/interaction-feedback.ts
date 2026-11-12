@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 
@@ -20,7 +20,7 @@ export interface ListingSharePrompt {
 
 interface ShareConversation {
   id: string;
-  otherUser: { fullName: string };
+  otherUser: { fullName: string; avatarUrl: string | null };
   listing: { title: string } | null;
 }
 
@@ -35,6 +35,13 @@ export class InteractionFeedback {
   readonly toast = signal<ActionToast | null>(null);
   readonly sharePrompt = signal<ListingSharePrompt | null>(null);
   readonly shareConversations = signal<ShareConversation[]>([]);
+  readonly shareSearch = signal('');
+  readonly filteredShareConversations = computed(() => {
+    const query = this.shareSearch().trim().toLocaleLowerCase();
+    return this.shareConversations().filter((conversation) =>
+      `${conversation.otherUser.fullName} ${conversation.listing?.title ?? ''}`.toLocaleLowerCase().includes(query),
+    );
+  });
   readonly shareInboxState = signal<'idle' | 'loading' | 'ready' | 'signin' | 'error'>('idle');
   readonly selectedShareConversationId = signal('');
   readonly sendingShareMessage = signal(false);
@@ -77,6 +84,7 @@ export class InteractionFeedback {
   openSharePrompt(title: string, url: string): void {
     this.sharePrompt.set({ title, url });
     this.shareConversations.set([]);
+    this.shareSearch.set('');
     this.selectedShareConversationId.set('');
     this.shareInboxState.set('loading');
     this.http.get<ShareInboxResponse>('/api/messages').subscribe({
@@ -98,6 +106,10 @@ export class InteractionFeedback {
 
   selectShareConversation(conversationId: string): void {
     this.selectedShareConversationId.set(conversationId);
+  }
+
+  setShareSearch(value: string): void {
+    this.shareSearch.set(value);
   }
 
   sendListingToConversation(): void {
@@ -132,6 +144,34 @@ export class InteractionFeedback {
     const message = `${share.title} — ${share.url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     this.closeSharePrompt();
+  }
+
+  shareOnFacebook(): void {
+    const share = this.sharePrompt();
+    if (!share) return;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(share.url)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  shareOnX(): void {
+    const share = this.sharePrompt();
+    if (!share) return;
+    const text = `Check out ${share.title}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(share.url)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  shareOnThreads(): void {
+    const share = this.sharePrompt();
+    if (!share) return;
+    const text = `Check out ${share.title} ${share.url}`;
+    window.open(`https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  shareByEmail(): void {
+    const share = this.sharePrompt();
+    if (!share) return;
+    const subject = `UniBee listing: ${share.title}`;
+    const body = `I thought you might like this listing: ${share.title} — ${share.url}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
   async shareWithApps(): Promise<void> {

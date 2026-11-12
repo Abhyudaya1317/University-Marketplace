@@ -170,56 +170,200 @@
   cursor: pointer;
 }
 
-.share-dialog-actions {
+.share-dialog {
+  display: flex;
+  width: min(100%, 740px);
+  max-height: min(86dvh, 820px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 28px;
+  background: #202329;
+  color: #f8f8fa;
+  box-shadow: 0 18px 60px rgb(0 0 0 / 45%);
+}
+
+.share-sheet-header {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 22px;
+  min-height: 72px;
+  flex: 0 0 auto;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  padding: 0 14px;
 }
 
-.share-dialog-actions .interaction-button { width: 100%; min-width: 0; }
-.share-dialog-actions .share-whatsapp { background: #168b50; color: #fff; }
-
-.share-inbox-picker {
-  display: grid;
-  gap: 9px;
-  margin-top: 18px;
-  padding: 13px;
-  border: 2px solid #777;
-  background: #d6d6d2;
+.share-sheet-header h2 {
+  margin: 0;
+  color: #fff;
+  font: 700 21px/1.2 var(--body, Arial, sans-serif);
+  text-align: center;
 }
 
-.share-inbox-picker > label {
-  color: #000080;
-  font: 700 10px/1.5 var(--pixel, monospace);
+.share-sheet-header > button {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #f7f7f9;
+  font: 300 38px/1 Arial, sans-serif;
+  cursor: pointer;
 }
 
-.share-inbox-picker select {
-  box-sizing: border-box;
+.share-sheet-search {
+  display: flex;
+  min-height: 52px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  border-radius: 12px;
+  padding: 0 18px;
+  background: #292d34;
+  color: #aeb3bc;
+}
+
+.share-sheet-search > span { font: 32px/1 Arial, sans-serif; }
+.share-sheet-search input {
   width: 100%;
-  min-height: 44px;
-  border: 2px inset #fff;
-  padding: 8px 10px;
-  background: #fff;
-  color: #080817;
-  font: 15px/1.35 var(--body, Arial, sans-serif);
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font: 17px/1.3 var(--body, Arial, sans-serif);
+}
+.share-sheet-search input::placeholder { color: #aeb3bc; opacity: 1; }
+
+.share-sheet-contacts {
+  display: grid;
+  min-height: 120px;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  align-content: start;
+  gap: 12px 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px 16px 18px;
+}
+
+.share-contact {
+  display: flex;
+  min-width: 0;
+  min-height: 144px;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 8px 5px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.share-contact:hover { background: #2a2f37; }
+.share-contact-selected { border-color: #4d83ff; background: #2a3548; }
+.share-contact > img, .share-contact-avatar-fallback {
+  display: grid;
+  width: 82px;
+  height: 82px;
+  flex: 0 0 82px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #555b68;
+  color: #fff;
+  font: 700 30px/1 var(--body, Arial, sans-serif);
+  object-fit: cover;
+}
+.share-contact-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff;
+  font: 15px/1.3 var(--body, Arial, sans-serif);
+  text-align: center;
+  text-overflow: ellipsis;
+}
+.share-contact-listing {
+  max-width: 100%;
+  overflow: hidden;
+  color: #aeb3bc;
+  font: 12px/1.2 var(--body, Arial, sans-serif);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .share-inbox-status {
-  margin: 0;
-  color: #444;
-  font-size: 14px;
-  line-height: 1.45;
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  margin: 20px 0;
+  color: #d4d7dd;
+  font: 15px/1.5 var(--body, Arial, sans-serif);
+  text-align: center;
 }
 
-.share-inbox-picker .share-send-button {
+.share-sheet-footer {
+  flex: 0 0 auto;
+  border-top: 1px solid #343840;
+  background: #202329;
+  padding: 12px 12px 16px;
+}
+
+.share-send-button {
+  display: block;
   width: 100%;
+  min-height: 44px;
+  margin-bottom: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #315eea;
+  color: white;
+  font: 700 15px/1.3 var(--body, Arial, sans-serif);
+  cursor: pointer;
 }
+.share-send-button:disabled { opacity: .65; cursor: wait; }
 
-.share-inbox-picker .share-send-button:disabled {
-  cursor: not-allowed;
-  filter: grayscale(.65);
-  opacity: .65;
+.share-sheet-channels {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.share-sheet-channels::-webkit-scrollbar { display: none; }
+.share-sheet-channels > button {
+  display: flex;
+  min-width: 92px;
+  flex: 1 0 92px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 4px 2px;
+  background: transparent;
+  color: #f1f2f5;
+  cursor: pointer;
+}
+.share-sheet-channels > button > span {
+  display: grid;
+  width: 62px;
+  height: 62px;
+  place-items: center;
+  border-radius: 50%;
+  background: #292d34;
+  color: #f1f2f5;
+  font: 30px/1 Arial, sans-serif;
+}
+.share-sheet-channels > button:hover > span { background: #3a404b; }
+.share-sheet-channels > button > .share-brand-letter { font-weight: 700; }
+.share-sheet-channels small {
+  color: #e5e6e9;
+  font: 13px/1.25 var(--body, Arial, sans-serif);
+  white-space: nowrap;
 }
 
 .action-toast-error > span:first-child {
@@ -237,7 +381,16 @@
   .interaction-button { flex-basis: 120px; min-height: 46px; padding: 9px 10px; font-size: 13px; }
   .action-toast { width: min(420px, calc(100vw - 28px)); max-width: none; flex-wrap: wrap; }
   .action-toast-link { margin-left: 36px; }
-  .share-dialog-actions { grid-template-columns: 1fr; }
+  .share-dialog { max-height: 90dvh; border-radius: 22px; }
+  .share-sheet-header { min-height: 62px; }
+  .share-sheet-search { min-height: 48px; margin-inline: 12px; }
+  .share-sheet-contacts { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px 2px; padding-inline: 10px; }
+  .share-contact { min-height: 126px; }
+  .share-contact > img, .share-contact-avatar-fallback { width: 72px; height: 72px; flex-basis: 72px; }
+  .share-sheet-channels { gap: 4px; }
+  .share-sheet-channels > button { min-width: 78px; flex-basis: 78px; }
+  .share-sheet-channels > button > span { width: 54px; height: 54px; font-size: 26px; }
+  .share-sheet-channels small { font-size: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

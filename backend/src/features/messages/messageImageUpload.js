@@ -32,7 +32,8 @@ const supportedTypes = new Map([
 // Buffer the request briefly; persist it only after the controller verifies conversation membership.
 const messageFileUpload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: maxMessageFileSize, files: 1, fields: 1, parts: 2 },
+    // A first message may include its seller/listing target and a caption alongside the file.
+    limits: { fileSize: maxMessageFileSize, files: 1, fields: 2, parts: 3 },
 }).single("file");
 
 // Validate actual bytes before any attachment reaches persistent storage.

@@ -27,6 +27,12 @@
                     class="paint-product-image"
                     [src]="photoUrl"
                     [alt]="item.title + ' product photo ' + (activePhotoIndex() + 1)"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Enlarge product photo"
+                    (click)="openImageViewer()"
+                    (keydown.enter)="openImageViewer()"
+                    (keydown.space)="$event.preventDefault(); openImageViewer()"
                     (error)="markPhotoUnavailable(photoUrl)"
                   />
                 } @else {
@@ -227,6 +233,21 @@
       <app-product-engagement [offers]="engagementOffers()" [listingId]="item.id" />
     }
   </main>
+  @if (imageViewerOpen() && activePhotoUrl(); as photoUrl) {
+    <div class="image-viewer-backdrop" role="dialog" aria-modal="true" aria-label="Product photo viewer"
+      (click)="closeImageViewer()" (keydown.escape)="closeImageViewer()"
+      (touchstart)="photoTouchStart($event)" (touchend)="photoTouchEnd($event)">
+      <button class="image-viewer-close" type="button" aria-label="Close enlarged photo" (click)="closeImageViewer(); $event.stopPropagation()">×</button>
+      <div class="image-viewer-scroll" (click)="$event.stopPropagation()">
+        <img class="image-viewer-image" [src]="photoUrl" [alt]="(listing()?.title ?? 'Product') + ' product photo ' + (activePhotoIndex() + 1)" />
+      </div>
+      @if (productPhotos().length > 1) {
+        <button class="image-viewer-arrow image-viewer-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1); $event.stopPropagation()">‹</button>
+        <button class="image-viewer-arrow image-viewer-next" type="button" aria-label="Next product photo" (click)="stepPhoto(1); $event.stopPropagation()">›</button>
+        <span class="image-viewer-count">{{ activePhotoIndex() + 1 }} / {{ productPhotos().length }}</span>
+      }
+    </div>
+  }
   @if (archiveDialogOpen()) {
     <div class="archive-modal-backdrop" (click)="cancelArchive()">
       <section class="archive-modal" role="dialog" aria-modal="true" aria-labelledby="archive-listing-title"

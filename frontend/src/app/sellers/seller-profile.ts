@@ -244,14 +244,19 @@ export class SellerProfile {
     this.messaging.set(true);
     this.notice.set('');
     this.http
-      .post<{ success: boolean; conversation: { id: string } }>(
+      .post<{ success: boolean; conversation: { id: string } | null }>(
         `/api/messages/sellers/${this.sellerId}`,
         {},
       )
       .subscribe({
         next: (response) => {
           this.messaging.set(false);
-          void this.router.navigate(['/messages', response.conversation.id]);
+          void this.router.navigate(
+            response.conversation
+              ? ['/messages', response.conversation.id]
+              : ['/messages', 'new'],
+            response.conversation ? undefined : { queryParams: { sellerId: this.sellerId } },
+          );
         },
         error: (response: HttpErrorResponse) => {
           this.messaging.set(false);

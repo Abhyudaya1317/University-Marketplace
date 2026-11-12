@@ -3,8 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, inject, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { interval } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { combineLatest, interval } from 'rxjs';
 import { AccountNavigation } from '../shared/account-navigation';
 
 // Keep inbox rows small while each thread contains only the latest 100 messages.
@@ -47,6 +47,21 @@ interface ConversationThread {
   listing: { id: string; title: string; price: string; photoUrl: string | null; status: string } | null;
   confirmedMeeting: { meetupAt: string; meetupLocation: string | null } | null;
   messages: ChatMessage[];
+}
+
+interface DraftTarget {
+  listingId: string | null;
+  sellerId: string | null;
+}
+
+interface DraftConversationResponse {
+  success: boolean;
+  conversation: { id: string } | null;
+  draft: {
+    sellerId: string;
+    otherUser: ConversationThread['otherUser'];
+    listing: ConversationThread['listing'];
+  };
 }
 
 // Reduce large camera photos before upload so chat image requests stay small and quick.
@@ -104,6 +119,7 @@ async function prepareChatPhoto(file: File): Promise<File> {
 export class Messages {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   protected readonly conversations = signal<ConversationSummary[]>([]);
   protected readonly conversation = signal<ConversationThread | null>(null);
   protected readonly currentUserId = signal<string | null>(null);
@@ -123,6 +139,7 @@ export class Messages {
   protected readonly signInRequired = signal(false);
   protected readonly notice = signal('');
   protected readonly conversationId = signal<string | null>(null);
+  protected readonly draftTarget = signal<DraftTarget>({ listingId: null, sellerId: null });
   protected readonly uploadingFile = signal(false);
   protected readonly meetupDecisionMessage = signal<ChatMessage | null>(null);
   protected readonly respondingMeetupId = signal<string | null>(null);
@@ -142,14 +159,24 @@ export class Messages {
       error: () => this.currentUserId.set(null),
     });
     this.loadInbox();
-    this.route.paramMap.subscribe((params) => {
-      const value = params.get('conversationId');
-      const id = value && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0 ? value : null;
-      this.conversationId.set(id);
-      this.conversation.set(null);
-      this.meetupDecisionMessage.set(null);
-      if (id) this.loadConversation(id);
-    });
+    combineLatest([this.route.paramMap, this.route.queryParamMap])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([params, query]) => {
+        const value = params.get('conversationId');
+        const isDraft = value === 'new';
+        const id = value && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0 ? value : null;
+        const target: DraftTarget = {
+          listingId: isDraft ? query.get('listingId') : null,
+          sellerId: isDraft ? query.get('sellerId') : null,
+        };
+        this.conversationId.set(isDraft ? 'new' : id);
+        this.draftTarget.set(target);
+        this.conversation.set(null);
+        this.meetupDecisionMessage.set(null);
+        this.conversationRequestInFlight = false;
+        if (id) this.loadConversation(id);
+        else if (isDraft) this.loadDraftConversation(target);
+      });
 
     // Refresh open conversations frequently, but avoid reloading the whole inbox every few seconds.
     interval(5000)
@@ -158,12 +185,54 @@ export class Messages {
         if (typeof document === 'undefined' || document.visibilityState !== 'visible') return;
 
         const openConversationId = this.conversationId();
-        if (openConversationId) {
+        if (openConversationId && openConversationId !== 'new') {
           this.refreshConversation(openConversationId);
-        } else if (Date.now() - this.lastInboxRefreshAt >= 15_000) {
+        } else if (!openConversationId && Date.now() - this.lastInboxRefreshAt >= 15_000) {
           this.refreshInbox();
         }
       });
+  }
+
+  // Opening a seller chat reads its details but does not create an inbox row.
+  private loadDraftConversation(target: DraftTarget): void {
+    this.conversationLoading.set(true);
+    this.error.set('');
+    this.conversationRequestInFlight = true;
+    const url = target.listingId
+      ? `/api/messages/listings/${encodeURIComponent(target.listingId)}`
+      : target.sellerId
+        ? `/api/messages/sellers/${encodeURIComponent(target.sellerId)}`
+        : null;
+    if (!url) {
+      this.conversationRequestInFlight = false;
+      this.conversationLoading.set(false);
+      this.error.set('Choose a seller or listing to start a conversation.');
+      return;
+    }
+
+    this.http.post<DraftConversationResponse>(url, {}).subscribe({
+      next: (response) => {
+        this.conversationRequestInFlight = false;
+        this.conversationLoading.set(false);
+        if (response.conversation?.id) {
+          void this.router.navigate(['/messages', response.conversation.id], { replaceUrl: true });
+          return;
+        }
+        this.conversation.set({
+          id: 'new',
+          otherUser: response.draft.otherUser,
+          listing: response.draft.listing,
+          confirmedMeeting: null,
+          messages: [],
+        });
+      },
+      error: (response: HttpErrorResponse) => {
+        this.conversationRequestInFlight = false;
+        this.conversationLoading.set(false);
+        this.error.set(this.messageError(response, 'conversation'));
+        this.signInRequired.set(response.status === 401);
+      },
+    });
   }
 
   // Fetch only threads in which the signed-in account is a buyer or seller.
@@ -442,12 +511,21 @@ export class Messages {
     this.sending.set(true);
     this.error.set('');
     this.notice.set('');
-    this.http.post(url, body).subscribe({
-      next: () => {
+    const requestBody = this.withDraftTarget(body, id);
+    this.http.post<{ conversationId?: string | number }>(url, requestBody).subscribe({
+      next: (response) => {
         if (successMessage === 'Message sent.') this.draft.set('');
         this.notice.set(successMessage);
         this.sending.set(false);
         onSuccess?.();
+        if (id === 'new' && response.conversationId) {
+          const savedConversationId = String(response.conversationId);
+          this.conversationId.set(savedConversationId);
+          this.draftTarget.set({ listingId: null, sellerId: null });
+          void this.router.navigate(['/messages', savedConversationId], { replaceUrl: true });
+          this.refreshInbox();
+          return;
+        }
         // A quiet refresh updates the bubble in place instead of rebuilding the chat view.
         this.refreshConversation(id);
         this.refreshInbox();
@@ -458,6 +536,18 @@ export class Messages {
         onError?.();
       },
     });
+  }
+
+  // Add the selected seller/listing only while a draft is being sent for the first time.
+  private withDraftTarget(body: object | FormData, conversationId: string): object | FormData {
+    if (conversationId !== 'new') return body;
+    const target = this.draftTarget();
+    if (body instanceof FormData) {
+      if (target.listingId) body.append('listingId', target.listingId);
+      if (target.sellerId) body.append('sellerId', target.sellerId);
+      return body;
+    }
+    return { ...body, ...target };
   }
 
   protected mapLocationUrl(message: ChatMessage): string {

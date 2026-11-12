@@ -51,54 +51,72 @@
 @if (interaction.sharePrompt(); as share) {
   <div class="interaction-backdrop" (click)="interaction.closeSharePrompt()">
     <section class="interaction-dialog share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-listing-title" (click)="$event.stopPropagation()">
-      <header class="interaction-titlebar">
-        <strong>SHARE_LISTING.EXE</strong>
+      <header class="share-sheet-header">
         <button type="button" aria-label="Close share options" (click)="interaction.closeSharePrompt()">×</button>
+        <h2 id="share-listing-title">Share</h2>
+        <span aria-hidden="true"></span>
       </header>
-      <div class="interaction-dialog-content">
-        <p class="interaction-eyebrow">PASS THIS FIND ALONG</p>
-        <h2 id="share-listing-title">Share {{ share.title }}</h2>
-        <p>Choose a conversation to send this listing privately, or share the link another way.</p>
-        <div class="share-inbox-picker">
-          <label for="share-conversation">Send to an inbox</label>
-          @if (interaction.shareInboxState() === 'loading') {
-            <p class="share-inbox-status" role="status">Loading your conversations…</p>
-          } @else if (interaction.shareInboxState() === 'signin') {
-            <p class="share-inbox-status">Sign in to send this listing in a chat.</p>
-            <a class="interaction-button interaction-secondary" routerLink="/auth" (click)="interaction.closeSharePrompt()">Sign in</a>
-          } @else if (interaction.shareInboxState() === 'error') {
-            <p class="share-inbox-status" role="status">Your conversations could not be loaded.</p>
-          } @else if (interaction.shareConversations().length === 0) {
-            <p class="share-inbox-status">No conversations yet. Start a chat with a seller or buyer first.</p>
-          } @else {
-            <select
-              id="share-conversation"
-              [value]="interaction.selectedShareConversationId()"
-              (change)="interaction.selectShareConversation($any($event.target).value)"
-            >
-              <option value="">Choose a conversation…</option>
-              @for (conversation of interaction.shareConversations(); track conversation.id) {
-                <option [value]="conversation.id">
-                  {{ conversation.otherUser.fullName }}{{ conversation.listing ? ' · ' + conversation.listing.title : ' · General chat' }}
-                </option>
-              }
-            </select>
+      <div class="share-sheet-search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          aria-label="Search conversations"
+          placeholder="Search"
+          [value]="interaction.shareSearch()"
+          (input)="interaction.setShareSearch($any($event.target).value)"
+        />
+      </div>
+      <div class="share-sheet-contacts" aria-label="Choose a conversation">
+        @if (interaction.shareInboxState() === 'loading') {
+          <p class="share-inbox-status" role="status">Loading your conversations…</p>
+        } @else if (interaction.shareInboxState() === 'signin') {
+          <p class="share-inbox-status">Sign in to send this listing in a chat.</p>
+          <a class="interaction-button interaction-secondary" routerLink="/auth" (click)="interaction.closeSharePrompt()">Sign in</a>
+        } @else if (interaction.shareInboxState() === 'error') {
+          <p class="share-inbox-status" role="status">Your conversations could not be loaded.</p>
+        } @else if (interaction.filteredShareConversations().length === 0) {
+          <p class="share-inbox-status">{{ interaction.shareConversations().length ? 'No matching conversations.' : 'No conversations yet. Start a chat first.' }}</p>
+        } @else {
+          @for (conversation of interaction.filteredShareConversations(); track conversation.id) {
             <button
               type="button"
-              class="interaction-button interaction-primary share-send-button"
-              [disabled]="!interaction.selectedShareConversationId() || interaction.sendingShareMessage()"
-              (click)="interaction.sendListingToConversation()"
+              class="share-contact"
+              [class.share-contact-selected]="interaction.selectedShareConversationId() === conversation.id"
+              [attr.aria-pressed]="interaction.selectedShareConversationId() === conversation.id"
+              (click)="interaction.selectShareConversation(conversation.id)"
             >
-              {{ interaction.sendingShareMessage() ? 'Sending…' : 'Send in chat' }}
+              @if (conversation.otherUser.avatarUrl) {
+                <img [src]="conversation.otherUser.avatarUrl" [alt]="''" />
+              } @else {
+                <span class="share-contact-avatar-fallback">{{ conversation.otherUser.fullName.charAt(0).toUpperCase() }}</span>
+              }
+              <span class="share-contact-name">{{ conversation.otherUser.fullName }}</span>
+              @if (conversation.listing) {
+                <span class="share-contact-listing">{{ conversation.listing.title }}</span>
+              }
             </button>
           }
-        </div>
-        <div class="share-dialog-actions">
-          <button type="button" class="interaction-button share-whatsapp" (click)="interaction.shareOnWhatsApp()">WhatsApp</button>
-          <button type="button" class="interaction-button interaction-primary" (click)="interaction.shareWithApps()">More apps</button>
-          <button type="button" class="interaction-button interaction-secondary" (click)="interaction.copyShareLink()">Copy link</button>
-        </div>
+        }
       </div>
+      <footer class="share-sheet-footer">
+        @if (interaction.selectedShareConversationId()) {
+          <button
+            type="button"
+            class="share-send-button"
+            [disabled]="interaction.sendingShareMessage()"
+            (click)="interaction.sendListingToConversation()"
+          >{{ interaction.sendingShareMessage() ? 'Sending…' : 'Send in chat' }}</button>
+        }
+        <div class="share-sheet-channels" aria-label="Share using another app">
+          <button type="button" (click)="interaction.copyShareLink()"><span>↗</span><small>Copy link</small></button>
+          <button type="button" (click)="interaction.shareOnFacebook()"><span class="share-brand-letter">f</span><small>Facebook</small></button>
+          <button type="button" (click)="interaction.shareWithApps()"><span>◉</span><small>Messenger</small></button>
+          <button type="button" (click)="interaction.shareOnWhatsApp()"><span>◉</span><small>WhatsApp</small></button>
+          <button type="button" (click)="interaction.shareByEmail()"><span>✉</span><small>Email</small></button>
+          <button type="button" (click)="interaction.shareOnThreads()"><span>@</span><small>Threads</small></button>
+          <button type="button" (click)="interaction.shareOnX()"><span>𝕏</span><small>X</small></button>
+        </div>
+      </footer>
     </section>
   </div>
 }

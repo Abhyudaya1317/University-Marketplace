@@ -59,6 +59,7 @@ export class ProductDetails {
   protected readonly feedback = signal('');
   protected readonly unavailablePhotoUrls = signal<Set<string>>(new Set());
   protected readonly activePhotoIndex = signal(0);
+  protected readonly imageViewerOpen = signal(false);
   protected readonly productPhotos = computed(() => {
     const item = this.listing();
     return [item?.photoUrl, item?.photoUrl2, item?.photoUrl3, item?.photoUrl4]
@@ -249,14 +250,19 @@ export class ProductDetails {
     this.startingConversation.set(true);
     this.feedback.set('');
     this.http
-      .post<{ success: boolean; conversation: { id: string }; message?: string }>(
+      .post<{ success: boolean; conversation: { id: string } | null; message?: string }>(
         `/api/messages/listings/${listing.id}`,
         {},
       )
       .subscribe({
         next: (response) => {
           this.startingConversation.set(false);
-          void this.router.navigate(['/messages', response.conversation.id]);
+          void this.router.navigate(
+            response.conversation
+              ? ['/messages', response.conversation.id]
+              : ['/messages', 'new'],
+            response.conversation ? undefined : { queryParams: { listingId: listing.id } },
+          );
         },
         error: (response: HttpErrorResponse) => {
           if (response.status === 401) {
@@ -294,6 +300,14 @@ export class ProductDetails {
     const count = this.productPhotos().length;
     if (count < 2) return;
     this.activePhotoIndex.update((index) => (index + direction + count) % count);
+  }
+
+  protected openImageViewer(): void {
+    if (this.activePhotoUrl()) this.imageViewerOpen.set(true);
+  }
+
+  protected closeImageViewer(): void {
+    this.imageViewerOpen.set(false);
   }
 
   protected photoTouchStart(event: TouchEvent): void {

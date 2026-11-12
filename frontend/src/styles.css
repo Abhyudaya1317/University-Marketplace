@@ -1590,6 +1590,15 @@ body .seller-page .profile-copy .seller-bio {
     padding-inline: clamp(3px, 1.2vw, 6px) !important;
     font-size: clamp(5px, 1.55vw, 7px) !important;
   }
+  body .universe-shell .main-toolbar .account-navigation > a[href='/sell'] {
+    grid-area: sell;
+    justify-self: end;
+    width: auto !important;
+    max-width: none;
+    min-height: 32px !important;
+    padding-inline: clamp(3px, 1.2vw, 6px) !important;
+    font-size: clamp(5px, 1.55vw, 7px) !important;
+  }
   body .universe-shell .main-toolbar > .toolbar-sell {
     grid-area: sell;
     justify-self: end;
@@ -1608,6 +1617,7 @@ body .seller-page .profile-copy .seller-bio {
 @media (max-width: 380px) {
   body .universe-shell .main-toolbar { column-gap: 5px; padding-inline: 8px; }
   body .universe-shell .main-toolbar .account-navigation > a[href='/explore'] { padding-inline: 5px !important; font-size: 5px !important; }
+  body .universe-shell .main-toolbar .account-navigation > a[href='/sell'] { padding-inline: 5px !important; font-size: 5px !important; }
   body .universe-shell .main-toolbar > .toolbar-sell { gap: 3px; padding-inline: 5px; font-size: 5px; }
   body .universe-shell .main-toolbar .account-menu > summary { gap: 4px; padding-inline: 5px; font-size: 5px; }
 }
@@ -2201,11 +2211,36 @@ body .universe-shell .main-toolbar > .toolbar-sell:hover {
   color: #080817 !important;
 }
 
-/* Keep the status-bar clock bright and the new-listing notice heading dark. */
+/* Keep the status-bar clock bright and all new-listing notice copy dark. */
 body .system-strip time { color: #fff !important; }
+body .notice-body p,
 body .notice-body p strong { color: #080817 !important; }
 
+/* Keep the home navigation actions as the three compact raised buttons in the reference. */
+body .universe-shell .account-navigation > a[href='/sell'] {
+  display: inline-flex !important;
+  min-height: 40px !important;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 9px !important;
+  border: 2px outset #fff !important;
+  background: #c0c0c0 !important;
+  color: #080817 !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+  font-size: 7px !important;
+  text-decoration: none;
+  white-space: nowrap;
+}
+body .universe-shell .account-navigation > a[href='/sell']:hover {
+  background: #d6d6d2 !important;
+  color: #080817 !important;
+}
+
+/* Make the route to the complete marketplace easier to spot without changing its layout. */
+body .feed-heading > a { font-size: 8px; }
+
 @media (max-width: 760px) {
+  body .feed-heading > a { font-size: 7px; }
   body .market-page .explore-category-buttons {
     gap: 2px;
   }

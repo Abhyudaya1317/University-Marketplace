@@ -59,31 +59,104 @@ async function findParticipantConversation(conversationId, userId) {
 
 // Save a typed message and update conversation activity in one database transaction.
 async function createConversationMessage(request, response, data) {
-    const conversationId = Number(request.params.conversationId);
-    if (!Number.isSafeInteger(conversationId) || conversationId < 1) {
+    const routeConversationId = request.params.conversationId;
+    const isDraftConversation = routeConversationId === "new";
+    const conversationId = Number(routeConversationId);
+    if (!isDraftConversation && (!Number.isSafeInteger(conversationId) || conversationId < 1)) {
         if (data.attachmentName) await removeMessageImage(data.attachmentName);
         return response.status(400).json({ success: false, message: "Conversation ID must be a positive integer." });
     }
 
     try {
-        const conversation = await findParticipantConversation(conversationId, request.user.id);
-        if (!conversation) {
-            if (data.attachmentName) await removeMessageImage(data.attachmentName);
-            return response.status(404).json({ success: false, message: "This conversation was not found." });
-        }
+        const saveMessage = async () => prisma.$transaction(async (transaction) => {
+            let targetConversationId = conversationId;
+            if (isDraftConversation) {
+                const listingIdValue = Number(request.body?.listingId);
+                const sellerIdValue = Number(request.body?.sellerId);
+                let targetSellerId = null;
+                let targetListingId = null;
 
-        const message = await prisma.$transaction(async (transaction) => {
+                if (Number.isSafeInteger(listingIdValue) && listingIdValue > 0) {
+                    const listing = await transaction.listing.findFirst({
+                        where: { id: listingIdValue, status: "ACTIVE" },
+                        select: { id: true, sellerId: true },
+                    });
+                    if (!listing) {
+                        const error = new Error("This listing is no longer available.");
+                        error.statusCode = 404;
+                        throw error;
+                    }
+                    targetListingId = listing.id;
+                    targetSellerId = listing.sellerId;
+                } else if (Number.isSafeInteger(sellerIdValue) && sellerIdValue > 0) {
+                    const seller = await transaction.user.findUnique({ where: { id: sellerIdValue }, select: { id: true } });
+                    if (!seller) {
+                        const error = new Error("This seller was not found.");
+                        error.statusCode = 404;
+                        throw error;
+                    }
+                    targetSellerId = seller.id;
+                } else {
+                    const error = new Error("Choose a seller or listing before sending a message.");
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                if (targetSellerId === request.user.id) {
+                    const error = new Error("You cannot message yourself.");
+                    error.statusCode = 400;
+                    throw error;
+                }
+
+                let existing = await transaction.conversation.findFirst({
+                    where: targetListingId
+                        ? { listingId: targetListingId, buyerId: request.user.id }
+                        : { listingId: null, sellerId: targetSellerId, buyerId: request.user.id },
+                    select: { id: true },
+                });
+                if (!existing) {
+                    existing = await transaction.conversation.create({
+                        data: { listingId: targetListingId, buyerId: request.user.id, sellerId: targetSellerId },
+                        select: { id: true },
+                    });
+                }
+                targetConversationId = existing.id;
+            } else {
+                const conversation = await transaction.conversation.findFirst({
+                    where: { id: targetConversationId, ...participantFilter(request.user.id) },
+                    select: { id: true },
+                });
+                if (!conversation) {
+                    const error = new Error("This conversation was not found.");
+                    error.statusCode = 404;
+                    throw error;
+                }
+            }
+
             const created = await transaction.message.create({
-                data: { conversationId, senderId: request.user.id, ...data },
+                data: { conversationId: targetConversationId, senderId: request.user.id, ...data },
                 include: { sender: { select: { fullName: true } } },
             });
-            await transaction.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
-            return created;
+            await transaction.conversation.update({ where: { id: targetConversationId }, data: { updatedAt: new Date() } });
+            return { message: created, conversationId: targetConversationId };
         });
 
-        return response.status(201).json({ success: true, message: presentMessage(message) });
+        let saved;
+        try {
+            saved = await saveMessage();
+        } catch (error) {
+            // Concurrent first messages can race to create the same unique conversation.
+            if (!isDraftConversation || error?.code !== "P2002") throw error;
+            saved = await saveMessage();
+        }
+        return response.status(201).json({
+            success: true,
+            conversationId: saved.conversationId,
+            message: presentMessage(saved.message),
+        });
     } catch (error) {
         if (data.attachmentName) await removeMessageImage(data.attachmentName);
+        if (error?.statusCode) return response.status(error.statusCode).json({ success: false, message: error.message });
         console.error("Message send failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not send this message." });
     }
@@ -104,7 +177,11 @@ export async function startListingConversation(request, response) {
     try {
         const listing = await prisma.listing.findFirst({
             where: { id: listingId, status: "ACTIVE" },
-            select: { id: true, sellerId: true },
+            select: {
+                id: true, title: true, price: true, photoUrl: true, status: true,
+                sellerId: true,
+                seller: { select: { id: true, fullName: true, avatarUrl: true } },
+            },
         });
         if (!listing)
             return response
@@ -123,21 +200,20 @@ export async function startListingConversation(request, response) {
                 });
         }
 
-        const conversation = await prisma.conversation.upsert({
-            where: {
-                listingId_buyerId: { listingId, buyerId: request.user.id },
-            },
-            create: {
-                listingId,
-                buyerId: request.user.id,
-                sellerId: listing.sellerId,
-            },
-            update: {},
+        const existing = await prisma.conversation.findFirst({
+            where: { listingId, buyerId: request.user.id, messages: { some: {} } },
+            select: { id: true },
         });
 
-        return response
-            .status(200)
-            .json({ success: true, conversation: { id: conversation.id } });
+        return response.json({
+            success: true,
+            conversation: existing ? { id: existing.id } : null,
+            draft: {
+                sellerId: listing.seller.id,
+                otherUser: { id: listing.seller.id, fullName: listing.seller.fullName || "CampusX Member", avatarUrl: listing.seller.avatarUrl },
+                listing: { id: listing.id, title: listing.title, price: listing.price.toFixed(2), photoUrl: listing.photoUrl, status: listing.status },
+            },
+        });
     } catch (error) {
         console.error(
             "Conversation start failed:",
@@ -163,30 +239,18 @@ export async function startSellerConversation(request, response) {
     }
 
     try {
-        const seller = await prisma.user.findUnique({ where: { id: sellerId }, select: { id: true } });
+        const seller = await prisma.user.findUnique({ where: { id: sellerId }, select: { id: true, fullName: true, avatarUrl: true } });
         if (!seller) return response.status(404).json({ success: false, message: "This seller was not found." });
 
-        let conversation = await prisma.conversation.findFirst({
-            where: { sellerId, buyerId: request.user.id, listingId: null },
+        const conversation = await prisma.conversation.findFirst({
+            where: { sellerId, buyerId: request.user.id, listingId: null, messages: { some: {} } },
             select: { id: true },
         });
-        if (!conversation) {
-            try {
-                conversation = await prisma.conversation.create({
-                    data: { sellerId, buyerId: request.user.id, listingId: null },
-                    select: { id: true },
-                });
-            } catch (error) {
-                // If two clicks arrive together, the partial unique index lets both reuse one thread.
-                if (error?.code !== "P2002") throw error;
-                conversation = await prisma.conversation.findFirst({
-                    where: { sellerId, buyerId: request.user.id, listingId: null },
-                    select: { id: true },
-                });
-                if (!conversation) throw error;
-            }
-        }
-        return response.status(200).json({ success: true, conversation });
+        return response.json({
+            success: true,
+            conversation,
+            draft: { sellerId: seller.id, otherUser: { id: seller.id, fullName: seller.fullName || "CampusX Member", avatarUrl: seller.avatarUrl }, listing: null },
+        });
     } catch (error) {
         console.error("Seller conversation start failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not open this conversation." });
@@ -197,7 +261,8 @@ export async function startSellerConversation(request, response) {
 export async function getMyConversations(request, response) {
     try {
         const conversations = await prisma.conversation.findMany({
-            where: participantFilter(request.user.id),
+            // A chat becomes an inbox entry only after somebody has sent a message.
+            where: { ...participantFilter(request.user.id), messages: { some: {} } },
             orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
             select: {
                 id: true,
@@ -733,13 +798,33 @@ export async function sendImageMessage(request, response) {
 // Store an image or document as a private conversation attachment.
 export async function sendAttachmentMessage(request, response) {
     if (!request.file) return response.status(400).json({ success: false, message: "Choose a file to send." });
-    const conversationId = Number(request.params.conversationId);
-    if (!Number.isSafeInteger(conversationId) || conversationId < 1) {
+    const routeConversationId = request.params.conversationId;
+    const isDraftConversation = routeConversationId === "new";
+    const conversationId = Number(routeConversationId);
+    if (!isDraftConversation && (!Number.isSafeInteger(conversationId) || conversationId < 1)) {
         return response.status(400).json({ success: false, message: "Conversation ID must be a positive integer." });
     }
     try {
-        const conversation = await findParticipantConversation(conversationId, request.user.id);
-        if (!conversation) return response.status(404).json({ success: false, message: "This conversation was not found." });
+        if (isDraftConversation) {
+            const listingId = Number(request.body?.listingId);
+            const sellerId = Number(request.body?.sellerId);
+            let targetSellerId = null;
+            if (Number.isSafeInteger(listingId) && listingId > 0) {
+                const listing = await prisma.listing.findFirst({
+                    where: { id: listingId, status: "ACTIVE" },
+                    select: { sellerId: true },
+                });
+                targetSellerId = listing?.sellerId ?? null;
+            } else if (Number.isSafeInteger(sellerId) && sellerId > 0) {
+                const seller = await prisma.user.findUnique({ where: { id: sellerId }, select: { id: true } });
+                targetSellerId = seller?.id ?? null;
+            }
+            if (!targetSellerId) return response.status(404).json({ success: false, message: "Choose a valid seller or active listing." });
+            if (targetSellerId === request.user.id) return response.status(400).json({ success: false, message: "You cannot message yourself." });
+        } else {
+            const conversation = await findParticipantConversation(conversationId, request.user.id);
+            if (!conversation) return response.status(404).json({ success: false, message: "This conversation was not found." });
+        }
     } catch (error) {
         console.error("Attachment conversation check failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not send this file." });
@@ -749,7 +834,8 @@ export async function sendAttachmentMessage(request, response) {
     const isImage = request.file.mimetype.startsWith("image/");
     let attachmentName;
     try {
-        attachmentName = await storeMessageImage(request.file, conversationId);
+        // Draft attachments use a temporary storage folder; the message row records the eventual conversation.
+        attachmentName = await storeMessageImage(request.file, isDraftConversation ? "pending" : conversationId);
     } catch (error) {
         console.error("Message attachment storage failed:", error?.code ?? error?.message ?? error?.name ?? "UNKNOWN");
         const storageNotConfigured = error?.message === "MESSAGE_STORAGE_NOT_CONFIGURED";
