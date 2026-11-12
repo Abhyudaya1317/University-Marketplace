@@ -86,22 +86,22 @@ export class Explore {
   private searchDebounce?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = [
-    { value: 'CLOTHING', label: 'Clothing' },
-    { value: 'ACCESSORIES', label: 'Accessories' },
-    { value: 'SHOES', label: 'Shoes' },
-    { value: 'FOOD', label: 'Food' },
-    { value: 'ELECTRONICS', label: 'Electronics' },
-    { value: 'BEAUTY', label: 'Beauty products' },
-    { value: 'TEMPORARY_TATTOOS', label: 'Temporary tattoos' },
-    { value: 'ARTWORK', label: 'Artwork' },
-    { value: 'PROJECTS', label: 'Projects' },
-    { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment' },
-    { value: 'MUSICAL_INSTRUMENTS', label: 'Musical instruments' },
-    { value: 'POSTERS', label: 'Posters' },
-    { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
-    { value: 'DAILY_USE', label: 'Daily-use products' },
-    { value: 'WAX_CANDLES', label: 'Wax candles' },
-    { value: 'GIFTS', label: 'Gifts' },
+    { value: 'CLOTHING', label: 'Clothing', icon: '👕' },
+    { value: 'ACCESSORIES', label: 'Accessories', icon: '👜' },
+    { value: 'SHOES', label: 'Shoes', icon: '👟' },
+    { value: 'FOOD', label: 'Food', icon: '🍎' },
+    { value: 'ELECTRONICS', label: 'Electronics', icon: '💻' },
+    { value: 'BEAUTY', label: 'Beauty products', icon: '🧴' },
+    { value: 'TEMPORARY_TATTOOS', label: 'Temporary tattoos', icon: '✨' },
+    { value: 'ARTWORK', label: 'Artwork', icon: '🎨' },
+    { value: 'PROJECTS', label: 'Projects', icon: '📁' },
+    { value: 'SPORTS_EQUIPMENT', label: 'Sports equipment', icon: '⚽' },
+    { value: 'MUSICAL_INSTRUMENTS', label: 'Musical instruments', icon: '🎸' },
+    { value: 'POSTERS', label: 'Posters', icon: '🖼️' },
+    { value: 'KITCHEN_ITEMS', label: 'Kitchen items', icon: '🍽️' },
+    { value: 'DAILY_USE', label: 'Daily-use products', icon: '🧻' },
+    { value: 'WAX_CANDLES', label: 'Wax candles', icon: '🕯️' },
+    { value: 'GIFTS', label: 'Gifts', icon: '🎁' },
   ];
   protected readonly availableCategories = signal<string[]>([]);
   protected readonly orderedCategories = computed(() => {

@@ -94,13 +94,15 @@
     <nav class="explore-category-buttons" aria-label="Filter listings by category">
       <button
         type="button"
+        class="category-shortcut"
         [class.active]="!selectedCategory()"
         [attr.aria-pressed]="!selectedCategory()"
         (click)="onCategoryChange('')"
-      >All</button>
+      ><span class="category-shortcut-icon" aria-hidden="true">✦</span><span class="category-shortcut-label">For You</span></button>
       @for (category of orderedCategories(); track category.value) {
         <button
           type="button"
+          class="category-shortcut"
           [class.active]="selectedCategory() === category.value"
           [class.category-empty]="!categoryHasListings(category.value)"
           [disabled]="!categoryHasListings(category.value)"
@@ -108,7 +110,7 @@
           [attr.aria-label]="category.label + (categoryHasListings(category.value) ? '' : ', no listings yet')"
           [attr.title]="categoryHasListings(category.value) ? category.label : 'No listings in this category yet'"
           (click)="onCategoryChange(category.value)"
-        >{{ category.label }}</button>
+        ><span class="category-shortcut-icon" aria-hidden="true">{{ category.icon }}</span><span class="category-shortcut-label">{{ category.label }}</span></button>
       }
     </nav>
 

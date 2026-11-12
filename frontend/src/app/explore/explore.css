@@ -154,35 +154,53 @@ nav {
 }
 .explore-category-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 4px;
   margin: -8px 0 28px;
+  padding: 8px 0 4px;
+  overflow-x: auto;
+  border-block: 1px solid #d5d5d5;
+  scrollbar-width: thin;
+  scrollbar-color: #a7adb8 transparent;
 }
 .explore-category-buttons button {
   box-sizing: border-box;
-  min-height: 78px;
-  max-width: 100%;
-  padding: 18px 26px;
-  border: 2px outset #fff;
-  background: #fff;
-  color: #000080;
-  box-shadow: 3px 3px 0 #080817;
+  display: flex;
+  flex: 0 0 88px;
+  min-width: 0;
+  min-height: 76px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #22231f;
   cursor: pointer;
-  font: 700 clamp(15px, 1.15vw, 18px)/1.45 var(--pixel, monospace);
-  overflow-wrap: anywhere;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.25;
+  text-align: center;
 }
+.category-shortcut-icon { min-height: 27px; font: 23px/1 Arial, sans-serif; }
+.category-shortcut-label { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .explore-category-buttons button:hover:not(:disabled),
 .explore-category-buttons button.active {
-  border-color: #174bff;
-  background: #174bff;
-  color: #fff;
+  border-bottom-color: #174bff;
+  color: #000080;
 }
+.explore-category-buttons button.active { background: #e8f2ff; font-weight: 700; }
 .explore-category-buttons button:disabled,
 .explore-category-buttons button.category-empty {
-  border-color: #a5a5a5;
-  background: #dedede;
-  color: #707070;
+  border-bottom-color: transparent;
+  background: transparent;
+  color: #858585;
   cursor: not-allowed;
+}
+.explore-category-buttons button.category-empty .category-shortcut-icon { filter: grayscale(1); opacity: .5; }
+.explore-category-buttons button.category-empty .category-shortcut-label {
   text-decoration: line-through;
   text-decoration-thickness: 1px;
 }
@@ -527,19 +545,8 @@ nav {
 
 /* Let the filter controls and product grid fit phones and smaller tablets. */
 @media (max-width: 760px) {
-  .explore-category-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: -4px;
-  }
-  .explore-category-buttons button {
-    min-width: 0;
-    min-height: 70px;
-    padding: 12px 8px;
-    font-size: clamp(13px, 4vw, 16px);
-    line-height: 1.5;
-  }
+  .explore-category-buttons { gap: 2px; margin-top: -4px; }
+  .explore-category-buttons button { flex-basis: 78px; min-height: 70px; font-size: 13px; }
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
