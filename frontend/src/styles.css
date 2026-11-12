@@ -2122,10 +2122,18 @@ body .market-page .explore-category-buttons button.category-empty .category-shor
 body .market-page .category-shortcut-icon { min-height: 27px; font: 23px/1 Arial, sans-serif; }
 body .market-page .category-shortcut-label { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
+/* Keep the site navigation visible while scrolling through any page. */
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+  position: sticky !important;
+  top: 0;
+  z-index: 1000;
+  isolation: isolate;
+}
+
 /* Make seller identity and the two important product actions easy to spot. */
 body .details-page .seller-link {
   border: 2px solid #000080 !important;
-  background: #fff !important;
+  background: #dff3f5 !important;
   box-shadow: 4px 4px 0 #080817 !important;
 }
 body .details-page .seller-link strong {
@@ -2135,7 +2143,7 @@ body .details-page .seller-link strong {
 }
 body .details-page .detail-actions .save-item-action {
   border: 2px solid #000080 !important;
-  background: #fff !important;
+  background: #fff3a6 !important;
   color: #000080 !important;
   box-shadow: 3px 3px 0 #080817 !important;
   font-size: 17px !important;

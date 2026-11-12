@@ -176,13 +176,6 @@
             <strong class="price">₹{{ listing.price }}</strong>
             <span class="stock-label">{{ stockLabel(listing.quantityAvailable) }}</span>
             </a>
-            @if (listing.hashtags.length) {
-              <div class="product-hashtags" aria-label="Listing hashtags">
-                @for (tag of listing.hashtags; track tag) {
-                  <a [routerLink]="['/explore']" [queryParams]="{ search: '#' + tag }">#{{ tag }}</a>
-                }
-              </div>
-            }
             <div class="product-card-footer">
               <a class="seller-count" [routerLink]="['/sellers', listing.sellerId]">
                 <span>{{ listing.sellerName }} · Seller profile</span><span aria-hidden="true">→</span>

@@ -117,8 +117,10 @@
 .action-toast {
   position: fixed;
   z-index: 2100;
-  right: max(18px, env(safe-area-inset-right));
-  bottom: max(22px, env(safe-area-inset-bottom));
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
   display: flex;
   max-width: min(420px, calc(100vw - 36px));
   align-items: center;
@@ -131,6 +133,7 @@
   font-size: 15px;
   font-weight: 700;
   line-height: 1.4;
+  transform: translate(-50%, -50%);
   animation: interaction-pop-in 130ms ease-out;
 }
 
@@ -182,15 +185,15 @@
 }
 
 @keyframes interaction-pop-in {
-  from { opacity: 0; transform: translateY(8px) scale(.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translate(-50%, -46%) scale(.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @media (max-width: 480px) {
   .interaction-dialog-content { padding: 19px; }
   .interaction-dialog-actions { gap: 9px; }
   .interaction-button { flex-basis: 120px; min-height: 46px; padding: 9px 10px; font-size: 13px; }
-  .action-toast { right: 12px; bottom: max(14px, env(safe-area-inset-bottom)); left: 12px; max-width: none; flex-wrap: wrap; }
+  .action-toast { width: min(420px, calc(100vw - 28px)); max-width: none; flex-wrap: wrap; }
   .action-toast-link { margin-left: 36px; }
   .share-dialog-actions { grid-template-columns: 1fr; }
 }
