@@ -79,6 +79,21 @@
               <option value="OTHER">Other</option>
             </select>
           </div>
+          <div class="form-field">
+            <label for="clothing-sizes">Available sizes</label>
+            <input id="clothing-sizes" name="clothingSizes" type="text" required maxlength="200"
+              [(ngModel)]="clothingSizes" placeholder="e.g. S, M, L, XL">
+            <small>Separate each size with a comma.</small>
+          </div>
+        }
+
+        @if (supportsColorField(category)) {
+          <div class="form-field">
+            <label for="item-color">Color</label>
+            <input id="item-color" name="color" type="text" required maxlength="120"
+              [(ngModel)]="color" placeholder="e.g. Black, navy blue">
+            <small>Enter one or more colors separated by commas.</small>
+          </div>
         }
 
         @if (category === 'POSTERS') {

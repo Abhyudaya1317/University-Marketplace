@@ -73,6 +73,18 @@
               <dt>Price</dt>
               <dd><strong class="price-tag">₹{{ item.price }}</strong></dd>
             </div>
+            @if (item.category === 'CLOTHING' && item.clothingSizes) {
+              <div class="product-attribute-field">
+                <dt>Available sizes</dt>
+                <dd>{{ item.clothingSizes }}</dd>
+              </div>
+            }
+            @if (supportsColorField(item.category) && item.color) {
+              <div class="product-attribute-field">
+                <dt>Color</dt>
+                <dd>{{ item.color }}</dd>
+              </div>
+            }
             <div class="product-field">
               <dt>Availability</dt>
               <dd class="stock">{{ stockLabel(item.quantityAvailable) }}</dd>

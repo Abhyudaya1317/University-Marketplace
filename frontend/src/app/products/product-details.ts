@@ -23,6 +23,8 @@ interface ListingDetails {
   condition: string;
   customCondition: string | null;
   clothingGender: string | null;
+  clothingSizes: string | null;
+  color: string | null;
   proteinGrams: string | null;
   posterSize: string | null;
   category: string;
@@ -293,6 +295,11 @@ export class ProductDetails {
       .toLowerCase()
       .replaceAll('_', ' ')
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  // Keep color information off categories where color is not a useful listing attribute.
+  protected supportsColorField(category: string): boolean {
+    return !['DAILY_USE', 'FOOD', 'KITCHEN_ITEMS', 'POSTERS', 'PROJECTS', 'SPORTS_EQUIPMENT'].includes(category);
   }
 
   // Switch between the listing photos without stretching either image.

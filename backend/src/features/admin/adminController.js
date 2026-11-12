@@ -1,7 +1,7 @@
 // Give configured administrators safe user and listing management operations.
 import { prisma } from "../../lib/prisma.js";
 import { isAdminEmail } from "../../middleware/adminAccess.js";
-import { normalizeListingHashtags, normalizeProductName, validateListingDetails, validateListingHashtags } from "../listings/listingsValidation.js";
+import { COLOR_EXCLUDED_CATEGORIES, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, validateListingDetails, validateListingHashtags } from "../listings/listingsValidation.js";
 
 const userSelect = {
     id: true, email: true, fullName: true, avatarUrl: true, createdAt: true,
@@ -11,7 +11,7 @@ const userSelect = {
 const listingSelect = {
     id: true, title: true, description: true, price: true, quantityAvailable: true, phoneNumber: true,
     location: true, condition: true, customCondition: true, clothingGender: true,
-    proteinGrams: true, posterSize: true, hashtags: true, photoUrl: true,
+    clothingSizes: true, color: true, proteinGrams: true, posterSize: true, hashtags: true, photoUrl: true,
     photoUrl2: true, photoUrl3: true, photoUrl4: true, status: true, archivedAt: true, createdAt: true,
     product: { select: { id: true, name: true, category: true } },
     seller: { select: { id: true, fullName: true, email: true, bannedAt: true } },
@@ -162,6 +162,8 @@ export async function editAdminListing(request, response) {
                 condition: request.body.condition,
                 customCondition: request.body.condition === "CUSTOM" ? request.body.customCondition.trim() : null,
                 clothingGender: request.body.category === "CLOTHING" ? request.body.clothingGender : null,
+                clothingSizes: request.body.category === "CLOTHING" ? normalizeCommaSeparatedValues(request.body.clothingSizes) : null,
+                color: COLOR_EXCLUDED_CATEGORIES.has(request.body.category) ? null : normalizeCommaSeparatedValues(request.body.color),
                 proteinGrams: request.body.category === "FOOD" ? String(request.body.proteinGrams).trim() : null,
                 posterSize: request.body.category === "POSTERS" ? request.body.posterSize.trim() : null,
                 ...(photoFields.some((field) => Object.hasOwn(request.body ?? {}, field)) ? {
@@ -235,6 +237,7 @@ function formatListing(listing) {
     return { id: listing.id, title: listing.title, description: listing.description, price: listing.price.toFixed(2),
         quantityAvailable: listing.quantityAvailable, location: listing.location, condition: listing.condition,
         customCondition: listing.customCondition, clothingGender: listing.clothingGender,
+        clothingSizes: listing.clothingSizes, color: listing.color,
         proteinGrams: listing.proteinGrams?.toFixed(2) ?? null, posterSize: listing.posterSize, phoneNumber: listing.phoneNumber,
         hashtags: listing.hashtags, photoUrl: listing.photoUrl, photoUrl2: listing.photoUrl2,
         photoUrl3: listing.photoUrl3, photoUrl4: listing.photoUrl4, status: listing.status,

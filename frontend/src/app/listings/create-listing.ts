@@ -41,6 +41,8 @@ interface EditListingResponse {
     condition: string;
     customCondition: string | null;
     clothingGender: string | null;
+    clothingSizes: string | null;
+    color: string | null;
     proteinGrams: string | null;
     posterSize: string | null;
   };
@@ -90,6 +92,8 @@ export class CreateListing implements OnDestroy {
   protected phoneNumber = '';
   protected location = '';
   protected clothingGender = '';
+  protected clothingSizes = '';
+  protected color = '';
   protected proteinGrams: number | string = '';
   protected proteinRich = false;
   protected posterSize = '';
@@ -170,6 +174,14 @@ export class CreateListing implements OnDestroy {
       this.error.set('Choose the clothing gender option.');
       return;
     }
+    if (this.category === 'CLOTHING' && !this.clothingSizes.trim()) {
+      this.error.set('Enter available clothing sizes separated by commas, for example S, M, L.');
+      return;
+    }
+    if (this.supportsColorField(this.category) && !this.color.trim()) {
+      this.error.set('Enter the available color or colors separated by commas.');
+      return;
+    }
     if (this.category === 'FOOD' && this.proteinRich && (!this.proteinGrams || Number(this.proteinGrams) <= 0)) {
       this.error.set('Enter a positive protein amount per serving.');
       return;
@@ -200,6 +212,8 @@ export class CreateListing implements OnDestroy {
     formData.append('condition', this.condition);
     formData.append('customCondition', this.condition === 'CUSTOM' ? this.customCondition.trim() : '');
     if (this.category === 'CLOTHING') formData.append('clothingGender', this.clothingGender);
+    if (this.category === 'CLOTHING') formData.append('clothingSizes', this.clothingSizes.trim());
+    if (this.supportsColorField(this.category)) formData.append('color', this.color.trim());
     if (this.category === 'FOOD') formData.append('proteinGrams', this.proteinRich ? String(this.proteinGrams) : '0');
     if (this.category === 'POSTERS') formData.append('posterSize', this.posterSize.trim());
     for (const photo of this.selectedPhotos) formData.append('photos', photo);
@@ -229,6 +243,8 @@ export class CreateListing implements OnDestroy {
         this.phoneNumber = '';
         this.location = '';
         this.clothingGender = '';
+        this.clothingSizes = '';
+        this.color = '';
         this.proteinGrams = '';
         this.proteinRich = false;
         this.posterSize = '';
@@ -509,10 +525,17 @@ export class CreateListing implements OnDestroy {
   protected onCategoryChange(value: string): void {
     this.category = value;
     this.clothingGender = '';
+    this.clothingSizes = '';
+    if (!this.supportsColorField(value)) this.color = '';
     this.proteinGrams = '';
     this.proteinRich = false;
     this.posterSize = '';
     this.condition = value === 'FOOD' ? 'FRESH' : 'GOOD';
+  }
+
+  // Categories where a color choice does not help buyers compare the listing.
+  protected supportsColorField(category: string): boolean {
+    return !['DAILY_USE', 'FOOD', 'KITCHEN_ITEMS', 'POSTERS', 'PROJECTS', 'SPORTS_EQUIPMENT'].includes(category);
   }
 
   // Only ask for protein grams when the seller marks the food as protein-rich.
@@ -544,6 +567,8 @@ export class CreateListing implements OnDestroy {
             ? 'FRESH'
             : listing.condition;
           this.clothingGender = listing.clothingGender ?? '';
+          this.clothingSizes = listing.clothingSizes ?? '';
+          this.color = listing.color ?? '';
           this.proteinGrams = listing.proteinGrams ?? '';
           this.posterSize = listing.posterSize ?? '';
           this.proteinRich = Number(listing.proteinGrams ?? 0) > 0;

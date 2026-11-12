@@ -35,6 +35,8 @@ interface AdminListing {
   condition: string;
   customCondition: string | null;
   clothingGender: string | null;
+  clothingSizes: string | null;
+  color: string | null;
   proteinGrams: string | null;
   posterSize: string | null;
   hashtags: string[];
@@ -62,6 +64,8 @@ interface ListingDraft {
   condition: string;
   customCondition: string;
   clothingGender: string;
+  clothingSizes: string;
+  color: string;
   proteinGrams: string;
   posterSize: string;
   photoUrl: string;
@@ -201,6 +205,8 @@ export class AdminConsole {
       condition: listing.condition,
       customCondition: listing.customCondition ?? '',
       clothingGender: listing.clothingGender ?? '',
+      clothingSizes: listing.clothingSizes ?? '',
+      color: listing.color ?? '',
       proteinGrams: listing.proteinGrams ?? '0',
       posterSize: listing.posterSize ?? '',
       photoUrl: listing.photoUrl ?? '',

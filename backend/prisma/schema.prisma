@@ -113,6 +113,8 @@ model Listing {
   photoUrl4      String?
   location       String          @default("LPU campus") @db.VarChar(120)
   clothingGender ClothingGender?
+  clothingSizes  String?         @db.VarChar(200)
+  color          String?         @db.VarChar(120)
   proteinGrams   Decimal?        @db.Decimal(6, 2)
   posterSize     String?         @db.VarChar(40)
   condition      ProductCondition @default(GOOD)

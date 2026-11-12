@@ -1,12 +1,12 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
-import { CLOTHING_GENDERS, isValidQuantity, matchesExploreFilters, normalizeListingHashtags, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
+import { CLOTHING_GENDERS, COLOR_EXCLUDED_CATEGORIES, isValidQuantity, matchesExploreFilters, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
 import { productNamesMatch } from "./productGrouping.js";
 import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
 export async function createListing(request, response) {
-    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, proteinGrams, posterSize, quantityAvailable, condition, customCondition } = request.body ?? {};
+    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, clothingSizes, color, proteinGrams, posterSize, quantityAvailable, condition, customCondition } = request.body ?? {};
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
@@ -59,6 +59,9 @@ export async function createListing(request, response) {
                     condition,
                     customCondition: condition === "CUSTOM" ? customCondition.trim() : null,
                     clothingGender: category === "CLOTHING" ? clothingGender : null,
+                    clothingSizes: category === "CLOTHING" ? normalizeCommaSeparatedValues(clothingSizes) : null,
+                    color: !COLOR_EXCLUDED_CATEGORIES.has(category)
+                        ? normalizeCommaSeparatedValues(color) : null,
                     proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null,
                     posterSize: category === "POSTERS" ? posterSize.trim() : null
                 },
@@ -87,6 +90,8 @@ export async function createListing(request, response) {
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
+                clothingSizes: listing.clothingSizes,
+                color: listing.color,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 posterSize: listing.posterSize,
                 status: listing.status,
@@ -179,6 +184,8 @@ export async function getExploreProducts(request, response) {
                 condition: true,
                 customCondition: true,
                 clothingGender: true,
+                clothingSizes: true,
+                color: true,
                 proteinGrams: true,
                 posterSize: true,
                 hashtags: true,
@@ -287,6 +294,8 @@ export async function getPublicListingDetails(request, response) {
                 condition: true,
                 customCondition: true,
                 clothingGender: true,
+                clothingSizes: true,
+                color: true,
                 proteinGrams: true,
                 posterSize: true,
                 createdAt: true,
@@ -319,6 +328,8 @@ export async function getPublicListingDetails(request, response) {
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
+                clothingSizes: listing.clothingSizes,
+                color: listing.color,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 posterSize: listing.posterSize,
                 category: listing.product.category,

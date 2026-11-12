@@ -1,6 +1,6 @@
 // Handle seller-owned listing edits, archival, restoration, and guarded deletion.
 import { prisma } from "../../lib/prisma.js";
-import { normalizeListingHashtags, normalizeProductName, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
+import { COLOR_EXCLUDED_CATEGORIES, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
 import { listingPhotoUrl, removeListingPhotos, removeListingPhotoByUrl } from "./listingPhotoUpload.js";
 
 // Return only the owner's active listing data needed to prefill the existing sell form.
@@ -17,7 +17,7 @@ export async function getListingForEdit(request, response) {
                 id: true, title: true, description: true, price: true, quantityAvailable: true,
                 phoneNumber: true, location: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                 condition: true, customCondition: true,
-                clothingGender: true, proteinGrams: true, posterSize: true, hashtags: true,
+                clothingGender: true, clothingSizes: true, color: true, proteinGrams: true, posterSize: true, hashtags: true,
                 product: { select: { category: true } }
             }
         });
@@ -41,6 +41,8 @@ export async function getListingForEdit(request, response) {
                 condition: listing.condition,
                 customCondition: listing.customCondition,
                 clothingGender: listing.clothingGender,
+                clothingSizes: listing.clothingSizes,
+                color: listing.color,
                 proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
                 posterSize: listing.posterSize,
                 hashtags: listing.hashtags
@@ -117,6 +119,8 @@ export async function updateListing(request, response) {
                     condition: request.body.condition,
                     customCondition: request.body.condition === "CUSTOM" ? request.body.customCondition.trim() : null,
                     clothingGender: request.body.category === "CLOTHING" ? request.body.clothingGender : null,
+                    clothingSizes: request.body.category === "CLOTHING" ? normalizeCommaSeparatedValues(request.body.clothingSizes) : null,
+                    color: COLOR_EXCLUDED_CATEGORIES.has(request.body.category) ? null : normalizeCommaSeparatedValues(request.body.color),
                     proteinGrams: request.body.category === "FOOD" ? String(request.body.proteinGrams).trim() : null,
                     posterSize: request.body.category === "POSTERS" ? request.body.posterSize.trim() : null
                 }
@@ -129,7 +133,7 @@ export async function updateListing(request, response) {
                     id: true, title: true, description: true, price: true, quantityAvailable: true,
                     photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true,
                     location: true, condition: true, customCondition: true, clothingGender: true,
-                    proteinGrams: true, posterSize: true, hashtags: true, product: { select: { id: true, name: true, category: true } }
+                    clothingSizes: true, color: true, proteinGrams: true, posterSize: true, hashtags: true, product: { select: { id: true, name: true, category: true } }
                 }
             });
             return { listing, previousPhotoUrls: [current.photoUrl, current.photoUrl2, current.photoUrl3, current.photoUrl4] };
@@ -164,6 +168,8 @@ export async function updateListing(request, response) {
                 condition: updatedListing.listing.condition,
                 customCondition: updatedListing.listing.customCondition,
                 clothingGender: updatedListing.listing.clothingGender,
+                clothingSizes: updatedListing.listing.clothingSizes,
+                color: updatedListing.listing.color,
                 proteinGrams: updatedListing.listing.proteinGrams?.toFixed(2) ?? null,
                 posterSize: updatedListing.listing.posterSize,
                 hashtags: updatedListing.listing.hashtags

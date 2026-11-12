@@ -8,6 +8,15 @@ export const PRODUCT_CATEGORIES = new Set([
 export const CLOTHING_GENDERS = new Set(["MEN", "WOMEN", "UNISEX", "OTHER"]);
 export const FOOD_CONDITIONS = new Set(["FRESH", "PACKAGED", "OPENED", "PREPARED", "FROZEN", "CUSTOM"]);
 export const PRODUCT_CONDITIONS = new Set(["NEW", "LIKE_NEW", "GOOD", "FAIR", "OLD", ...FOOD_CONDITIONS]);
+export const COLOR_EXCLUDED_CATEGORIES = new Set(["DAILY_USE", "FOOD", "KITCHEN_ITEMS", "POSTERS", "PROJECTS", "SPORTS_EQUIPMENT"]);
+
+// Normalize short comma-separated seller attributes before storing them as plain text.
+export function normalizeCommaSeparatedValues(value) {
+    if (typeof value !== "string") return "";
+    const values = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+    const uniqueValues = [...new Map(values.map((entry) => [entry.toLocaleLowerCase("en"), entry])).values()];
+    return uniqueValues.join(", ");
+}
 
 // Keep seller-entered search tags small, unique, and safe to render as plain text.
 export function validateListingHashtags(value) {
@@ -38,7 +47,7 @@ export function matchesExploreFilters(listing, { category = "", gender = "", pro
 }
 
 // Validate the listing fields shared by create and edit without trusting browser checks.
-export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, proteinGrams, posterSize, quantityAvailable, condition, customCondition }) {
+export function validateListingDetails({ name, category, description, price, phoneNumber, location, clothingGender, clothingSizes, color, proteinGrams, posterSize, quantityAvailable, condition, customCondition }) {
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const trimmedLocation = typeof location === "string" ? location.trim() : "";
@@ -51,6 +60,8 @@ export function validateListingDetails({ name, category, description, price, pho
     if (!isValidPhoneNumber(phoneNumber)) return "Enter a valid phone number with 7 to 15 digits.";
     if (trimmedLocation.length < 2 || trimmedLocation.length > 120) return "Enter a campus pickup location between 2 and 120 characters.";
     if (category === "CLOTHING" && !CLOTHING_GENDERS.has(clothingGender)) return "Choose a gender option for this clothing listing.";
+    if (category === "CLOTHING" && !isValidCommaSeparatedValues(clothingSizes, 200, 20)) return "Enter available clothing sizes separated by commas, for example S, M, L.";
+    if (!COLOR_EXCLUDED_CATEGORIES.has(category) && !isValidCommaSeparatedValues(color, 120, 20)) return "Enter the available color or colors separated by commas.";
     if (category === "FOOD" && !isValidProteinGrams(proteinGrams)) return "Enter protein per serving in grams, from 0 to 5,000.";
     if (category === "POSTERS" && (typeof posterSize !== "string" || posterSize.trim().length < 1 || posterSize.trim().length > 40)) return "Enter the poster size, for example A3 or 30 × 40 cm.";
     const allowedConditions = category === "FOOD"
@@ -62,6 +73,13 @@ export function validateListingDetails({ name, category, description, price, pho
     if (condition === "CUSTOM" && (typeof customCondition !== "string" || customCondition.trim().length < 2 || customCondition.trim().length > 80)) return "Describe the custom item condition in 2 to 80 characters.";
     if (!normalizeProductName(trimmedName)) return "Product name must include letters or numbers.";
     return null;
+}
+
+function isValidCommaSeparatedValues(value, maxLength, maxEntries) {
+    if (typeof value !== "string") return false;
+    const values = value.split(",").map((entry) => entry.trim()).filter(Boolean);
+    return value.trim().length > 0 && value.length <= maxLength && values.length > 0 && values.length <= maxEntries &&
+        values.every((entry) => entry.length <= 30 && !/[<>\r\n]/u.test(entry));
 }
 
 // Convert a submitted product name into a stable key for grouping equivalent offers.
