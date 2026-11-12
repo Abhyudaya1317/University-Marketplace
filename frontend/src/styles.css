@@ -2096,7 +2096,7 @@ body .market-page .explore-category-buttons button {
   padding: 6px 4px;
   border: 0;
   border-bottom: 3px solid transparent;
-  background: transparent;
+  background: #fff;
   box-shadow: none;
   color: #22231f;
   font: inherit;
@@ -2106,13 +2106,13 @@ body .market-page .explore-category-buttons button {
 }
 body .market-page .explore-category-buttons button.active {
   border-bottom-color: #174bff;
-  background: #e8f2ff;
+  background: #fff;
   color: #000080;
   font-weight: 700;
 }
 body .market-page .explore-category-buttons button.category-empty,
 body .market-page .explore-category-buttons button:disabled {
-  background: transparent;
+  background: #fff;
   color: #858585;
 }
 body .market-page .explore-category-buttons button.category-empty .category-shortcut-label { text-decoration: line-through; }

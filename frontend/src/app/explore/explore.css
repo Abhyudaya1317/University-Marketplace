@@ -176,7 +176,7 @@ nav {
   padding: 6px 4px;
   border: 0;
   border-bottom: 3px solid transparent;
-  background: transparent;
+  background: #fff;
   color: #22231f;
   cursor: pointer;
   font: inherit;
@@ -191,11 +191,11 @@ nav {
   border-bottom-color: #174bff;
   color: #000080;
 }
-.explore-category-buttons button.active { background: #e8f2ff; font-weight: 700; }
+.explore-category-buttons button.active { background: #fff; font-weight: 700; }
 .explore-category-buttons button:disabled,
 .explore-category-buttons button.category-empty {
   border-bottom-color: transparent;
-  background: transparent;
+  background: #fff;
   color: #858585;
   cursor: not-allowed;
 }
