@@ -717,7 +717,7 @@
 .message-actions-popover button:hover, .message-actions-popover button:focus-visible { background: #dce7ff; outline: none; }
 .message-actions-popover button:disabled { cursor: wait; opacity: .6; }
 .chat-message.selection-active .message-bubble { cursor: pointer; }
-.chat-message.selected-for-delete .message-bubble { outline: 2px solid #174bff; outline-offset: 2px; }
+.chat-message.selected-for-delete .message-bubble { outline: 2px solid #4168f6; outline-offset: 2px; }
 .messages-page .page-heading h1 { text-shadow: 3px 3px 0 #fff; }
 
 /* Keep meetup details readable on the bright blue outgoing chat bubble. */
