@@ -101,6 +101,7 @@ export class Explore {
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
     { value: 'WAX_CANDLES', label: 'Wax candles' },
+    { value: 'GIFTS', label: 'Gifts' },
   ];
   protected readonly availableCategories = signal<string[]>([]);
   protected readonly orderedCategories = computed(() => {

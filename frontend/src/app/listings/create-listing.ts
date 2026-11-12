@@ -118,7 +118,8 @@ export class CreateListing implements OnDestroy {
     { value: 'POSTERS', label: 'Posters' },
     { value: 'KITCHEN_ITEMS', label: 'Kitchen items' },
     { value: 'DAILY_USE', label: 'Daily-use products' },
-    { value: 'WAX_CANDLES', label: 'Wax candles' }
+    { value: 'WAX_CANDLES', label: 'Wax candles' },
+    { value: 'GIFTS', label: 'Gifts' }
   ];
 
   // Check the HttpOnly session cookie on the server before showing the seller form.

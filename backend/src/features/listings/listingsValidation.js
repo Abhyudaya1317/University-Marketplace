@@ -1,7 +1,7 @@
 // Keep product categories controlled so filtering and grouping use consistent values.
 export const PRODUCT_CATEGORIES = new Set([
     "CLOTHING", "ACCESSORIES", "SHOES", "FOOD", "ELECTRONICS", "BEAUTY", "TEMPORARY_TATTOOS", "ARTWORK",
-    "PROJECTS", "SPORTS_EQUIPMENT", "MUSICAL_INSTRUMENTS", "POSTERS", "KITCHEN_ITEMS", "DAILY_USE", "WAX_CANDLES"
+    "PROJECTS", "SPORTS_EQUIPMENT", "MUSICAL_INSTRUMENTS", "POSTERS", "KITCHEN_ITEMS", "DAILY_USE", "WAX_CANDLES", "GIFTS"
 ]);
 
 // Use one stable set of clothing values in forms, storage, and filters.

@@ -2019,16 +2019,15 @@ body .seller-page .profile-actions .save-button.is-following {
   box-shadow: 3px 3px 0 #080817 !important;
 }
 
-/* The current homepage accent switches from bright yellow to CampusX blue. */
+/* Keep the homepage's reference yellow accents, independent of the neutral inner-page palette. */
 body .universe-shell .hero-label,
 body .universe-shell .featured-photo b,
 body .universe-shell .notice-icon,
-body .universe-shell .home-product-window .product-category,
 body .universe-shell .stat-yellow {
-  background: #174bff !important;
-  color: #fff !important;
+  background: #fff34d !important;
+  color: #080817 !important;
 }
-body .universe-shell .hero h1 .floating-amp { color: #174bff !important; }
+body .universe-shell .hero h1 .floating-amp { color: #fff34d !important; }
 body .universe-shell .hero-description { color: #080817 !important; }
 body .universe-shell .home-share-button {
   min-height: 34px;
@@ -2130,11 +2129,17 @@ body .details-page .detail-actions .message-seller-action:hover:not(:disabled) {
 }
 
 @media (max-width: 760px) {
-  body .market-page .explore-category-buttons { gap: 9px; }
+  body .market-page .explore-category-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
   body .market-page .explore-category-buttons button {
-    min-height: 64px;
-    padding: 14px 16px;
-    font-size: clamp(13px, 3.5vw, 16px);
+    min-width: 0;
+    min-height: 70px;
+    padding: 12px 8px;
+    font-size: clamp(13px, 4vw, 16px);
+    line-height: 1.5;
   }
 }
 

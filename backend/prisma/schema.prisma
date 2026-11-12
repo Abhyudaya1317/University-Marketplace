@@ -279,6 +279,7 @@ enum ProductCategory {
   DAILY_USE
   OTHER
   WAX_CANDLES
+  GIFTS
 }
 
 // Only active offers appear in public product and price comparisons.

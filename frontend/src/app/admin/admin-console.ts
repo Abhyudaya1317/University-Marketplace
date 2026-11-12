@@ -96,7 +96,7 @@ export class AdminConsole {
   protected readonly categories = [
     'CLOTHING', 'ACCESSORIES', 'JEWELLERY', 'SHOES', 'FOOD', 'ELECTRONICS', 'BEAUTY',
     'TEMPORARY_TATTOOS', 'ARTWORK', 'PROJECTS', 'SPORTS_EQUIPMENT', 'MUSICAL_INSTRUMENTS',
-    'POSTERS', 'KITCHEN_ITEMS', 'DAILY_USE', 'OTHER', 'WAX_CANDLES',
+    'POSTERS', 'KITCHEN_ITEMS', 'DAILY_USE', 'OTHER', 'WAX_CANDLES', 'GIFTS',
   ];
   protected readonly conditions = ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'OLD', 'FRESH', 'PACKAGED', 'OPENED', 'PREPARED', 'FROZEN', 'CUSTOM'];
   protected readonly genders = ['MEN', 'WOMEN', 'UNISEX', 'OTHER'];
