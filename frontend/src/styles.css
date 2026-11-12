@@ -928,6 +928,8 @@ body .hero h1 .campus-word,
 body .hero h1 .floating-amp { color: #fff !important; }
 body .notice-cta:hover { background: #fff !important; }
 body .messages-page .message-bubble.own-message { background: #fff !important; color: #000080 !important; }
+body .messages-page .message-bubble.own-message p,
+body .messages-page .message-bubble.own-message .edited-note { color: #000080 !important; }
 body .messages-page .message-bubble.other-message { background: #dfe8f5 !important; color: #080817 !important; }
 body .messages-page .unread-badge,
 body .messages-page .conversation-unread-badge,
@@ -2182,10 +2184,10 @@ body .account-navigation > a[href='/explore'],
 body .universe-shell .account-navigation > a[href='/explore'] {
   min-height: 40px !important;
   padding-inline: 9px !important;
-  border: 2px outset #fff !important;
+  border: 2px solid #080817 !important;
   background: #174bff !important;
   color: #fff !important;
-  box-shadow: 3px 3px 0 #080817 !important;
+  box-shadow: 4px 4px 0 #080817 !important;
   animation: none !important;
 }
 body .account-navigation > a[href='/explore']:hover,
@@ -2202,6 +2204,11 @@ body .universe-shell .main-toolbar > .toolbar-sell {
   background: #c0c0c0 !important;
   color: #080817 !important;
   box-shadow: 3px 3px 0 #080817 !important;
+}
+body .account-navigation > a[href='/sell'],
+body .universe-shell .main-toolbar .account-navigation > a[href='/sell'],
+body .universe-shell .account-navigation > a[href='/sell'] {
+  font-size: 9px !important;
 }
 body .account-navigation > a[href='/sell']:hover,
 body .account-navigation > .account-button:hover,
@@ -2227,7 +2234,7 @@ body .universe-shell .account-navigation > a[href='/sell'] {
   background: #c0c0c0 !important;
   color: #080817 !important;
   box-shadow: 3px 3px 0 #080817 !important;
-  font-size: 7px !important;
+  font-size: 9px !important;
   text-decoration: none;
   white-space: nowrap;
 }

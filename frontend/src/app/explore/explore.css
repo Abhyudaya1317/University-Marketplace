@@ -477,18 +477,21 @@ nav {
   margin: 0;
   padding: 8px 0;
 }
-.listing-share-button {
+.listing-open-button {
+  display: inline-flex;
   min-height: 34px;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   padding: 5px 9px;
   border: 2px outset #fff;
   background: #174bff;
   color: #fff;
   box-shadow: 2px 2px 0 #080817;
   font: 700 8px/1.4 var(--pixel, monospace);
-  cursor: pointer;
+  text-decoration: none;
 }
-.listing-share-button:hover { background: #000080; }
+.listing-open-button:hover { background: #000080; }
 
 /* Explain loading, errors, and empty searches without leaving a blank page. */
 .state-message {

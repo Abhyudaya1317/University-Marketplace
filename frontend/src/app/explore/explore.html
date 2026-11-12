@@ -164,10 +164,6 @@
                   <span class="product-icon" aria-label="No product photo available">✳</span>
                 }
               </a>
-              @if (photoCount(listing) > 1) {
-                <button class="catalog-photo-arrow previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(listing, -1, $event)">‹</button>
-                <button class="catalog-photo-arrow next" type="button" aria-label="Next product photo" (click)="stepPhoto(listing, 1, $event)">›</button>
-              }
             </div>
             <a class="product-card-main" [routerLink]="['/products', listing.id]">
             <span class="category-label">{{ categoryLabel(listing.category) }}</span>
@@ -180,7 +176,7 @@
               <a class="seller-count" [routerLink]="['/sellers', listing.sellerId]">
                 <span>{{ listing.sellerName }} · Seller profile</span><span aria-hidden="true">→</span>
               </a>
-              <button class="listing-share-button" type="button" (click)="shareListing(listing, $event)">Share</button>
+              <a class="listing-open-button" [routerLink]="['/products', listing.id]">Click here</a>
             </div>
           </article>
         }

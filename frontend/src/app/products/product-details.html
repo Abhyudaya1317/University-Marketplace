@@ -35,6 +35,8 @@
                     (keydown.space)="$event.preventDefault(); openImageViewer()"
                     (error)="markPhotoUnavailable(photoUrl)"
                   />
+                  <button class="paint-photo-maximize" type="button" aria-label="Enlarge product photo"
+                    title="Enlarge photo" (click)="openImageViewer(); $event.stopPropagation()">⛶</button>
                 } @else {
                   <div class="paint-placeholder" aria-label="No product photo available">
                     <span aria-hidden="true">✳</span>
@@ -58,6 +60,10 @@
         <div class="detail-copy">
           <p class="product-category">{{ categoryLabel(item.category) }}</p>
           <h1>{{ item.title }}</h1>
+          <div class="pickup-location-highlight" aria-label="Pickup location">
+            <span>PICKUP LOCATION</span>
+            <strong>{{ item.location || 'Not provided by seller' }}</strong>
+          </div>
           <dl class="product-fields">
             <div class="product-field">
               <dt>Condition</dt>
@@ -102,10 +108,6 @@
                 </dd>
               </div>
             }
-            <div class="product-field">
-              <dt>Pickup location</dt>
-              <dd>{{ item.location }}</dd>
-            </div>
             <div class="product-field">
               <dt>Listed</dt>
               <dd>{{ item.createdAt | date: 'mediumDate' }}</dd>
