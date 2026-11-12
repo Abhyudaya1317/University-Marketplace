@@ -155,13 +155,14 @@ nav {
 .explore-category-buttons {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 0;
   margin: -8px 0 28px;
-  padding: 8px 0 4px;
+  padding: 4px 0;
   overflow-x: auto;
-  border-block: 1px solid #d5d5d5;
+  border: 0;
+  background: #fff;
   scrollbar-width: thin;
-  scrollbar-color: #a7adb8 transparent;
+  scrollbar-color: #a7adb8 #fff;
 }
 .explore-category-buttons button {
   box-sizing: border-box;
@@ -174,8 +175,7 @@ nav {
   justify-content: center;
   gap: 4px;
   padding: 6px 4px;
-  border: 0;
-  border-bottom: 3px solid transparent;
+  border: 2px solid transparent;
   background: #fff;
   color: #22231f;
   cursor: pointer;
@@ -188,13 +188,12 @@ nav {
 .category-shortcut-label { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .explore-category-buttons button:hover:not(:disabled),
 .explore-category-buttons button.active {
-  border-bottom-color: #174bff;
   color: #000080;
 }
-.explore-category-buttons button.active { background: #fff; font-weight: 700; }
+.explore-category-buttons button.active { border-color: #174bff; background: #fff; font-weight: 700; }
 .explore-category-buttons button:disabled,
 .explore-category-buttons button.category-empty {
-  border-bottom-color: transparent;
+  border-color: transparent;
   background: #fff;
   color: #858585;
   cursor: not-allowed;

@@ -2081,8 +2081,11 @@ body :is(.universe-shell, .market-page, .details-page, .sell-page, .seller-page,
 body .market-page .explore-category-buttons {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 0;
   overflow-x: auto;
+  border: 0;
+  background: #fff;
+  scrollbar-color: #a7adb8 #fff;
 }
 body .market-page .explore-category-buttons button {
   display: flex;
@@ -2094,8 +2097,7 @@ body .market-page .explore-category-buttons button {
   justify-content: center;
   gap: 4px;
   padding: 6px 4px;
-  border: 0;
-  border-bottom: 3px solid transparent;
+  border: 2px solid transparent;
   background: #fff;
   box-shadow: none;
   color: #22231f;
@@ -2105,7 +2107,7 @@ body .market-page .explore-category-buttons button {
   text-align: center;
 }
 body .market-page .explore-category-buttons button.active {
-  border-bottom-color: #174bff;
+  border-color: #174bff;
   background: #fff;
   color: #000080;
   font-weight: 700;
