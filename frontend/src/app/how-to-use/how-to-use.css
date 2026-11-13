@@ -1,0 +1,114 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: var(--deep-navy, #080817);
+}
+
+.how-to-use-content {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: clamp(28px, 6vw, 72px) 0 64px;
+}
+
+.how-to-use-intro {
+  margin-bottom: 28px;
+  border: 2px solid var(--border-gray, #777);
+  padding: clamp(18px, 4vw, 34px);
+  background: var(--os-gray, #c0c0c0);
+  box-shadow: 5px 5px 0 var(--deep-navy, #080817);
+}
+
+.how-to-use-intro .eyebrow {
+  margin: 0 0 12px;
+  color: var(--electric-blue, #1148ff);
+  font: 700 9px/1.6 var(--pixel, monospace);
+}
+
+.how-to-use-intro h1 {
+  margin: 0 0 12px;
+  color: var(--deep-navy, #080817);
+  font: 400 clamp(20px, 4vw, 32px)/1.5 var(--pixel, monospace);
+  text-shadow: 3px 3px 0 #fff;
+}
+
+.how-to-use-intro > p:last-child {
+  margin: 0;
+  font: 17px/1.6 var(--body, Arial, sans-serif);
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.guide-window {
+  min-width: 0;
+  border: 2px solid var(--border-gray, #777);
+  background: var(--os-gray, #c0c0c0);
+  box-shadow: 5px 5px 0 var(--deep-navy, #080817);
+}
+
+.guide-titlebar {
+  min-height: 38px;
+  padding: 11px 13px;
+  background: var(--navy, #000080);
+  color: #fff;
+  font: 700 9px/1.5 var(--pixel, monospace);
+}
+
+.guide-content {
+  display: flex;
+  min-height: 320px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.guide-content h2 {
+  margin: 0 0 14px;
+  font: 700 clamp(18px, 2.5vw, 23px)/1.35 var(--body, Arial, sans-serif);
+}
+
+.guide-content ol {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 22px;
+  padding-left: 24px;
+  font: 16px/1.6 var(--body, Arial, sans-serif);
+}
+
+.guide-action {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 18px;
+  margin-top: auto;
+  border: 2px solid var(--deep-navy, #080817);
+  padding: 10px 16px;
+  background: var(--electric-blue, #1148ff);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--deep-navy, #080817);
+  font: 700 10px/1.4 var(--pixel, monospace);
+  text-decoration: none;
+}
+
+.guide-action:hover {
+  background: var(--navy, #000080);
+}
+
+@media (max-width: 640px) {
+  .how-to-use-content {
+    width: calc(100% - 24px);
+    padding-top: 24px;
+  }
+
+  .guide-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .guide-content {
+    min-height: 0;
+  }
+}

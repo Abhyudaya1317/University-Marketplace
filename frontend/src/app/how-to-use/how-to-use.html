@@ -1,0 +1,44 @@
+<div class="market-page how-to-use-page">
+  <header class="market-header">
+    <a class="brand" routerLink="/" aria-label="UniBee home">
+      <span class="brand-mark">✦</span><span>UNIBEE<sup>’26</sup></span>
+    </a>
+    <app-account-navigation />
+  </header>
+
+  <main class="how-to-use-content">
+    <section class="how-to-use-intro">
+      <p class="eyebrow">UNIBEE QUICK GUIDE</p>
+      <h1>How to use</h1>
+      <p>Buy and sell things with people on campus in a few simple steps.</p>
+    </section>
+
+    <div class="guide-grid">
+      <section class="guide-window" aria-labelledby="seller-guide-title">
+        <div class="guide-titlebar"><strong>SELLER_GUIDE.EXE</strong></div>
+        <div class="guide-content">
+          <h2 id="seller-guide-title">Selling is simple</h2>
+          <ol>
+            <li>Choose <strong>Sell item</strong> in the top menu.</li>
+            <li>Add the item name, category, price, photos, and details.</li>
+            <li>Post it. You can manage your listing and buyer requests from <strong>Options → Items I’m selling</strong>.</li>
+          </ol>
+          <a class="guide-action" routerLink="/sell">For sellers <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="guide-window" aria-labelledby="buyer-guide-title">
+        <div class="guide-titlebar"><strong>BUYER_GUIDE.EXE</strong></div>
+        <div class="guide-content">
+          <h2 id="buyer-guide-title">Finding an item is easy</h2>
+          <ol>
+            <li>Open <strong>Explore</strong> and search or choose a category.</li>
+            <li>Select an item to see its photos, price, and seller details.</li>
+            <li>Save it, message the seller, or send a request to arrange pickup.</li>
+          </ol>
+          <a class="guide-action" routerLink="/explore">For buyers <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

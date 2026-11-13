@@ -183,7 +183,7 @@
   margin: 0 0 12px;
   color: #080817;
   font-family: var(--pixel);
-  font-size: clamp(15px, 3.3vw, 15px);
+  font-size: clamp(18px, 3.3vw, 18px);
   font-weight: 400;
   letter-spacing: -1px;
   line-height: 1.7;
