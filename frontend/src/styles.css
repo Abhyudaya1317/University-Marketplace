@@ -3074,3 +3074,12 @@ body :is(.details-page,.sell-page,.orders-page,.messages-page,.how-to-use-page) 
     --route-header-gutter: 28px;
   }
 }
+
+/* Keep the home toolbar background flush with the full shell on narrow screens. */
+body .universe-shell > .main-toolbar {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: none !important;
+  justify-self: stretch !important;
+}
