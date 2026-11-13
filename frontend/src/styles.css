@@ -465,7 +465,11 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
   .featured-photo { height: 220px; }.drop-notice { right: 0; bottom: -52px; width: min(250px, 83%); }.campus-stamp { display: none; }
   .home-feed { padding: 52px 15px 60px; }.feed-heading { align-items: flex-start; flex-direction: column; }.feed-heading > a { font-size: 6px; }.feed-heading h2 { font-size: 20px; }
   .feed-filters { justify-content: flex-start; }.feed-filters a { padding: 10px 7px; font-size: 5px; }
-  .home-product-grid { grid-template-columns: 1fr; gap: 18px; }.home-product-image { height: 260px; }
+  .home-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .home-product-window { min-width: 0; }
+  .home-product-image { height: auto; aspect-ratio: 1.25 / 1; margin: 6px; }
+  .home-product-info { padding: 4px 9px 11px; }
+  .home-product-name { min-height: 44px; font-size: 15px; }
   .diagnostics { padding: 52px 14px; }.diagnostics-window { grid-template-columns: 1fr; }.diagnostics-intro { grid-column: auto; min-height: 210px; }
   .stat-panel { min-height: 190px; border-top: 1px solid var(--deep-navy); border-left: 0; }.stat-panel > strong { font-size: 35px; }
   .footer-top { align-items: flex-start; flex-direction: column; }.footer-top nav { gap: 12px; }.footer-top nav a, .uptime { font-size: 6px; }.uptime { margin-left: 0; }.footer-bottom { flex-direction: column; align-items: center; gap: 8px; font-size: 6px; }
