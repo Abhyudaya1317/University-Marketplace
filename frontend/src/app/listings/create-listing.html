@@ -108,16 +108,10 @@
         @if (category === 'FOOD') {
           <div class="form-field">
             <label for="protein-rich">Is this a protein-rich food?</label>
-            <select id="protein-rich" name="proteinRich" required [ngModel]="proteinRich"
-              (ngModelChange)="onProteinRichChange($event)">
+            <select id="protein-rich" name="proteinRich" required [(ngModel)]="proteinRich">
               <option [ngValue]="false">No</option>
               <option [ngValue]="true">Yes</option>
             </select>
-            @if (proteinRich) {
-              <label for="protein-grams">Protein per serving (grams)</label>
-              <input id="protein-grams" name="proteinGrams" type="number" required min="0.01" max="5000" step="0.01"
-                [(ngModel)]="proteinGrams" placeholder="e.g. 12">
-            }
           </div>
         }
 

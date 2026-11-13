@@ -37,7 +37,7 @@ interface AdminListing {
   clothingGender: string | null;
   clothingSizes: string | null;
   color: string | null;
-  proteinGrams: string | null;
+  proteinRich: boolean;
   posterSize: string | null;
   hashtags: string[];
   photoUrl: string | null;
@@ -66,7 +66,7 @@ interface ListingDraft {
   clothingGender: string;
   clothingSizes: string;
   color: string;
-  proteinGrams: string;
+  proteinRich: boolean;
   posterSize: string;
   photoUrl: string;
   photoUrl2: string;
@@ -207,7 +207,7 @@ export class AdminConsole {
       clothingGender: listing.clothingGender ?? '',
       clothingSizes: listing.clothingSizes ?? '',
       color: listing.color ?? '',
-      proteinGrams: listing.proteinGrams ?? '0',
+      proteinRich: listing.proteinRich,
       posterSize: listing.posterSize ?? '',
       photoUrl: listing.photoUrl ?? '',
       photoUrl2: listing.photoUrl2 ?? '',

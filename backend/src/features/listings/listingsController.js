@@ -1,12 +1,12 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
-import { CLOTHING_GENDERS, COLOR_EXCLUDED_CATEGORIES, isValidQuantity, matchesExploreFilters, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
+import { CLOTHING_GENDERS, COLOR_EXCLUDED_CATEGORIES, isValidQuantity, matchesExploreFilters, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, parseProteinRich, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
 import { productNamesMatch } from "./productGrouping.js";
 import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
 export async function createListing(request, response) {
-    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, clothingSizes, color, proteinGrams, posterSize, quantityAvailable, condition, customCondition } = request.body ?? {};
+    const { name, category, description, hashtags: rawHashtags, price, phoneNumber, location, clothingGender, clothingSizes, color, proteinRich, posterSize, quantityAvailable, condition, customCondition } = request.body ?? {};
     const trimmedName = typeof name === "string" ? name.trim() : "";
     const trimmedDescription = typeof description === "string" ? description.trim() : "";
     const priceText = typeof price === "number" || typeof price === "string" ? String(price).trim() : "";
@@ -62,7 +62,8 @@ export async function createListing(request, response) {
                     clothingSizes: category === "CLOTHING" ? normalizeCommaSeparatedValues(clothingSizes) : null,
                     color: !COLOR_EXCLUDED_CATEGORIES.has(category)
                         ? normalizeCommaSeparatedValues(color) : null,
-                    proteinGrams: category === "FOOD" ? String(proteinGrams).trim() : null,
+                    proteinRich: category === "FOOD" ? parseProteinRich(proteinRich) : false,
+                    proteinGrams: null,
                     posterSize: category === "POSTERS" ? posterSize.trim() : null
                 },
                 include: { product: { select: { id: true, name: true, category: true } } }
@@ -92,7 +93,7 @@ export async function createListing(request, response) {
                 clothingGender: listing.clothingGender,
                 clothingSizes: listing.clothingSizes,
                 color: listing.color,
-                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                proteinRich: listing.proteinRich,
                 posterSize: listing.posterSize,
                 status: listing.status,
                 quantityAvailable: Number.isSafeInteger(listing.quantityAvailable) ? listing.quantityAvailable : null,
@@ -164,7 +165,7 @@ export async function getExploreProducts(request, response) {
                 quantityAvailable: { gt: 0 },
                 ...(browsingCategory ? { product: { category: browsingCategory } } : {}),
                 ...(gender ? { clothingGender: gender } : {}),
-                ...(proteinOnly ? { proteinGrams: { gt: 0 } } : {})
+                ...(proteinOnly ? { proteinRich: true } : {})
             },
             orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
             ...(!search ? {
@@ -186,7 +187,7 @@ export async function getExploreProducts(request, response) {
                 clothingGender: true,
                 clothingSizes: true,
                 color: true,
-                proteinGrams: true,
+                proteinRich: true,
                 posterSize: true,
                 hashtags: true,
                 createdAt: true,
@@ -228,6 +229,7 @@ export async function getExploreProducts(request, response) {
             condition: listing.condition,
             customCondition: listing.customCondition,
             clothingGender: listing.clothingGender,
+            proteinRich: listing.proteinRich,
             color: listing.color,
             posterSize: listing.posterSize
         }));
@@ -299,7 +301,7 @@ export async function getPublicListingDetails(request, response) {
                 clothingGender: true,
                 clothingSizes: true,
                 color: true,
-                proteinGrams: true,
+                proteinRich: true,
                 posterSize: true,
                 createdAt: true,
                 product: { select: { id: true, category: true } },
@@ -333,7 +335,7 @@ export async function getPublicListingDetails(request, response) {
                 clothingGender: listing.clothingGender,
                 clothingSizes: listing.clothingSizes,
                 color: listing.color,
-                proteinGrams: listing.proteinGrams?.toFixed(2) ?? null,
+                proteinRich: listing.proteinRich,
                 posterSize: listing.posterSize,
                 category: listing.product.category,
                 productId: listing.product.id,

@@ -50,6 +50,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 /* Buttons and fields use raised and inset Windows-style edges throughout the app. */
 button, .primary-button, .primary-link, .search-button, .save-button, .wishlist-button,
 .engagement-button, .randomize-button, .management-button, .nav-button {
+  font-family: var(--pixel);
   border-radius: 0 !important;
   box-shadow: inset 1px 1px #fff, inset -1px -1px #555, 2px 2px 0 #080817;
   transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
@@ -322,7 +323,7 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 }
 .universe-shell .account-navigation > a[href='/explore']:hover { background: var(--navy) !important; }
 .universe-shell .account-navigation > a, .universe-shell .account-navigation > button { min-height: 32px; padding-inline: 7px !important; font-size: 7px !important; }
-.universe-shell .account-navigation > .account-button { padding: 8px 10px !important; border: 2px outset #fff !important; background: var(--os-gray) !important; color: var(--deep-navy) !important; box-shadow: 2px 2px 0 var(--deep-navy) !important; text-decoration: none; white-space: nowrap; }
+.universe-shell .account-navigation > .account-button { padding: 8px 10px !important; border: 2px solid outset #0b0b0b !important; background: #174bff !important; color: var(--deep-navy) !important; box-shadow: 2px 2px 0 var(--deep-navy) !important; text-decoration: none; white-space: nowrap; }
 
 /* Match the retro collage hero, oversized pixel headline, and listing window. */
 .hero { position: relative; display: grid; min-height: 660px; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); align-items: center; gap: clamp(28px, 3vw, 48px); padding: 62px clamp(30px, 6.2vw, 100px) 78px; overflow: hidden; border-bottom: 4px solid var(--deep-navy); isolation: isolate; }
@@ -1348,7 +1349,7 @@ body .seller-page .listing-section { display: none; }
   body .details-page .product-field .price-tag { font-size: 20px; }
   body .details-page .seller-link { min-width: 0; padding: 8px; }
   body .details-page .detail-actions { flex-wrap: wrap; gap: 7px; margin-block: 10px; }
-  body .details-page .detail-actions > * { min-height: 38px; max-width: 100%; padding-inline: 10px; font-size: 13px; }
+  body .details-page .detail-actions > * {font-family: var(--pixel); min-height: 38px; max-width: 100%; padding-inline: 10px; font-size: 13px; }
   body .details-page .request-form { gap: 8px; margin-top: 12px; padding: 12px !important; }
   body .details-page .request-form h2 { font-size: 18px; }
   body .details-page .request-form :is(input, textarea) { min-width: 0; font-size: 16px; }
@@ -2167,22 +2168,25 @@ body .details-page .seller-link strong {
 }
 body .details-page .detail-actions .save-item-action {
   border: 2px solid #080817 !important;
-  background: #c91818 !important;
+  background: #dc3a7b !important;
   color: #080817 !important;
+  font-family: var(--pixel);
   box-shadow: 3px 3px 0 #080817 !important;
-  font-size: 17px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
 }
 body .details-page .detail-actions .save-item-action.is-saved {
-  background: #c91818 !important;
+  background: #dc3a7b !important;
+  font-family: var(--pixel);
 }
 body .details-page .detail-actions .message-seller-action {
   border: 2px solid #000080 !important;
   background: #174bff !important;
   color: #fff !important;
   box-shadow: 4px 4px 0 #080817 !important;
-  font-size: 17px !important;
+  font-size: 12px !important;
   font-weight: 800 !important;
+  font-family: var(--pixel);
 }
 body .details-page .detail-actions .message-seller-action:hover:not(:disabled) {
   background: #000080 !important;
@@ -2928,7 +2932,7 @@ body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .a
     min-height: 34px !important;
     margin: 0 !important;
     padding: 0 5px !important;
-    border: 2px outset #fff !important;
+    border: 2px outset #000000 !important;
     background: #c0c0c0 !important;
     color: #080817 !important;
     box-shadow: 3px 3px 0 #080817 !important;

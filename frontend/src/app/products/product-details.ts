@@ -25,7 +25,7 @@ interface ListingDetails {
   clothingGender: string | null;
   clothingSizes: string | null;
   color: string | null;
-  proteinGrams: string | null;
+  proteinRich: boolean;
   posterSize: string | null;
   category: string;
   createdAt: string;
@@ -371,12 +371,9 @@ export class ProductDetails {
     return labels[item.condition] ?? item.condition;
   }
 
-  // Keep food protein information with its description and use 0/null for a non-protein food.
+  // Show the food toggle clearly without asking for or displaying a grams measurement.
   protected foodProteinDescription(item: ListingDetails): string {
-    const grams = Number(item.proteinGrams ?? 0);
-    return grams > 0
-      ? `Protein-rich food: Yes · ${grams.toFixed(2)} g per serving`
-      : 'Protein-rich food: No';
+    return item.proteinRich ? 'Protein-rich food: Yes' : 'Protein-rich food: No';
   }
 
   protected stockLabel(quantity: number): string {

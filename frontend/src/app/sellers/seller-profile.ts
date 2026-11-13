@@ -36,7 +36,7 @@ interface SellerProfileResponse {
     photoUrl4: string | null;
     location: string;
     clothingGender: string | null;
-    proteinGrams: string | null;
+    proteinRich: boolean;
     createdAt: string;
   }>;
   message?: string;

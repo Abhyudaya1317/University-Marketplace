@@ -115,6 +115,8 @@ model Listing {
   clothingGender ClothingGender?
   clothingSizes  String?         @db.VarChar(200)
   color          String?         @db.VarChar(120)
+  proteinRich    Boolean         @default(false)
+  // Legacy nutrition value retained for existing rows; new forms use the boolean flag.
   proteinGrams   Decimal?        @db.Decimal(6, 2)
   posterSize     String?         @db.VarChar(40)
   condition      ProductCondition @default(GOOD)

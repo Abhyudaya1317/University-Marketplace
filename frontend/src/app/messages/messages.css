@@ -291,7 +291,7 @@
   color: #080817 !important;
 }
 .messages-page .thread-card .message-list .message-bubble.own-message {
-  --chat-bubble-color: #174bff;
+  --chat-bubble-color: #4467e5;
   align-self: flex-end;
   color: #fff !important;
 }

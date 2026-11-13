@@ -44,7 +44,7 @@ interface EditListingResponse {
     clothingGender: string | null;
     clothingSizes: string | null;
     color: string | null;
-    proteinGrams: string | null;
+    proteinRich: boolean;
     posterSize: string | null;
   };
 }
@@ -95,7 +95,6 @@ export class CreateListing implements OnDestroy {
   protected clothingGender = '';
   protected clothingSizes = '';
   protected color = '';
-  protected proteinGrams: number | string = '';
   protected proteinRich = false;
   protected posterSize = '';
   protected condition = 'GOOD';
@@ -183,10 +182,6 @@ export class CreateListing implements OnDestroy {
       this.error.set('Enter the available color or colors separated by commas.');
       return;
     }
-    if (this.category === 'FOOD' && this.proteinRich && (!this.proteinGrams || Number(this.proteinGrams) <= 0)) {
-      this.error.set('Enter a positive protein amount per serving.');
-      return;
-    }
     if (this.category === 'POSTERS' && !this.posterSize.trim()) {
       this.error.set('Enter the poster size, such as A3 or 30 × 40 cm.');
       return;
@@ -215,7 +210,7 @@ export class CreateListing implements OnDestroy {
     if (this.category === 'CLOTHING') formData.append('clothingGender', this.clothingGender);
     if (this.category === 'CLOTHING') formData.append('clothingSizes', this.clothingSizes.trim());
     if (this.supportsColorField(this.category)) formData.append('color', this.color.trim());
-    if (this.category === 'FOOD') formData.append('proteinGrams', this.proteinRich ? String(this.proteinGrams) : '0');
+    if (this.category === 'FOOD') formData.append('proteinRich', String(this.proteinRich));
     if (this.category === 'POSTERS') formData.append('posterSize', this.posterSize.trim());
     for (const photo of this.selectedPhotos) formData.append('photos', photo);
 
@@ -252,7 +247,6 @@ export class CreateListing implements OnDestroy {
         this.clothingGender = '';
         this.clothingSizes = '';
         this.color = '';
-        this.proteinGrams = '';
         this.proteinRich = false;
         this.posterSize = '';
         this.condition = 'GOOD';
@@ -534,7 +528,6 @@ export class CreateListing implements OnDestroy {
     this.clothingGender = '';
     this.clothingSizes = '';
     if (!this.supportsColorField(value)) this.color = '';
-    this.proteinGrams = '';
     this.proteinRich = false;
     this.posterSize = '';
     this.condition = value === 'FOOD' ? 'FRESH' : 'GOOD';
@@ -543,12 +536,6 @@ export class CreateListing implements OnDestroy {
   // Categories where a color choice does not help buyers compare the listing.
   protected supportsColorField(category: string): boolean {
     return !['DAILY_USE', 'FOOD', 'KITCHEN_ITEMS', 'POSTERS', 'PROJECTS', 'SPORTS_EQUIPMENT'].includes(category);
-  }
-
-  // Only ask for protein grams when the seller marks the food as protein-rich.
-  protected onProteinRichChange(value: boolean): void {
-    this.proteinRich = value;
-    if (!value) this.proteinGrams = '';
   }
 
   // Reuse the same listing form for edit mode and load only the signed-in owner's offer.
@@ -576,9 +563,8 @@ export class CreateListing implements OnDestroy {
           this.clothingGender = listing.clothingGender ?? '';
           this.clothingSizes = listing.clothingSizes ?? '';
           this.color = listing.color ?? '';
-          this.proteinGrams = listing.proteinGrams ?? '';
           this.posterSize = listing.posterSize ?? '';
-          this.proteinRich = Number(listing.proteinGrams ?? 0) > 0;
+          this.proteinRich = listing.proteinRich;
           this.currentPhotoUrls.set([listing.photoUrl, listing.photoUrl2, listing.photoUrl3, listing.photoUrl4]
             .filter((url): url is string => Boolean(url)));
           this.customCondition = listing.customCondition ?? '';

@@ -4,7 +4,6 @@ import test from "node:test";
 import {
     isValidPhoneNumber,
     isValidPrice,
-    isValidProteinGrams,
     matchesExploreFilters,
     normalizeProductName,
     PRODUCT_CATEGORIES,
@@ -14,9 +13,9 @@ import { buildProductGroups, filterProductGroups, productNamesMatch } from "./pr
 
 // The final Explore response check must exclude mismatched clothing even if a query slips through.
 test("applies category and exact clothing gender to individual Explore listings", () => {
-    const mensListing = { product: { category: "CLOTHING" }, clothingGender: "MEN", proteinGrams: null };
-    const womensListing = { product: { category: "CLOTHING" }, clothingGender: "WOMEN", proteinGrams: null };
-    const electronicsListing = { product: { category: "ELECTRONICS" }, clothingGender: null, proteinGrams: null };
+    const mensListing = { product: { category: "CLOTHING" }, clothingGender: "MEN", proteinRich: false };
+    const womensListing = { product: { category: "CLOTHING" }, clothingGender: "WOMEN", proteinRich: false };
+    const electronicsListing = { product: { category: "ELECTRONICS" }, clothingGender: null, proteinRich: false };
 
     assert.equal(matchesExploreFilters(mensListing, { category: "CLOTHING", gender: "MEN" }), true);
     assert.equal(matchesExploreFilters(womensListing, { category: "CLOTHING", gender: "MEN" }), false);
@@ -62,15 +61,15 @@ test("groups duplicate offers across categories and keeps the cheapest price", (
 });
 
 // Category details filter the matching seller offers and recalculate the visible lowest price.
-test("filters clothing by gender and food by minimum protein", () => {
+test("filters clothing by gender and food by the protein-rich flag", () => {
     const groups = buildProductGroups([
         { id: 21, name: "hoodie", category: "CLOTHING", listings: [
             { id: 21, sellerId: 1, price: "50.00", clothingGender: "MEN", createdAt: new Date() },
             { id: 22, sellerId: 2, price: "40.00", clothingGender: "WOMEN", createdAt: new Date() }
         ] },
         { id: 23, name: "protein bar", category: "FOOD", listings: [
-            { id: 23, sellerId: 3, price: "20.00", proteinGrams: "8.00", createdAt: new Date() },
-            { id: 24, sellerId: 4, price: "25.00", proteinGrams: "20.00", createdAt: new Date() }
+            { id: 23, sellerId: 3, price: "20.00", proteinRich: false, createdAt: new Date() },
+            { id: 24, sellerId: 4, price: "25.00", proteinRich: true, createdAt: new Date() }
         ] }
     ]);
 
@@ -78,10 +77,10 @@ test("filters clothing by gender and food by minimum protein", () => {
     assert.equal(mensHoodie.lowestPrice, "50.00");
     assert.equal(mensHoodie.sellerCount, 1);
 
-    const [highProteinFood] = filterProductGroups(groups, { category: "FOOD", minProtein: "10" });
+    const [highProteinFood] = filterProductGroups(groups, { category: "FOOD", proteinOnly: true });
     assert.equal(highProteinFood.lowestPrice, "25.00");
     assert.equal(highProteinFood.sellerCount, 1);
-    assert.equal(filterProductGroups(groups, { category: "FOOD", minProtein: "30" }).length, 0);
+    assert.equal(filterProductGroups(groups, { category: "FOOD", proteinOnly: false })[0].sellerCount, 2);
 });
 
 // Search works with a category selected, and both controls narrow results together.
@@ -125,25 +124,15 @@ test("accepts valid listing prices and rejects invalid amounts", () => {
     assert.equal(isValidPrice("1e3"), false);
 });
 
-// Protein values stay numeric, non-negative, and capped at five thousand grams per serving.
-test("validates protein amounts per serving", () => {
-    assert.equal(isValidProteinGrams("0"), true);
-    assert.equal(isValidProteinGrams("12.5"), true);
-    assert.equal(isValidProteinGrams("5000"), true);
-    assert.equal(isValidProteinGrams("5001"), false);
-    assert.equal(isValidProteinGrams("-1"), false);
-    assert.equal(isValidProteinGrams("12.555"), false);
-});
-
-// Food listings use food-specific conditions and require grams only when protein is declared.
+// Food listings use food-specific conditions and require a protein-rich Yes/No choice.
 test("accepts food conditions and rejects general clothing conditions for food", () => {
     const details = {
         name: "Granola bar", category: "FOOD", description: "Sealed snack bar", price: "25",
         phoneNumber: "9876543210", location: "Campus shop", quantityAvailable: 2,
-        proteinGrams: "0", condition: "PACKAGED"
+        proteinRich: "false", condition: "PACKAGED"
     };
 
     assert.equal(validateListingDetails(details), null);
     assert.equal(validateListingDetails({ ...details, condition: "GOOD" }), "Choose a valid food condition.");
-    assert.equal(validateListingDetails({ ...details, proteinGrams: "12.5", condition: "FRESH" }), null);
+    assert.equal(validateListingDetails({ ...details, proteinRich: "true", condition: "FRESH" }), null);
 });

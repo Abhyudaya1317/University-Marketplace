@@ -86,7 +86,7 @@ function details(id: number) {
     location: 'Campus',
     condition: 'GOOD',
     clothingGender: 'UNISEX',
-    proteinGrams: null,
+    proteinRich: false,
     category: 'CLOTHING',
     createdAt: new Date().toISOString(),
     seller: {

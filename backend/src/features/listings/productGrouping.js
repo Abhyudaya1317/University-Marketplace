@@ -105,7 +105,7 @@ export function buildProductGroups(products) {
 }
 
 // Filter already-grouped products so search and category controls match the visible cards.
-export function filterProductGroups(groups, { search = "", category = "", gender = "", minProtein = "" } = {}) {
+export function filterProductGroups(groups, { search = "", category = "", gender = "", proteinOnly = false } = {}) {
     const searchWords = productKeywords(search);
 
     return groups.map((product) => {
@@ -113,7 +113,7 @@ export function filterProductGroups(groups, { search = "", category = "", gender
         const offers = product.offers.filter((offer) => {
             if (category && offer.category !== category) return false;
             if (gender && offer.clothingGender !== gender) return false;
-            if (minProtein !== "" && (offer.category !== "FOOD" || Number(offer.proteinGrams) < Number(minProtein))) return false;
+            if (proteinOnly && (offer.category !== "FOOD" || offer.proteinRich !== true)) return false;
             return true;
         });
         const productWords = productKeywords(product.name);

@@ -91,7 +91,7 @@ nav {
 .page-intro h1 {
   margin: 9px 0;
   color: #242520;
-  font-size: clamp(32px, 5vw, 48px);
+  font-size: clamp(15px, 5vw, 30px);
   letter-spacing: -2px;
 }
 .page-intro > p:last-child {
