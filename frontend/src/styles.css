@@ -1003,11 +1003,13 @@ body .universe-shell .stat-pink { background: #f35bc7 !important; color: #080817
 /* Let the shared page headers reach both viewport edges and center their link labels. */
 body .universe-shell {
   box-sizing: border-box;
-  width: 100%;
+  width: 100vw;
   max-width: none;
   margin: 0;
   border-inline: 0;
 }
+
+body { overflow-x: clip; }
 
 body .universe-shell > .main-toolbar {
   box-sizing: border-box;
@@ -3073,13 +3075,4 @@ body :is(.details-page,.sell-page,.orders-page,.messages-page,.how-to-use-page) 
   body .market-page:not(.how-to-use-page) {
     --route-header-gutter: 28px;
   }
-}
-
-/* Keep the home toolbar background flush with the full shell on narrow screens. */
-body .universe-shell > .main-toolbar {
-  box-sizing: border-box !important;
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: none !important;
-  justify-self: stretch !important;
 }
