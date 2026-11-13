@@ -37,6 +37,7 @@ input, textarea, [contenteditable]:not([contenteditable='false']) { cursor: text
 .crop-viewport canvas:active { cursor: grabbing !important; }
 
 body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--teal); background-image: linear-gradient(#00008038 1px, transparent 1px), linear-gradient(90deg, #00008038 1px, transparent 1px), repeating-linear-gradient(0deg, #00000008 0 1px, transparent 1px 4px); background-size: 30px 30px, 30px 30px, 100% 4px; }
+app-root { display: block; width: 100%; min-width: 0; }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
@@ -123,7 +124,7 @@ body :is(.market-page,.details-page,.sell-page,.seller-page,.dashboard-page,.ord
   color: var(--ink) !important;
 }
 
-body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) {
+body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
   border-bottom: 3px solid var(--deep-navy) !important;
   background: var(--os-gray) !important;
 }
@@ -1003,7 +1004,8 @@ body .universe-shell .stat-pink { background: #f35bc7 !important; color: #080817
 /* Let the shared page headers reach both viewport edges and center their link labels. */
 body .universe-shell {
   box-sizing: border-box;
-  width: 100vw;
+  width: 100%;
+  min-width: 0;
   max-width: none;
   margin: 0;
   border-inline: 0;
@@ -1016,13 +1018,18 @@ body .universe-shell > .main-toolbar {
   width: 100%;
   max-width: none;
   margin-inline: 0;
+  position: sticky;
+  top: 30px;
+  z-index: 2001;
 }
 
 body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header) {
   box-sizing: border-box;
   width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px));
   max-width: none !important;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 1200;
   left: auto;
   transform: none;
   margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
@@ -1163,7 +1170,9 @@ body .seller-page .listing-section { display: none; }
     box-sizing: border-box;
     width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px));
     max-width: none !important;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1200;
     left: auto;
     transform: none;
     margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
@@ -3017,13 +3026,14 @@ body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .a
     align-items: center !important;
     justify-content: initial !important;
     gap: 8px !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px)) !important;
+    max-width: none !important;
     min-width: 0 !important;
     height: auto !important;
     min-height: 0 !important;
     box-sizing: border-box !important;
     padding: 7px 8px !important;
+    margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
   }
 }
 
@@ -3055,24 +3065,28 @@ body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .a
   }
 }
 
-/* Keep routed header expansion equal to each page's actual horizontal padding. */
-body :is(.details-page,.sell-page,.orders-page,.messages-page,.how-to-use-page) {
+/* The page gutter and its header expansion must always match exactly. */
+body :is(.market-page,.details-page,.sell-page,.orders-page,.messages-page) {
   --route-header-gutter: clamp(14px, 3.5vw, 48px);
 }
 
-@media (max-width: 760px) {
-  body :is(.details-page,.sell-page,.orders-page,.messages-page,.how-to-use-page) {
-    --route-header-gutter: clamp(14px, 3.5vw, 48px);
-  }
-
-  /* Explore uses 16px page padding on small phones and 28px above 520px. */
-  body .market-page:not(.how-to-use-page) {
-    --route-header-gutter: 16px;
-  }
+body :is(.seller-page,.dashboard-page) {
+  --route-header-gutter: 0px;
 }
 
-@media (min-width: 521px) and (max-width: 760px) {
-  body .market-page:not(.how-to-use-page) {
-    --route-header-gutter: 28px;
+body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+  box-sizing: border-box !important;
+  width: calc(100% + var(--route-header-gutter, 0px) + var(--route-header-gutter, 0px)) !important;
+  max-width: none !important;
+  margin-inline: calc(0px - var(--route-header-gutter, 0px)) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2001 !important;
+}
+
+@media (max-width: 760px) {
+  /* These pages use a fixed 14px mobile inset, so their headers expand by 14px too. */
+  body :is(.market-page,.details-page,.sell-page,.orders-page,.messages-page) {
+    --route-header-gutter: 14px;
   }
 }

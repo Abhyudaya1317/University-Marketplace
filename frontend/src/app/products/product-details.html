@@ -73,6 +73,10 @@
               <dt>Price</dt>
               <dd><strong class="price-tag">₹{{ item.price }}</strong></dd>
             </div>
+            <div class="payment-mode-field">
+              <dt>Payment Mode:</dt>
+              <dd>Cash On Delivery</dd>
+            </div>
             @if (item.category === 'CLOTHING' && item.clothingSizes) {
               <div class="product-attribute-field">
                 <dt>Available sizes</dt>

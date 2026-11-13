@@ -259,6 +259,28 @@
   font-size: 25px;
   line-height: 1.15;
 }
+.payment-mode-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 10px 0 12px;
+  padding: 9px 12px;
+  border: 2px solid #080817;
+  background: #000080;
+  box-shadow: 3px 3px 0 #080817;
+  color: #fff;
+}
+.payment-mode-field dt,
+.payment-mode-field dd {
+  margin: 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
 .product-attribute-field {
   display: grid;
   grid-template-columns: minmax(105px, 0.32fr) minmax(0, 1fr);
