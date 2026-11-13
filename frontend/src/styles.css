@@ -2370,3 +2370,102 @@ body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-heade
     text-align: center;
   }
 }
+
+/* Phone headers share one predictable layout: brand first, then three visible actions. */
+@media (max-width: 760px) {
+  body .universe-shell .main-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'brand' 'account' 'links' 'search' !important;
+    align-items: center;
+    gap: 9px !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar > .brand {
+    grid-area: brand;
+    justify-self: start;
+    min-width: max-content !important;
+    font-size: clamp(15px, 4vw, 19px) !important;
+    line-height: 1.25;
+  }
+
+  body .universe-shell .main-toolbar > app-account-navigation,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) app-account-navigation {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar > app-account-navigation { grid-area: account; }
+
+  body .universe-shell .main-toolbar .account-navigation,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 7px !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a,
+  body .universe-shell .main-toolbar .account-menu,
+  body .universe-shell .main-toolbar .account-menu > summary,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation > a,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu > summary {
+    box-sizing: border-box;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 38px !important;
+    padding: 0 3px !important;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(9px, 2.8vw, 12px) !important;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  body .universe-shell .main-toolbar > .desktop-links { grid-area: links; }
+  body .universe-shell .main-toolbar > .toolbar-search { grid-area: search; width: 100%; min-width: 0; }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'brand' 'account' !important;
+    align-items: center;
+    gap: 9px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) > .brand {
+    grid-area: brand;
+    justify-self: start;
+    min-width: max-content !important;
+    font-size: clamp(15px, 4vw, 19px) !important;
+    line-height: 1.25;
+  }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) app-account-navigation { grid-area: account; }
+}
+
+@media (max-width: 380px) {
+  body .universe-shell .main-toolbar,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+    padding-inline: 9px !important;
+  }
+  body .universe-shell .main-toolbar .account-navigation,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+    gap: 5px !important;
+  }
+}
