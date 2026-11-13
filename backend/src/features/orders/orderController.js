@@ -327,7 +327,18 @@ export async function updateOrderStatus(request, response) {
             });
             if (updated.count !== 1) throw new Error("Order changed while a seller action was being processed.");
 
-            return { status: transition.to, order };
+            const updatedListing = transition.schedule
+                ? await transaction.listing.findUnique({
+                    where: { id: order.listingId },
+                    select: { quantityAvailable: true }
+                })
+                : null;
+
+            return {
+                status: transition.to,
+                order,
+                ...(updatedListing ? { quantityAvailable: updatedListing.quantityAvailable } : {})
+            };
         });
 
         if (result.error === "NOT_FOUND") return response.status(404).json({ success: false, message: "This order was not found." });
@@ -352,7 +363,11 @@ export async function updateOrderStatus(request, response) {
             });
         }
 
-        return response.json({ success: true, status: result.status });
+        return response.json({
+            success: true,
+            status: result.status,
+            ...(result.quantityAvailable !== undefined ? { quantityAvailable: result.quantityAvailable } : {})
+        });
     } catch (error) {
         if (error?.code === "P2034") {
             return response.status(409).json({ success: false, message: "The order changed while being updated. Refresh My Orders and try again." });

@@ -116,6 +116,7 @@ export class ProductDetails {
   private loadListing(listingId: string): void {
     this.loading.set(true);
     this.error.set('');
+    this.saved.set(false);
     this.activePhotoIndex.set(0);
     this.unavailablePhotoUrls.set(new Set());
     this.orderFeedback.set('');
@@ -139,8 +140,9 @@ export class ProductDetails {
 
   // Read saved listing IDs from the signed-in account; guest browsing remains public.
   private loadSavedState(listingId: string): void {
-    this.http.get<{ listingIds: string[] }>('/api/listings/favorites').subscribe({
-      next: (response) => this.saved.set((response.listingIds ?? []).includes(listingId)),
+    this.http.get<{ listingIds: Array<number | string> }>('/api/listings/favorites').subscribe({
+      next: (response) =>
+        this.saved.set((response.listingIds ?? []).some((savedId) => String(savedId) === listingId)),
       error: () => this.saved.set(false),
     });
   }

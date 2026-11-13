@@ -69,7 +69,7 @@ export class InteractionFeedback {
     this.toastTimer = setTimeout(() => {
       this.toast.set(null);
       this.toastTimer = undefined;
-    }, 1000);
+    }, 2000);
   }
 
   openToastAction(): void {

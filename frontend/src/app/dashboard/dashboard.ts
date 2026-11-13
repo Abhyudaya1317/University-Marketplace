@@ -592,12 +592,25 @@ export class Dashboard {
     this.requestBusyId.set(request.id);
     this.requestNotice.set('');
     this.http
-      .patch(`/api/orders/${request.id}`, {
+      .patch<{ success: boolean; quantityAvailable?: number }>(`/api/orders/${request.id}`, {
         action,
         ...(action === 'accept' ? { meetingAt: meetingAt?.toISOString(), meetingLocation } : {}),
       })
       .subscribe({
-        next: () => {
+        next: (response) => {
+          if (action === 'accept' && typeof response.quantityAvailable === 'number') {
+            this.listings.update((listings) =>
+              listings.map((listing) =>
+                listing.id === request.listingId
+                  ? { ...listing, quantityAvailable: response.quantityAvailable! }
+                  : listing,
+              ),
+            );
+            this.stockDrafts.update((drafts) => ({
+              ...drafts,
+              [request.listingId]: response.quantityAvailable!,
+            }));
+          }
           this.requests.update((items) => items.filter((item) => item.id !== request.id));
           this.requestNotice.set(
             action === 'accept'
