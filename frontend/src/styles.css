@@ -1484,94 +1484,6 @@ body .seller-page .listing-section { display: none; }
   body .orders-page .order-details img { width: 54px; height: 54px; flex-basis: 54px; }
 }
 
-@media (min-width: 360px) and (max-width: 600px) {
-  body .universe-shell .home-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  body .universe-shell .home-product-image { height: clamp(112px, 34vw, 150px); }
-  body .universe-shell .home-product-main { min-width: 0; padding: 9px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body .market-page .product-card,
-  body .universe-shell .home-product-window,
-  body :is(.dashboard-page,.seller-page) .profile-photo-tile img { transition: none; }
-}
-
-/* Keep public profiles in the owner's pixel theme while allowing every stat to wrap on phones. */
-body .seller-page .profile-console-body { padding: 14px 18px 18px; }
-body .seller-page .profile-handle {
-  margin: 0 0 12px;
-  color: var(--navy);
-  font: 9px/1.6 var(--pixel);
-}
-body .seller-page .seller-content :is(h1,h2,h3,p,span,strong,small,a,button,label,input,textarea) {
-  font-family: var(--pixel) !important;
-}
-body .seller-page .profile-copy .seller-bio {
-  width: min(100%, 720px);
-  margin: 14px 0 12px;
-  padding: 10px 12px;
-  border-top: 1px solid #777;
-  border-bottom: 1px solid #777;
-  border-left: 5px solid var(--navy);
-  background: #d6d6d2;
-  box-shadow: 3px 3px 0 #080817;
-  color: var(--navy);
-  font-size: 14px;
-  line-height: 1.8;
-}
-
-@media (max-width: 600px) {
-  body .dashboard-page .profile-summary,
-  body .seller-page .profile-heading {
-    grid-template-columns: 62px minmax(0, 1fr);
-    grid-template-areas: 'avatar stats' 'name name' 'bio bio' 'note note' 'action action';
-    align-items: center;
-    gap: 8px 10px;
-  }
-  body :is(.dashboard-page,.seller-page) .profile-stats {
-    display: grid;
-    width: 100%;
-    min-width: 0;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 3px;
-  }
-  body :is(.dashboard-page,.seller-page) .profile-stats > div {
-    min-width: 0;
-    width: 100%;
-    text-align: center;
-  }
-  body :is(.dashboard-page,.seller-page) .profile-stats span {
-    display: block;
-    max-width: 100%;
-    font-size: clamp(6px, 2vw, 8px);
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
-  body .dashboard-page .profile-action {
-    grid-area: action;
-    justify-self: end;
-  }
-  body .seller-page .profile-actions {
-    grid-area: action;
-    justify-self: stretch;
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-  }
-  body .seller-page .profile-actions .save-button {
-    width: auto;
-    max-width: 49%;
-    min-height: 34px;
-    font-size: 7px;
-  }
-  body .seller-page .profile-copy .seller-bio {
-    font-size: 10px;
-    line-height: 1.8;
-  }
-  body .seller-page .profile-console-body { padding: 10px; }
-}
-
 /* Keep the mobile Home wordmark and actions in the same row. */
 @media (max-width: 600px) {
   body .universe-shell .main-toolbar {
@@ -1709,6 +1621,102 @@ body .seller-page .profile-copy .seller-bio {
   body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu > summary {
     padding-inline: 3px !important;
     font-size: 5px !important;
+  }
+}
+
+/* Match the compact reference header on phones: brand and actions share one row. */
+@media (max-width: 760px) {
+  body .universe-shell .main-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas: 'brand account' !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar > .brand,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) > .brand {
+    grid-area: brand;
+    justify-self: start;
+    min-width: 0 !important;
+    white-space: nowrap;
+    font-size: clamp(11px, 3.5vw, 16px) !important;
+    line-height: 1.2;
+  }
+
+  body .universe-shell .main-toolbar > app-account-navigation,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) app-account-navigation {
+    grid-area: account;
+    display: block !important;
+    width: auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: flex-end;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    gap: clamp(3px, 1.2vw, 7px) !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a,
+  body .universe-shell .main-toolbar .account-menu,
+  body .universe-shell .main-toolbar .account-menu > summary,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation > a,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu > summary {
+    box-sizing: border-box;
+    display: flex !important;
+    flex: 0 1 auto;
+    align-items: center;
+    justify-content: center;
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding: 0 clamp(4px, 1.4vw, 8px) !important;
+    font-size: clamp(7px, 2.4vw, 10px) !important;
+    line-height: 1.1;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  body .universe-shell .main-toolbar > .desktop-links,
+  body .universe-shell .main-toolbar > .toolbar-search {
+    display: none !important;
+  }
+
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas: 'brand account' !important;
+    align-items: center;
+    gap: 8px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  @media (max-width: 380px) {
+    body .universe-shell .main-toolbar,
+    body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+      gap: 4px !important;
+      padding-inline: 7px !important;
+    }
+
+    body .universe-shell .main-toolbar .account-navigation,
+    body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+      gap: 3px !important;
+    }
   }
 }
 
@@ -2427,7 +2435,7 @@ body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-heade
     padding: 0 3px !important;
     align-items: center;
     justify-content: center;
-    font-size: clamp(9px, 2.8vw, 12px) !important;
+    font-size: clamp(6px, 1.9vw, 8px) !important;
     line-height: 1.2;
     text-align: center;
     white-space: nowrap;
