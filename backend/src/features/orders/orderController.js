@@ -139,8 +139,9 @@ export async function createOrder(request, response) {
             return response.status(409).json({ success: false, message: "You already have an open request for this offer. Check My Orders for its status." });
         }
 
-        // Notify the seller only after the buyer request has been committed successfully.
-        void sendPushNotification(createdOrder.sellerId, {
+        // Wait for the push attempt so a serverless runtime cannot stop it after the response returns.
+        // Push delivery catches its own errors and cannot undo the saved buyer request.
+        await sendPushNotification(createdOrder.sellerId, {
             title: "New buyer request",
             body: `Your item "${createdOrder.listing.product.name}" has been ordered by "${createdOrder.buyer.fullName || "CampusX Member"}". Schedule meet and confirm.`,
             url: "/items-selling",
