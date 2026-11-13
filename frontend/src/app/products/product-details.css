@@ -92,12 +92,12 @@
   place-items: center;
   border: 2px solid #080817;
   background: #fefefe;
-  color: #fff;
+  color: #080817;
   box-shadow: 2px 2px 0 #080817;
   font: 700 21px/1 Arial, sans-serif;
   cursor: pointer;
 }
-.paint-photo-maximize:hover { background: #000080; }
+.paint-photo-maximize:hover { background: #000080; color: #fff; }
 .paint-frame-image { display: block; width: 100%; height: auto; }
 .paint-product-image {
   display: block;

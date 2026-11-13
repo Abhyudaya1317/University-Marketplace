@@ -5,6 +5,7 @@ import { listingPhotoUrl, removeListingPhotos, removeListingPhotoByUrl } from ".
 
 // Return only the owner's active listing data needed to prefill the existing sell form.
 export async function getListingForEdit(request, response) {
+    response.setHeader("Cache-Control", "private, no-store");
     const listingId = Number(request.params.listingId);
     if (!Number.isSafeInteger(listingId) || listingId < 1) {
         return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
@@ -56,6 +57,7 @@ export async function getListingForEdit(request, response) {
 
 // Update the owner's active offer and its shared catalog link in one transaction.
 export async function updateListing(request, response) {
+    response.setHeader("Cache-Control", "private, no-store");
     const listingId = Number(request.params.listingId);
     const uploadedPhotos = request.files ?? [];
     if (!Number.isSafeInteger(listingId) || listingId < 1) {

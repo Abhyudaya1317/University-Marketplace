@@ -169,6 +169,9 @@
             <span class="category-label">{{ categoryLabel(listing.category) }}</span>
             <h2>{{ listing.title }}</h2>
             <span class="listing-condition">{{ listingConditionLabel(listing) }}</span>
+            @if (listing.color) {
+              <span class="listing-color">Color: {{ listing.color }}</span>
+            }
             <strong class="price">₹{{ listing.price }}</strong>
             <span class="stock-label">{{ stockLabel(listing.quantityAvailable) }}</span>
             </a>

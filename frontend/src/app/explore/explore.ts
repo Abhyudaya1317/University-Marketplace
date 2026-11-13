@@ -22,6 +22,7 @@ interface ExploreListing {
   condition: string;
   customCondition: string | null;
   clothingGender: string | null;
+  color: string | null;
 }
 
 interface ExploreResponse {

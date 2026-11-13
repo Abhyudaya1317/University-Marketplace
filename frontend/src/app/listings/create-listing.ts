@@ -16,6 +16,7 @@ interface CreateListingResponse {
   message?: string;
   listing?: {
     id: string;
+    title?: string;
     product: { id: string; name: string; category: string };
     price: string;
     quantityAvailable: number;
@@ -225,11 +226,17 @@ export class CreateListing implements OnDestroy {
       : this.http.post<CreateListingResponse>('/api/listings', formData);
     request.subscribe({
       next: (response) => {
-        const productName = response.listing?.product.name ?? this.name.trim();
+        const productName = response.listing?.title ?? response.listing?.product.name ?? this.name.trim();
         if (this.isEditing()) {
           this.success.set(`Your listing for ${productName} was updated.`);
           this.busy.set(false);
-          void this.router.navigateByUrl('/dashboard');
+          this.clearCachedExploreListings();
+          const listingId = response.listing?.id ?? this.route.snapshot.queryParamMap.get('edit');
+          if (listingId) {
+            void this.router.navigate(['/products', listingId]);
+          } else {
+            void this.router.navigateByUrl('/dashboard');
+          }
           return;
         }
         this.success.set(`Your listing for ${productName} is live.`);
@@ -583,6 +590,18 @@ export class CreateListing implements OnDestroy {
         this.loadingListing.set(false);
       }
     });
+  }
+
+  // An edited offer must not reappear from this tab's older Explore snapshot.
+  private clearCachedExploreListings(): void {
+    try {
+      for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+        const key = sessionStorage.key(index);
+        if (key?.startsWith('campusx:explore:')) sessionStorage.removeItem(key);
+      }
+    } catch {
+      // The updated listing still opens directly if browser storage is unavailable.
+    }
   }
 }
 

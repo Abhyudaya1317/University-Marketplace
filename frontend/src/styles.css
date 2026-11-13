@@ -2155,14 +2155,14 @@ body .details-page .seller-link strong {
 }
 body .details-page .detail-actions .save-item-action {
   border: 2px solid #080817 !important;
-  background: #f35bc7 !important;
+  background: #c91818 !important;
   color: #080817 !important;
   box-shadow: 3px 3px 0 #080817 !important;
   font-size: 17px !important;
   font-weight: 800 !important;
 }
 body .details-page .detail-actions .save-item-action.is-saved {
-  background: #f35bc7 !important;
+  background: #c91818 !important;
 }
 body .details-page .detail-actions .message-seller-action {
   border: 2px solid #000080 !important;
@@ -2266,4 +2266,107 @@ body .universe-shell .feed-filters a.category-empty:hover {
   color: #707070;
   text-decoration: line-through;
   text-decoration-thickness: 1px;
+}
+
+/* Final navbar layout: reserve room for the ’26 wordmark and equal-width actions. */
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) > .brand {
+  flex: 0 0 auto !important;
+  width: max-content;
+  min-width: max-content !important;
+  overflow: visible !important;
+  white-space: nowrap;
+}
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) > .brand sup {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) app-account-navigation {
+  flex: 0 0 auto;
+  width: 339px !important;
+  min-width: 0;
+  overflow: visible !important;
+}
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100% !important;
+  min-width: 0;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation > a,
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu,
+body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu > summary {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+}
+@media (max-width: 760px) {
+  body .universe-shell .main-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'brand' 'account' 'links' 'search' !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+  }
+  body .universe-shell .main-toolbar > .brand { grid-area: brand; justify-self: start; }
+  body .universe-shell .main-toolbar > app-account-navigation {
+    grid-area: account;
+    display: block !important;
+    width: 100% !important;
+  }
+  body .universe-shell .main-toolbar .account-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  body .universe-shell .main-toolbar .account-navigation > a,
+  body .universe-shell .main-toolbar .account-navigation > .account-menu,
+  body .universe-shell .main-toolbar .account-menu > summary {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 40px !important;
+    padding-inline: 3px !important;
+    font-size: clamp(6px, 2vw, 8px) !important;
+    justify-content: center;
+    text-align: center;
+  }
+  body .universe-shell .main-toolbar > .desktop-links { grid-area: links; }
+  body .universe-shell .main-toolbar > .toolbar-search { grid-area: search; }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: 'brand' 'account' !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) > .brand {
+    grid-area: brand;
+    justify-self: start;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) app-account-navigation {
+    grid-area: account;
+    display: block !important;
+    width: 100% !important;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100% !important;
+    gap: 8px !important;
+  }
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation > a,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-navigation > .account-menu,
+  body :is(.market-header,.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) .account-menu > summary {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 40px !important;
+    padding-inline: 3px !important;
+    font-size: clamp(6px, 2vw, 8px) !important;
+    justify-content: center;
+    text-align: center;
+  }
 }

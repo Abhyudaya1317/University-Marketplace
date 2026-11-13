@@ -420,6 +420,14 @@ nav {
   color: #77756e;
   font-size: 11px;
 }
+.listing-color {
+  display: block;
+  margin-top: 5px;
+  color: #080817;
+  font-size: 12px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
 .price {
   margin-top: auto;
   padding-top: 9px;

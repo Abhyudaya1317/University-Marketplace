@@ -228,6 +228,7 @@ export async function getExploreProducts(request, response) {
             condition: listing.condition,
             customCondition: listing.customCondition,
             clothingGender: listing.clothingGender,
+            color: listing.color,
             posterSize: listing.posterSize
         }));
 
@@ -238,7 +239,8 @@ export async function getExploreProducts(request, response) {
             ])).values()].slice(0, 6)
             : [];
 
-        response.set("Cache-Control", "public, max-age=0, s-maxage=15, stale-while-revalidate=45");
+        // Listing edits should be visible immediately across browsers and deployments.
+        response.setHeader("Cache-Control", "no-store");
         return response.json({
             success: true,
             listings: results,
@@ -270,6 +272,7 @@ function productSearchMatches(search, title, hashtags = []) {
 
 // Return one public listing by its own ID, including only safe seller identity and reputation.
 export async function getPublicListingDetails(request, response) {
+    response.setHeader("Cache-Control", "no-store");
     const listingId = Number(request.params.listingId);
     if (!Number.isSafeInteger(listingId) || listingId < 1) {
         return response.status(400).json({ success: false, message: "Listing ID must be a positive integer." });
