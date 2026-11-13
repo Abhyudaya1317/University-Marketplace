@@ -39,7 +39,7 @@
       </div>
       <div class="hero-showcase">
         @if (showFeatured() && featuredListing(); as featured) {
-          <app-retro-window [title]="'★ LIVE_LISTING.EXE'" (closed)="showFeatured.set(false)">
+          <app-retro-window class="featured-listing-window" [title]="'★ LIVE_LISTING.EXE'" (closed)="showFeatured.set(false)">
             <div class="featured-window">
               <a class="featured-photo" [routerLink]="['/products', featured.id]">
                 @if (featured.photoUrl) { <img [src]="featured.photoUrl" [alt]="featured.title + ' product photo'" /> }

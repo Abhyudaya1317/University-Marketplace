@@ -42,7 +42,7 @@
   gap: 8px;
   padding: 0 11px;
   border: 2px outset #fff;
-  background: var(--os-gray, #c0c0c0);
+  background: var(--os-blue, #174bff);
   color: var(--deep-navy, #080817);
   cursor: pointer;
   font: 8px/1.5 var(--pixel, monospace);

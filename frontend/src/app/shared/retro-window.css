@@ -37,3 +37,30 @@
 @media (max-width: 620px) {
   .retro-window { transform: none; }
 }
+
+/* Keep the homepage spotlight's window controls compact on phones. */
+@media (max-width: 560px) {
+  :host(.featured-listing-window) .retro-window-titlebar {
+    min-height: 30px;
+    gap: 6px;
+    padding: 3px 5px 3px 8px;
+  }
+
+  :host(.featured-listing-window) .retro-window-titlebar strong {
+    font-size: 8px;
+  }
+
+  :host(.featured-listing-window) .retro-window-controls {
+    gap: 2px;
+  }
+
+  :host(.featured-listing-window) .retro-window-controls button {
+    width: 21px;
+    height: 19px;
+    font-size: 13px;
+  }
+
+  :host(.featured-listing-window) .retro-window-content {
+    padding: 7px;
+  }
+}

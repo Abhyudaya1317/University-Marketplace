@@ -2501,3 +2501,541 @@ body :is(.main-toolbar,.market-header,.details-header,.sell-header,.seller-heade
     font-size: 6px !important;
   }
 }
+
+/* Keep every primary navigation action in the same blue-and-white button style. */
+body .account-navigation > a[href='/explore'],
+body .account-navigation > a[href='/sell'],
+body .account-navigation > .account-button,
+body .account-navigation > .account-menu > summary,
+body .main-toolbar > .toolbar-sell {
+  border: 2px solid #080817 !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+}
+
+body .account-navigation > a[href='/explore']:hover,
+body .account-navigation > a[href='/sell']:hover,
+body .account-navigation > .account-button:hover,
+body .account-navigation > .account-menu > summary:hover,
+body .main-toolbar > .toolbar-sell:hover {
+  background: #000080 !important;
+  color: #fff !important;
+}
+
+body .account-navigation > a[href='/explore']:focus-visible,
+body .account-navigation > a[href='/sell']:focus-visible,
+body .account-navigation > .account-button:focus-visible,
+body .account-navigation > .account-menu > summary:focus-visible,
+body .main-toolbar > .toolbar-sell:focus-visible {
+  outline: 3px solid #fff !important;
+  outline-offset: 2px;
+}
+
+/* Reduce the homepage spotlight and notice together on narrow screens only. */
+@media (max-width: 560px) {
+  body .universe-shell .hero-showcase {
+    width: min(82vw, 370px);
+  }
+
+  body .universe-shell .featured-photo {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+  }
+
+  body .universe-shell .featured-photo b {
+    top: 10px;
+    right: 8px;
+    padding: 8px 7px;
+    font-size: 7px;
+  }
+
+  body .universe-shell .drop-notice {
+    right: 0;
+    bottom: -34px;
+    width: min(210px, 78%);
+    padding-bottom: 8px;
+    border-width: 2px;
+    box-shadow: 4px 4px 0 #080817b8;
+  }
+
+  body .universe-shell .notice-titlebar {
+    min-height: 26px;
+    gap: 5px;
+    padding: 3px 4px 3px 7px;
+  }
+
+  body .universe-shell .notice-titlebar > strong {
+    font-size: 7px;
+  }
+
+  body .universe-shell .notice-close {
+    width: 19px;
+    height: 18px;
+    font-size: 12px;
+  }
+
+  body .universe-shell .notice-body {
+    gap: 8px;
+    padding: 8px 8px 6px;
+  }
+
+  body .universe-shell .notice-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    border-width: 2px;
+    font-size: 18px;
+  }
+
+  body .universe-shell .notice-body p {
+    font-size: 10px;
+    line-height: 1.45;
+  }
+
+  body .universe-shell .notice-body p strong {
+    font-size: 6px;
+  }
+
+  body .universe-shell .notice-cta {
+    min-width: 100px;
+    min-height: 28px;
+    padding-inline: 10px;
+    font-size: 6px;
+  }
+}
+
+/* Keep the primary and Explore route navigation visible and aligned like the header reference. */
+body .universe-shell .system-strip {
+  position: sticky;
+  top: 0;
+  z-index: 2002;
+}
+
+body .universe-shell .main-toolbar {
+  position: sticky;
+  top: 30px;
+  z-index: 2001;
+}
+
+body .market-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2001;
+}
+
+body :is(.details-header,.sell-header,.seller-header,.dashboard-header,.orders-header,.messages-header,.saved-header) {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2001;
+}
+
+/* Match the reference: Explore is the blue action; the other actions use raised OS-gray buttons. */
+body .account-navigation > a[href='/explore'] {
+  border: 2px solid #080817 !important;
+  background: #174bff !important;
+  color: #fff !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+}
+
+body .account-navigation > a[href='/explore']:hover {
+  background: #000080 !important;
+  color: #fff !important;
+}
+
+body .account-navigation > a[href='/sell'],
+body .account-navigation > .account-button,
+body .account-navigation > .account-menu > summary {
+  border: 2px outset #fff !important;
+  background: #c0c0c0 !important;
+  color: #080817 !important;
+  box-shadow: 3px 3px 0 #080817 !important;
+}
+
+body .account-navigation > a[href='/sell']:hover,
+body .account-navigation > .account-button:hover,
+body .account-navigation > .account-menu > summary:hover {
+  background: #d6d6d2 !important;
+  color: #080817 !important;
+}
+
+@media (max-width: 760px) {
+  /* Brand and account actions share the first row; site links and search share the second. */
+  body .universe-shell .main-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    grid-template-areas: 'brand account' 'links links' 'search search' !important;
+    align-items: center !important;
+    gap: 8px 10px !important;
+    padding: 8px 12px !important;
+  }
+
+  body .universe-shell .main-toolbar > .brand {
+    grid-area: brand;
+    width: max-content !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    font-size: clamp(9px, 3vw, 15px) !important;
+  }
+
+  body .universe-shell .main-toolbar > app-account-navigation {
+    grid-area: account;
+    display: flex !important;
+    width: clamp(160px, 53vw, 260px) !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    justify-self: end;
+    margin: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation {
+    display: grid !important;
+    grid-template-columns: minmax(44px, .9fr) minmax(64px, 1.3fr) minmax(44px, .9fr) !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    gap: 6px !important;
+    justify-content: end !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a,
+  body .universe-shell .main-toolbar .account-navigation > .account-menu,
+  body .universe-shell .main-toolbar .account-menu > summary {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    padding-inline: 5px !important;
+    font-size: clamp(6px, 1.8vw, 9px) !important;
+    white-space: nowrap !important;
+  }
+
+  body .universe-shell .main-toolbar > .desktop-links {
+    grid-area: links;
+    display: flex !important;
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: clamp(7px, 2vw, 14px) !important;
+    margin: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar > .desktop-links a {
+    font-size: clamp(6px, 1.65vw, 8px) !important;
+    white-space: nowrap;
+  }
+
+  body .universe-shell .main-toolbar > .toolbar-search {
+    grid-area: search;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+    margin: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar > .toolbar-search label {
+    padding-inline: 7px;
+    font-size: 6px;
+  }
+
+  body .universe-shell .main-toolbar > .toolbar-search input {
+    width: 0;
+    min-width: 0 !important;
+    font-size: 12px;
+  }
+
+  /* The Explore page uses the same fixed brand/action row without duplicating its search form. */
+  body .market-header {
+    display: flex !important;
+    min-height: 64px !important;
+    height: auto !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+  }
+
+  body .market-header > .brand {
+    flex: 0 1 auto !important;
+    width: max-content !important;
+    max-width: 40% !important;
+    min-width: 0 !important;
+    font-size: clamp(9px, 3vw, 15px) !important;
+    white-space: nowrap !important;
+  }
+
+  body .market-header > app-account-navigation {
+    display: flex !important;
+    flex: 0 1 auto !important;
+    width: auto !important;
+    max-width: 60% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  body .market-header .account-navigation {
+    display: grid !important;
+    grid-template-columns: minmax(54px, .9fr) minmax(76px, 1.25fr) minmax(54px, .9fr) !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 5px !important;
+  }
+
+  body .market-header .account-navigation > a,
+  body .market-header .account-navigation > .account-menu,
+  body .market-header .account-menu > summary {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+    padding-inline: 4px !important;
+    font-size: clamp(5px, 1.7vw, 8px) !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 380px) {
+  body .universe-shell .main-toolbar > app-account-navigation { width: 160px !important; }
+  body .universe-shell .main-toolbar .account-navigation { gap: 4px !important; }
+  body .market-header > .brand { max-width: 34% !important; }
+  body .market-header > app-account-navigation { max-width: 63% !important; }
+  body .market-header .account-navigation {
+    grid-template-columns: minmax(46px, .9fr) minmax(60px, 1.2fr) minmax(46px, .9fr) !important;
+    gap: 4px !important;
+  }
+}
+
+/* Keep the shared Explore, Sell item, Sign in, and Options controls close to the reference buttons. */
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/explore'],
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/sell'],
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-button,
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-menu > summary {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border: 2px outset #fff !important;
+  background: #c0c0c0 !important;
+  color: #080817 !important;
+  box-shadow: 4px 4px 0 #080817 !important;
+  font-family: var(--pixel) !important;
+  font-size: 8px !important;
+  font-weight: 400 !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/explore'] {
+  border-style: outset !important;
+  background: #174bff !important;
+  color: #fff !important;
+}
+
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/explore']:hover,
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/explore'][aria-current='page'] {
+  background: #174bff !important;
+  color: #fff !important;
+}
+
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/sell']:hover,
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-button:hover,
+body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-menu > summary:hover {
+  background: #c0c0c0 !important;
+  color: #080817 !important;
+}
+
+@media (max-width: 760px) {
+  body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/explore'],
+  body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > a[href='/sell'],
+  body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-button,
+  body :is(.universe-shell .main-toolbar, .market-header) .account-navigation > .account-menu > summary {
+    padding-inline: 4px !important;
+    font-size: clamp(5px, 1.8vw, 8px) !important;
+  }
+}
+
+/* Put the three mobile actions in one real flex row beside the logo. */
+@media (max-width: 760px) {
+  body .universe-shell .main-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    grid-template-areas: 'brand actions' 'links links' 'search search' !important;
+    align-items: center !important;
+    column-gap: 8px !important;
+    row-gap: 6px !important;
+    padding: 7px 8px !important;
+  }
+
+  body .universe-shell .main-toolbar > .brand,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) > .brand {
+    grid-area: brand !important;
+    justify-self: start !important;
+    min-width: 0 !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    font-size: clamp(10px, 3.3vw, 14px) !important;
+  }
+
+  body .universe-shell .main-toolbar > app-account-navigation,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) > app-account-navigation {
+    display: block !important;
+    grid-area: actions !important;
+    justify-self: end !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar app-account-navigation > .account-navigation,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) app-account-navigation > .account-navigation {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+    width: max-content !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a[href='/explore'],
+  body .universe-shell .main-toolbar .account-navigation > a[href='/sell'],
+  body .universe-shell .main-toolbar .account-navigation > .account-button,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > a[href='/explore'],
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > a[href='/sell'],
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > .account-button {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    grid-area: auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 5px !important;
+    border: 2px outset #fff !important;
+    background: #c0c0c0 !important;
+    color: #080817 !important;
+    box-shadow: 3px 3px 0 #080817 !important;
+    font: 6px/1 var(--pixel) !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a[href='/explore'],
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > a[href='/explore'] {
+    background: #174bff !important;
+    color: #fff !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > .account-menu,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > .account-menu {
+    display: block !important;
+    flex: 0 0 auto !important;
+    grid-area: auto !important;
+    width: max-content !important;
+    margin: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar .account-menu > summary,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-menu > summary {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    box-sizing: border-box !important;
+    width: max-content !important;
+    min-width: 0 !important;
+    min-height: 34px !important;
+    padding: 0 5px !important;
+    white-space: nowrap !important;
+    font: 6px/1 var(--pixel) !important;
+  }
+
+  body .universe-shell .main-toolbar .options-notification-badge,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .options-notification-badge {
+    width: 14px !important;
+    min-width: 14px !important;
+    height: 14px !important;
+    padding: 0 !important;
+    font-size: 7px !important;
+  }
+
+  body .universe-shell .main-toolbar > .desktop-links {
+    grid-area: links !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  body .universe-shell .main-toolbar > .toolbar-search {
+    grid-area: search !important;
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) max-content !important;
+    grid-template-areas: 'brand actions' !important;
+    align-items: center !important;
+    justify-content: initial !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+    padding: 7px 8px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  body .universe-shell .main-toolbar,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) {
+    column-gap: 5px !important;
+    padding-inline: 5px !important;
+  }
+
+  body .universe-shell .main-toolbar > .brand,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) > .brand {
+    font-size: 10px !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation {
+    gap: 3px !important;
+  }
+
+  body .universe-shell .main-toolbar .account-navigation > a,
+  body .universe-shell .main-toolbar .account-menu > summary,
+  body .universe-shell .main-toolbar .account-navigation > .account-button,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > a,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-menu > summary,
+  body :is(.market-header, .details-header, .sell-header, .seller-header, .dashboard-header, .orders-header, .messages-header, .saved-header) .account-navigation > .account-button {
+    padding-inline: 3px !important;
+    font-size: 5px !important;
+  }
+}
