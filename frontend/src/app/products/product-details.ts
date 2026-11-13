@@ -342,6 +342,14 @@ export class ProductDetails {
     );
   }
 
+  // Take the buyer directly to the request form without submitting it.
+  protected scrollToRequestForm(): void {
+    document.getElementById('request-form')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }
+
   protected isPhotoAvailable(url: string): boolean {
     return !this.unavailablePhotoUrls().has(url);
   }

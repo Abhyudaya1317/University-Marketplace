@@ -147,6 +147,10 @@
             >
           </a>
           <div class="detail-actions">
+            @if (!isOwnListing(item) && item.quantityAvailable > 0) {
+              <button type="button" class="primary-button buy-item-button"
+                (click)="scrollToRequestForm()">Buy item</button>
+            }
             @if (isOwnListing(item)) {
               <a
                 class="wishlist-button"
@@ -201,6 +205,10 @@
               <p class="eyebrow">CASH ON DELIVERY</p>
               <h2>Request this item</h2>
               <p>The seller will review your request and arrange a time and place with you.</p>
+              <div class="request-pickup-location" aria-label="Seller pickup location">
+                <strong>Pickup Location: {{ item.location || 'Not provided by the seller' }}</strong>
+                <span>You’ll need to go to this location to collect the item and pay the seller in cash.</span>
+              </div>
               <label
                 >Quantity<input
                   name="quantity"
