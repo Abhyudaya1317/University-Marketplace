@@ -1,10 +1,14 @@
 // Send opt-in browser push messages without exposing subscription endpoints or keys in logs.
 import { createHash } from "node:crypto";
-import { createRequire } from "node:module";
 import { prisma } from "../../lib/prisma.js";
 
-const require = createRequire(import.meta.url);
-const webPush = require("web-push");
+// web-push is ESM-only. Load it with import() only when a push is actually sent.
+let webPushPromise;
+function loadWebPush() {
+    webPushPromise ??= import("web-push").then((module) => module.default ?? module);
+    return webPushPromise;
+}
+
 let vapidConfigured = false;
 let vapidConfigurationErrorLogged = false;
 
@@ -14,19 +18,7 @@ function getVapidConfiguration() {
     const subject = process.env.VAPID_SUBJECT?.trim();
     if (!publicKey || !privateKey || !subject) return null;
 
-    if (!vapidConfigured) {
-        try {
-            webPush.setVapidDetails(subject, publicKey, privateKey);
-            vapidConfigured = true;
-        } catch (error) {
-            if (!vapidConfigurationErrorLogged) {
-                console.error("Browser push configuration is invalid:", error?.name ?? "UNKNOWN");
-                vapidConfigurationErrorLogged = true;
-            }
-            return null;
-        }
-    }
-    return { publicKey };
+    return { publicKey, privateKey, subject };
 }
 
 export function getPublicVapidKey() {
@@ -61,7 +53,22 @@ export async function removePushSubscription(userId, endpoint) {
 // Push failures never roll back a request, decision, or message already saved in the database.
 export async function sendPushNotification(userId, notification) {
     try {
-        if (!getVapidConfiguration()) return;
+        const vapid = getVapidConfiguration();
+        if (!vapid) return;
+
+        const webPush = await loadWebPush();
+        if (!vapidConfigured) {
+            try {
+                webPush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
+                vapidConfigured = true;
+            } catch (error) {
+                if (!vapidConfigurationErrorLogged) {
+                    console.error("Browser push configuration is invalid:", error?.name ?? "UNKNOWN");
+                    vapidConfigurationErrorLogged = true;
+                }
+                return;
+            }
+        }
 
         const subscriptions = await prisma.pushSubscription.findMany({ where: { userId } });
         await Promise.all(subscriptions.map(async (subscription) => {
