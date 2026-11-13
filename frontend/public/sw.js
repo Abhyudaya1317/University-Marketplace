@@ -9,8 +9,8 @@ self.addEventListener("push", (event) => {
 
   event.waitUntil(self.registration.showNotification(data.title || "UniBee", {
     body: data.body || "You have a new marketplace update.",
-    icon: "/favicon.svg",
-    badge: "/favicon.svg",
+    icon: "/images/unibee-cursor.png",
+    badge: "/images/unibee-cursor.png",
     tag: data.tag || "unibee-marketplace-update",
     renotify: true,
     data: { url: data.url || "/" },
