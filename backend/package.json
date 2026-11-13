@@ -8,7 +8,7 @@
     "start": "node src/server.js",
     "predev": "node src/scripts/checkDevPort.js",
     "build": "prisma generate",
-    "watch":"ng build --watch --configuration development",
+    "watch": "ng build --watch --configuration development",
     "dev": "nodemon src/server.js",
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -34,7 +34,8 @@
     "google-auth-library": "^11.3.1",
     "multer": "^2.5.0",
     "nodemailer": "^10.2.1",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "web-push": "^4.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

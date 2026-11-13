@@ -36,6 +36,20 @@
             </span>
           }
         </a>
+        <button class="push-notification-toggle" role="menuitem" type="button"
+          (click)="togglePushNotifications()"
+          [disabled]="pushStatus() === 'enabling' || pushStatus() === 'disabling' || pushStatus() === 'unsupported'">
+          @switch (pushStatus()) {
+            @case ('enabled') { Phone alerts: On }
+            @case ('enabling') { Enabling phone alerts… }
+            @case ('disabling') { Turning alerts off… }
+            @case ('unsupported') { Phone alerts unavailable }
+            @default { Enable phone alerts }
+          }
+        </button>
+        @if (pushStatusMessage()) {
+          <p class="push-notification-status" role="status" aria-live="polite">{{ pushStatusMessage() }}</p>
+        }
         <button role="menuitem" type="button" (click)="signOut()" [disabled]="signingOut()">
           {{ signingOut() ? 'Signing out…' : 'Sign out' }}
         </button>
@@ -47,3 +61,29 @@
     >
   }
 </nav>
+
+@if (showPushPrompt()) {
+  <div class="push-prompt-backdrop">
+    <section class="push-permission-prompt" role="dialog" aria-modal="true"
+      aria-labelledby="push-prompt-title" aria-describedby="push-prompt-description">
+      <header class="push-prompt-titlebar">
+        <span>UNIBEE_ALERTS.EXE</span>
+        <button type="button" aria-label="Close notification prompt" (click)="dismissPushPrompt()">×</button>
+      </header>
+      <div class="push-prompt-content">
+        <h2 id="push-prompt-title">Stay in the loop</h2>
+        <p id="push-prompt-description">
+          Get alerts when someone requests your item, responds to your request, or sends you a message.
+        </p>
+        <div class="push-prompt-actions">
+          <button class="push-prompt-enable" type="button" (click)="enablePushFromPrompt()">
+            Enable phone alerts
+          </button>
+          <button class="push-prompt-dismiss" type="button" (click)="dismissPushPrompt()">
+            Not now
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+}

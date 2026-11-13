@@ -18,6 +18,7 @@ import messagesRoutes from "./features/messages/messagesRoutes.js";
 import sellerRoutes from "./features/sellers/sellerRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import adminRoutes from "./features/admin/adminRoutes.js";
+import notificationsRoutes from "./features/notifications/notificationsRoutes.js";
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use("/api/listings", engagementRoutes);
 app.use("/api/sellers", sellerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/messages", messagesRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Return a safe JSON failure when an unexpected route or middleware error reaches Express.
 app.use((error, _request, response, next) => {

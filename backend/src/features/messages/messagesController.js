@@ -1,6 +1,7 @@
 // Keep private buyer-seller messages scoped to participants and a single listing.
 import { prisma } from "../../lib/prisma.js";
 import { normalizeMessageBody } from "./messageValidation.js";
+import { sendPushNotification } from "../notifications/pushNotifications.js";
 import {
     messageImageContentType,
     removeMessageImage,
@@ -70,6 +71,7 @@ async function createConversationMessage(request, response, data) {
     try {
         const saveMessage = async () => prisma.$transaction(async (transaction) => {
             let targetConversationId = conversationId;
+            let recipientId;
             if (isDraftConversation) {
                 const listingIdValue = Number(request.body?.listingId);
                 const sellerIdValue = Number(request.body?.sellerId);
@@ -112,25 +114,27 @@ async function createConversationMessage(request, response, data) {
                     where: targetListingId
                         ? { listingId: targetListingId, buyerId: request.user.id }
                         : { listingId: null, sellerId: targetSellerId, buyerId: request.user.id },
-                    select: { id: true },
+                    select: { id: true, buyerId: true, sellerId: true },
                 });
                 if (!existing) {
                     existing = await transaction.conversation.create({
                         data: { listingId: targetListingId, buyerId: request.user.id, sellerId: targetSellerId },
-                        select: { id: true },
+                        select: { id: true, buyerId: true, sellerId: true },
                     });
                 }
                 targetConversationId = existing.id;
+                recipientId = existing.buyerId === request.user.id ? existing.sellerId : existing.buyerId;
             } else {
                 const conversation = await transaction.conversation.findFirst({
                     where: { id: targetConversationId, ...participantFilter(request.user.id) },
-                    select: { id: true },
+                    select: { id: true, buyerId: true, sellerId: true },
                 });
                 if (!conversation) {
                     const error = new Error("This conversation was not found.");
                     error.statusCode = 404;
                     throw error;
                 }
+                recipientId = conversation.buyerId === request.user.id ? conversation.sellerId : conversation.buyerId;
             }
 
             const created = await transaction.message.create({
@@ -138,7 +142,7 @@ async function createConversationMessage(request, response, data) {
                 include: { sender: { select: { fullName: true } } },
             });
             await transaction.conversation.update({ where: { id: targetConversationId }, data: { updatedAt: new Date() } });
-            return { message: created, conversationId: targetConversationId };
+            return { message: created, conversationId: targetConversationId, recipientId };
         });
 
         let saved;
@@ -149,6 +153,13 @@ async function createConversationMessage(request, response, data) {
             if (!isDraftConversation || error?.code !== "P2002") throw error;
             saved = await saveMessage();
         }
+        // Alert the other participant only after the message row is durably saved.
+        void sendPushNotification(saved.recipientId, {
+            title: "New message",
+            body: `You have a new message from "${saved.message.sender.fullName || "CampusX Member"}".`,
+            url: `/messages/${saved.conversationId}`,
+            tag: `message-${saved.conversationId}`,
+        });
         return response.status(201).json({
             success: true,
             conversationId: saved.conversationId,

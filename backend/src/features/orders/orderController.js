@@ -1,6 +1,7 @@
 // Handle cash-on-delivery order requests and keep each listing's availability consistent.
 import { prisma } from "../../lib/prisma.js";
 import { isValidPhoneNumber } from "../listings/listingsValidation.js";
+import { sendPushNotification } from "../notifications/pushNotifications.js";
 
 // Select only item details needed by the buyer or seller in their private order view.
 const orderSelection = {
@@ -137,6 +138,14 @@ export async function createOrder(request, response) {
         if (createdOrder.error === "ACTIVE_REQUEST_EXISTS") {
             return response.status(409).json({ success: false, message: "You already have an open request for this offer. Check My Orders for its status." });
         }
+
+        // Notify the seller only after the buyer request has been committed successfully.
+        void sendPushNotification(createdOrder.sellerId, {
+            title: "New buyer request",
+            body: `Your item "${createdOrder.listing.product.name}" has been ordered by "${createdOrder.buyer.fullName || "CampusX Member"}". Schedule meet and confirm.`,
+            url: "/items-selling",
+            tag: `order-${createdOrder.id}-requested`,
+        });
 
         return response.status(201).json({ success: true, order: presentOrder(createdOrder, request.user.id) });
     } catch (error) {
@@ -279,7 +288,17 @@ export async function updateOrderStatus(request, response) {
         const result = await prisma.$transaction(async (transaction) => {
             const order = await transaction.order.findUnique({
                 where: { id: orderId },
-                select: { id: true, buyerId: true, sellerId: true, listingId: true, quantity: true, status: true }
+                select: {
+                    id: true,
+                    buyerId: true,
+                    sellerId: true,
+                    listingId: true,
+                    quantity: true,
+                    status: true,
+                    buyer: { select: { fullName: true } },
+                    seller: { select: { fullName: true } },
+                    listing: { select: { product: { select: { name: true } } } },
+                }
             });
             if (!order) return { error: "NOT_FOUND" };
 
@@ -307,13 +326,30 @@ export async function updateOrderStatus(request, response) {
             });
             if (updated.count !== 1) throw new Error("Order changed while a seller action was being processed.");
 
-            return { status: transition.to };
+            return { status: transition.to, order };
         });
 
         if (result.error === "NOT_FOUND") return response.status(404).json({ success: false, message: "This order was not found." });
         if (result.error === "FORBIDDEN") return response.status(403).json({ success: false, message: "Only the other participant in this order can take that action." });
         if (result.error === "CONFLICT") return response.status(409).json({ success: false, message: "This order has changed. Refresh your orders and try again." });
         if (result.error === "INSUFFICIENT_STOCK") return response.status(409).json({ success: false, message: "There is not enough stock left for this request. Decline it or ask the buyer to request a smaller quantity." });
+
+        // A seller's decision alerts the buyer after the order status and meeting details are saved.
+        if (action === "accept") {
+            void sendPushNotification(result.order.buyerId, {
+                title: "Request accepted",
+                body: `Your order request has been accepted by "${result.order.seller.fullName || "CampusX Member"}" for item "${result.order.listing.product.name}". Open to see scheduled time and date.`,
+                url: "/orders",
+                tag: `order-${result.order.id}-accepted`,
+            });
+        } else if (action === "decline") {
+            void sendPushNotification(result.order.buyerId, {
+                title: "Request declined",
+                body: `Your request has been declined for item "${result.order.listing.product.name}".`,
+                url: "/orders",
+                tag: `order-${result.order.id}-declined`,
+            });
+        }
 
         return response.json({ success: true, status: result.status });
     } catch (error) {
