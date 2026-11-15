@@ -12,6 +12,7 @@ import { SavedCollections } from './saved/saved-collections';
 import { AdminConsole } from './admin/admin-console';
 import { HowToUse } from './how-to-use/how-to-use';
 import { FeedbackReport } from './feedback/feedback-report';
+import { About } from './about/about';
 
 // Keep page URLs and their feature components together in one route list.
 export const routes: Routes = [
@@ -54,6 +55,11 @@ export const routes: Routes = [
     path: 'feedback-report',
     component: FeedbackReport,
     data: { seoTitle: 'Feedback & Reports | UniBee', noIndex: true },
+  },
+  {
+    path: 'about',
+    component: About,
+    data: { seoTitle: 'About UniBee | LPU Student Marketplace', seoDescription: 'Learn why Abhyudaya Raj created UniBee, a student marketplace for Lovely Professional University.' },
   },
   {
     path: 'products/:listingId',

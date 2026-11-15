@@ -1,0 +1,30 @@
+:host { display: block; min-height: 100vh; background: var(--desktop, #5b9e9c); color: #080817; }
+.about-page { min-height: 100vh; padding-bottom: 48px; background-image: linear-gradient(#00008024 1px, transparent 1px), linear-gradient(90deg, #00008024 1px, transparent 1px); background-size: 30px 30px; }
+.about-header { display: flex; min-height: 76px; align-items: center; justify-content: space-between; gap: 20px; padding: 12px clamp(16px, 5vw, 76px); border-bottom: 3px solid #080817; background: #c0c0c0; }
+.about-brand { display: inline-flex; align-items: center; gap: 10px; color: #080817; font: 17px var(--pixel, monospace); text-decoration: none; white-space: nowrap; }
+.about-brand > span, .about-brand sup { color: #174bff; }
+.about-brand > span { font: 28px Arial, sans-serif; }
+.about-brand sup { font: 8px var(--pixel, monospace); }
+.about-content { width: min(1020px, calc(100% - 32px)); margin: 30px auto; }
+.about-back { color: #000080; font: 8px/1.6 var(--pixel, monospace); }
+.about-intro { margin: 22px 0; padding: clamp(22px, 4vw, 38px); border: 3px solid #fff; background: #c0c0c0; box-shadow: 6px 6px 0 #080817; }
+.about-eyebrow { margin: 0 0 10px; color: #000080; font: 8px/1.6 var(--pixel, monospace); }
+.about-intro h1 { margin: 0 0 12px; font: clamp(20px, 4vw, 32px)/1.4 var(--pixel, monospace); }
+.about-intro > p:last-child { max-width: 760px; margin: 0; color: #333; font: 15px/1.7 var(--body, sans-serif); }
+.founder-panel { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); align-items: start; gap: clamp(22px, 4vw, 42px); padding: clamp(18px, 4vw, 34px); border: 3px solid #fff; background: #c0c0c0; box-shadow: 6px 6px 0 #080817; }
+.founder-photo { display: block; width: 100%; aspect-ratio: 4 / 5; border: 3px solid #fff; outline: 1px solid #777; background: #eee; object-fit: cover; object-position: center 25%; box-shadow: 4px 4px 0 #080817; }
+.founder-copy h2, .about-feedback h2 { margin: 0 0 14px; font: clamp(14px, 2.3vw, 20px)/1.6 var(--pixel, monospace); }
+.founder-copy > p:not(.about-eyebrow), .about-feedback p:not(.about-eyebrow) { margin: 0 0 14px; color: #333; font: 15px/1.75 var(--body, sans-serif); }
+.about-connect a { color: #000080; font-weight: 700; }
+.about-feedback { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 22px; padding: clamp(18px, 3vw, 28px); border: 2px solid #080817; background: #eef3ff; box-shadow: 4px 4px 0 #080817; }
+.about-feedback > div { max-width: 650px; }
+.about-feedback h2 { margin-bottom: 8px; }
+.about-feedback p:not(.about-eyebrow) { margin-bottom: 0; }
+.about-feedback-link { flex: 0 0 auto; padding: 12px 16px; border: 2px outset #fff; background: #174bff; color: #fff; box-shadow: 3px 3px 0 #080817; font: 8px/1.6 var(--pixel, monospace); text-align: center; text-decoration: none; }
+@media (max-width: 760px) {
+  .about-header { align-items: flex-start; flex-direction: column; padding-inline: 14px; }
+  .founder-panel { grid-template-columns: 1fr; }
+  .founder-photo { width: min(280px, 100%); aspect-ratio: 1 / 1; }
+  .about-feedback { align-items: flex-start; flex-direction: column; }
+  .about-feedback-link { flex-basis: auto; }
+}
