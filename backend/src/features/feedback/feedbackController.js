@@ -1,5 +1,6 @@
 // Save signed-in feedback and reports, with all attachments visible only to administrators.
 import { prisma } from "../../lib/prisma.js";
+import { sendFeedbackReportNotification } from "../auth/emailService.js";
 import { feedbackPhotoContentType, readFeedbackPhoto, removeFeedbackPhoto, storeFeedbackPhoto } from "./feedbackPhotoUpload.js";
 
 const allowedKinds = new Set(["FEEDBACK", "REPORT_USER", "REPORT_LISTING", "OTHER_ISSUE"]);
@@ -53,7 +54,27 @@ export async function createFeedbackReport(request, response) {
         });
         for (const file of request.files) photoKeys.push(await storeFeedbackPhoto(file, report.id));
         await prisma.feedbackReport.update({ where: { id: report.id }, data: { photoKeys } });
-        return response.status(201).json({ success: true, message: "Thanks. Your feedback or report was sent to the CampusX admin team." });
+        let emailNotificationSent = false;
+        try {
+            const reporter = await prisma.user.findUnique({ where: { id: request.user.id }, select: { email: true } });
+            await sendFeedbackReportNotification({
+                reportId: report.id, kind, details, reporterEmail: reporter?.email ?? "Unknown account",
+                targetUserName: kind === "REPORT_USER" ? targetUserName : null,
+                targetListingUrl: kind === "REPORT_LISTING" ? targetListingUrl : null,
+                photos: request.files,
+            });
+            emailNotificationSent = true;
+        } catch (emailError) {
+            const safeReason = emailError?.message === "FEEDBACK_EMAIL_NOT_CONFIGURED" ? "EMAIL_NOT_CONFIGURED" : undefined;
+            console.error("Feedback email notification failed:", emailError?.code ?? emailError?.responseCode ?? safeReason ?? emailError?.name ?? "UNKNOWN");
+        }
+        return response.status(201).json({
+            success: true,
+            emailNotificationSent,
+            message: emailNotificationSent
+                ? "Thanks. Your report was saved and emailed to the CampusX admin account."
+                : "Your report was saved in the Admin Console, but its email notification could not be sent. Check the server SMTP settings and ADMIN_EMAILS.",
+        });
     } catch (error) {
         await Promise.allSettled(photoKeys.map(removeFeedbackPhoto));
         if (report) await prisma.feedbackReport.deleteMany({ where: { id: report.id } }).catch(() => {});

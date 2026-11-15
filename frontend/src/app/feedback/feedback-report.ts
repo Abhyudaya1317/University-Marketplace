@@ -57,6 +57,12 @@ export class FeedbackReport {
       input.value = '';
       return;
     }
+    if (selected.reduce((total, file) => total + file.size, 0) > 15 * 1024 * 1024) {
+      this.photos.set([]);
+      this.error.set('The combined photo size must be 15 MB or smaller.');
+      input.value = '';
+      return;
+    }
     this.photos.set(selected);
     this.error.set('');
   }

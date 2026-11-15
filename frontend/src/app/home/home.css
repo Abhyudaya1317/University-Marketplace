@@ -1,2 +1,7 @@
 /* The complete homepage visual system is centralized in the shared stylesheet. */
 :host { display: block; min-height: 100vh; background: var(--desktop); color: var(--ink); }
+.marketplace-summary { width: min(900px, calc(100% - 36px)); margin: 0 auto 44px; padding: clamp(20px, 4vw, 38px); border: 3px solid #fff; background: #c0c0c0; box-shadow: 6px 6px 0 #080817; color: #080817; }
+.marketplace-summary-label { margin: 0 0 10px; color: #000080; font: 8px/1.6 var(--pixel, monospace); }
+.marketplace-summary h2 { margin: 0 0 12px; font: clamp(16px, 3vw, 24px)/1.5 var(--pixel, monospace); }
+.marketplace-summary > p:not(.marketplace-summary-label) { max-width: 720px; margin: 0; color: #333; font: 15px/1.7 var(--body, sans-serif); }
+.marketplace-summary a { display: inline-block; margin-top: 16px; color: #000080; font: 8px/1.6 var(--pixel, monospace); }

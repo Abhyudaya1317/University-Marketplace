@@ -29,7 +29,7 @@
           <textarea id="feedback-details" name="details" required minlength="10" maxlength="2000" rows="6" [ngModel]="details()" (ngModelChange)="details.set($event)" placeholder="Tell us what happened or share your suggestion."></textarea>
           <label for="feedback-photos">Photos</label>
           <input id="feedback-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple required (change)="selectPhotos($event)">
-          <small>Attach 1 to 4 JPG, PNG, or WebP photos · up to 5 MB each</small>
+          <small>Attach 1 to 4 JPG, PNG, or WebP photos · up to 5 MB each · 15 MB combined</small>
           @if (photos().length) { <p class="photo-count" role="status">{{ photos().length }} photo{{ photos().length === 1 ? '' : 's' }} selected</p> }
           @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
           @if (success()) { <p class="form-success" role="status">{{ success() }}</p> }

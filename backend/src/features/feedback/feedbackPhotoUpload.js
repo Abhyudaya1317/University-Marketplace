@@ -37,6 +37,9 @@ export function uploadFeedbackPhotos(request, response, next) {
         if (files.length < 1 || files.length > 4) {
             return response.status(400).json({ success: false, message: "Attach between one and four photos." });
         }
+        if (files.reduce((total, file) => total + file.size, 0) > 15 * 1024 * 1024) {
+            return response.status(400).json({ success: false, message: "The combined photo size must be 15 MB or smaller." });
+        }
         for (const file of files) {
             const type = [...imageTypes.entries()].find(([, value]) => value.valid(file.buffer));
             if (!type) return response.status(400).json({ success: false, message: "A photo is not a valid JPG, PNG, or WebP image." });
