@@ -138,6 +138,7 @@ model Listing {
   condition      ProductCondition @default(GOOD)
   customCondition String?        @db.VarChar(80)
   status         ListingStatus   @default(ACTIVE)
+  isHotFind      Boolean         @default(false)
   archivedAt     DateTime?
   quantityAvailable Int          @default(1)
   createdAt      DateTime        @default(now())
@@ -153,6 +154,7 @@ model Listing {
   @@index([productId, status, price])
   @@index([sellerId, createdAt])
   @@index([status, price, createdAt(sort: Desc), id(sort: Desc)])
+  @@unique([isHotFind], map: "Listing_single_hot_find_key", where: raw("\"isHotFind\" = true"))
 }
 
 // Keep one private buyer-seller conversation per buyer and listing.

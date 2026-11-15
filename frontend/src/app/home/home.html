@@ -46,13 +46,13 @@
                 @else { <span>NO IMAGE DATA</span> }
                 <b>HOT FIND!</b>
               </a>
-              <small>LOWEST LISTED PRICE · {{ categoryLabel(featured.category) }}</small>
+              <small>ADMIN PICK · {{ categoryLabel(featured.category) }}</small>
               <a class="featured-title" [routerLink]="['/products', featured.id]">{{ featured.title }}</a>
               <div class="featured-meta"><strong>₹{{ featured.price }}</strong><span>BY <a [routerLink]="['/sellers', featured.sellerId]">{{ featured.sellerName }}</a></span></div>
             </div>
           </app-retro-window>
-        } @else if (listings().length === 0) {
-          <div class="featured-empty"><span class="empty-monitor">▣</span><strong>{{ listingError() ? 'MARKET FEED OFFLINE' : 'WAITING FOR FIRST DROP' }}</strong><a routerLink="/sell">LIST AN ITEM →</a></div>
+        } @else if (showFeatured()) {
+          <div class="featured-empty"><span class="empty-monitor">▣</span><strong>{{ listingError() ? 'MARKET FEED OFFLINE' : listings().length === 0 ? 'WAITING FOR FIRST DROP' : 'HOT FIND NOT SET' }}</strong><a routerLink="/explore">BROWSE LISTINGS →</a></div>
         }
         @if (showDropNotice() && listings().length > 0) {
           <aside class="drop-notice" aria-label="Marketplace notice">

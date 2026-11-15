@@ -32,6 +32,7 @@ interface HomeListing {
 interface ListingsResponse {
   success: boolean;
   listings: HomeListing[];
+  hotFind?: Pick<HomeListing, 'id' | 'sellerId' | 'sellerName' | 'title' | 'category' | 'price' | 'photoUrl'> | null;
 }
 
 // Keep the temporary welcome page's UI and backend status behavior in this feature folder.
@@ -56,11 +57,7 @@ export class Home {
   protected readonly searchDraft = signal('');
   protected readonly showFeatured = signal(true);
   protected readonly showDropNotice = signal(true);
-  protected readonly featuredListing = computed(() => {
-    const liveListings = this.listings();
-    // Prefer a later real listing photo so the hero does not keep spotlighting the first upload.
-    return [...liveListings].reverse().find((listing) => Boolean(listing.photoUrl)) ?? liveListings[0] ?? null;
-  });
+  protected readonly featuredListing = signal<ListingsResponse['hotFind']>(null);
   // Keep the home feed to one curated-looking row while Explore remains the full catalog.
   protected readonly homeFeed = computed(() => this.listings().slice(0, 4));
   protected readonly sellerCount = computed(() => new Set(this.listings().map((item) => item.sellerId)).size);
@@ -87,7 +84,10 @@ export class Home {
       error: () => this.backendState.set('offline')
     });
     this.http.get<ListingsResponse>('/api/products').subscribe({
-      next: (response) => this.listings.set(response.listings ?? []),
+      next: (response) => {
+        this.listings.set(response.listings ?? []);
+        this.featuredListing.set(response.hotFind ?? null);
+      },
       error: () => this.listingError.set(true),
     });
   }

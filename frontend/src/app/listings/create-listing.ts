@@ -3,6 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { InteractionFeedback } from '../shared/interaction-feedback';
 
 // Match the minimal signed-in account returned by the backend.
 interface AccountResponse {
@@ -60,6 +61,7 @@ export class CreateListing implements OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly interaction = inject(InteractionFeedback);
 
   // The template uses signals to show sign-in, loading, and submission states.
   protected readonly checkingSession = signal(true);
@@ -224,6 +226,7 @@ export class CreateListing implements OnDestroy {
         const productName = response.listing?.title ?? response.listing?.product.name ?? this.name.trim();
         if (this.isEditing()) {
           this.success.set(`Your listing for ${productName} was updated.`);
+          this.interaction.showToast('Listing has been edited.');
           this.busy.set(false);
           this.clearCachedExploreListings();
           const listingId = response.listing?.id ?? this.route.snapshot.queryParamMap.get('edit');
@@ -235,6 +238,7 @@ export class CreateListing implements OnDestroy {
           return;
         }
         this.success.set(`Your listing for ${productName} is live.`);
+        this.interaction.showToast('Listing has been saved.');
         this.createdListingId.set(response.listing?.id ?? null);
         this.name = '';
         this.category = 'CLOTHING';

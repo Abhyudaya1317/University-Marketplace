@@ -9,7 +9,7 @@ const userSelect = {
 };
 
 const listingSelect = {
-    id: true, title: true, description: true, price: true, quantityAvailable: true, phoneNumber: true,
+    id: true, title: true, description: true, price: true, quantityAvailable: true, isHotFind: true, phoneNumber: true,
     location: true, condition: true, customCondition: true, clothingGender: true,
     clothingSizes: true, color: true, proteinRich: true, posterSize: true, hashtags: true, photoUrl: true,
     photoUrl2: true, photoUrl3: true, photoUrl4: true, status: true, archivedAt: true, createdAt: true,
@@ -120,6 +120,39 @@ export async function getAdminListings(request, response) {
     } catch (error) {
         logAdminFailure("search listings", error);
         return response.status(500).json({ success: false, message: "Listings could not be loaded." });
+    }
+}
+
+// Let administrators choose one active, in-stock listing for the homepage Hot Find.
+export async function setHotFindListing(request, response) {
+    const listingId = parseId(request.params.listingId);
+    const isHotFind = request.body?.isHotFind;
+    if (listingId === null || typeof isHotFind !== "boolean") {
+        return response.status(400).json({ success: false, message: "Choose a valid listing and Hot Find setting." });
+    }
+
+    try {
+        if (!isHotFind) {
+            await prisma.listing.updateMany({ where: { id: listingId, isHotFind: true }, data: { isHotFind: false } });
+            return response.json({ success: true, isHotFind: false, message: "Hot Find cleared." });
+        }
+
+        const listing = await prisma.listing.findUnique({
+            where: { id: listingId },
+            select: { id: true, status: true, quantityAvailable: true }
+        });
+        if (!listing || listing.status !== "ACTIVE" || listing.quantityAvailable < 1) {
+            return response.status(400).json({ success: false, message: "Only active listings with available stock can be featured." });
+        }
+
+        await prisma.$transaction(async (transaction) => {
+            await transaction.listing.updateMany({ where: { isHotFind: true }, data: { isHotFind: false } });
+            await transaction.listing.update({ where: { id: listingId }, data: { isHotFind: true } });
+        });
+        return response.json({ success: true, isHotFind: true, message: "Hot Find updated on the homepage." });
+    } catch (error) {
+        logAdminFailure("set Hot Find", error);
+        return response.status(500).json({ success: false, message: "Hot Find could not be updated." });
     }
 }
 
@@ -236,7 +269,7 @@ function formatUser(user) {
 
 function formatListing(listing) {
     return { id: listing.id, title: listing.title, description: listing.description, price: listing.price.toFixed(2),
-        quantityAvailable: listing.quantityAvailable, location: listing.location, condition: listing.condition,
+        quantityAvailable: listing.quantityAvailable, isHotFind: listing.isHotFind, location: listing.location, condition: listing.condition,
         customCondition: listing.customCondition, clothingGender: listing.clothingGender,
         clothingSizes: listing.clothingSizes, color: listing.color,
         proteinRich: listing.proteinRich, posterSize: listing.posterSize, phoneNumber: listing.phoneNumber,

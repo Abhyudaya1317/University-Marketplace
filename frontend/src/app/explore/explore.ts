@@ -63,6 +63,10 @@ export class Explore {
   protected readonly selectedCategory = signal('');
   protected readonly selectedGender = signal('');
   protected readonly proteinOnly = signal(false);
+  protected readonly sortOrder = signal<'price_asc' | 'price_desc'>('price_asc');
+  protected readonly minimumPrice = signal('');
+  protected readonly maximumPrice = signal('');
+  protected readonly priceRangeError = signal('');
   protected readonly randomizedIds = signal<string[]>([]);
   protected readonly searchSubmitted = signal(false);
   protected readonly unavailablePhotoIds = signal<Set<string>>(new Set());
@@ -135,9 +139,36 @@ export class Explore {
   }
 
   protected searchProducts(): void {
+    const minimum = this.minimumPrice().trim();
+    const maximum = this.maximumPrice().trim();
+    const isValidPrice = (value: string) => !value ||
+      (/^\d{1,8}(\.\d{1,2})?$/.test(value) && Number.isFinite(Number(value)) && Number(value) <= 99_999_999.99);
+    if (!isValidPrice(minimum) || !isValidPrice(maximum)) {
+      this.priceRangeError.set('Enter a price from ₹0 to ₹99,999,999.99, with up to two decimal places.');
+      return;
+    }
+    if (minimum && maximum && Number(minimum) > Number(maximum)) {
+      this.priceRangeError.set('Minimum price must be less than or equal to maximum price.');
+      return;
+    }
+    this.priceRangeError.set('');
     this.searchSubmitted.set(true);
     this.showSuggestions.set(false);
     this.loadListings();
+  }
+
+  protected onSortChange(value: 'price_asc' | 'price_desc'): void {
+    this.sortOrder.set(value);
+    this.randomizedIds.set([]);
+    this.loadListings();
+  }
+
+  protected onMinimumPriceChange(value: number | string | null): void {
+    this.minimumPrice.set(value === null ? '' : String(value));
+  }
+
+  protected onMaximumPriceChange(value: number | string | null): void {
+    this.maximumPrice.set(value === null ? '' : String(value));
   }
 
   protected selectSuggestion(name: string): void {
@@ -335,7 +366,10 @@ export class Explore {
   private buildListingParams(): HttpParams {
     let params = new HttpParams();
     const search = this.searchText().trim();
+    params = params.set('sort', this.sortOrder());
     if (search) params = params.set('search', search);
+    if (this.minimumPrice().trim()) params = params.set('minPrice', this.minimumPrice().trim());
+    if (this.maximumPrice().trim()) params = params.set('maxPrice', this.maximumPrice().trim());
     if (this.selectedCategory()) params = params.set('category', this.selectedCategory());
     if (this.selectedGender()) params = params.set('gender', this.selectedGender());
     if (this.proteinOnly() && this.selectedCategory() === 'FOOD') params = params.set('proteinOnly', 'true');
@@ -344,7 +378,7 @@ export class Explore {
   }
 
   private cacheKey(params: HttpParams): string {
-    return `campusx:explore:v2:${params.toString() || 'all'}`;
+    return `campusx:explore:v3:${params.toString() || 'all'}`;
   }
 
   private readCache(key: string): ExploreResponse | null {

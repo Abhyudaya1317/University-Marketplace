@@ -137,6 +137,9 @@ export async function getExploreProducts(request, response) {
     const category = typeof request.query.category === "string" ? request.query.category.trim().toUpperCase() : "";
     const gender = typeof request.query.gender === "string" ? request.query.gender.trim().toUpperCase() : "";
     const proteinOnly = request.query.proteinOnly === "true";
+    const sort = typeof request.query.sort === "string" ? request.query.sort : "price_asc";
+    const minPrice = parseExplorePrice(request.query.minPrice);
+    const maxPrice = parseExplorePrice(request.query.maxPrice);
     const pageSize = 24;
     const cursorId = typeof request.query.cursor === "string" && /^\d+$/.test(request.query.cursor)
         ? Number(request.query.cursor)
@@ -152,6 +155,14 @@ export async function getExploreProducts(request, response) {
     if (proteinOnly && category !== "FOOD") {
         return response.status(400).json({ success: false, message: "The protein-only filter is available for food listings." });
     }
+    if (!new Set(["price_asc", "price_desc"]).has(sort)) {
+        return response.status(400).json({ success: false, message: "Choose a valid price sort order." });
+    }
+    if ((request.query.minPrice !== undefined && minPrice === null) ||
+        (request.query.maxPrice !== undefined && maxPrice === null) ||
+        (minPrice !== null && maxPrice !== null && minPrice > maxPrice)) {
+        return response.status(400).json({ success: false, message: "Enter a valid price range." });
+    }
     if (request.query.cursor !== undefined && (!Number.isSafeInteger(cursorId) || cursorId < 1 || search)) {
         return response.status(400).json({ success: false, message: "This listing page cursor is invalid." });
     }
@@ -163,11 +174,15 @@ export async function getExploreProducts(request, response) {
             where: {
                 status: "ACTIVE",
                 quantityAvailable: { gt: 0 },
+                ...(minPrice !== null || maxPrice !== null ? { price: {
+                    ...(minPrice !== null ? { gte: minPrice } : {}),
+                    ...(maxPrice !== null ? { lte: maxPrice } : {})
+                } } : {}),
                 ...(browsingCategory ? { product: { category: browsingCategory } } : {}),
                 ...(gender ? { clothingGender: gender } : {}),
                 ...(proteinOnly ? { proteinRich: true } : {})
             },
-            orderBy: [{ price: "asc" }, { createdAt: "desc" }, { id: "desc" }],
+            orderBy: [{ price: sort === "price_desc" ? "desc" : "asc" }, { createdAt: "desc" }, { id: "desc" }],
             ...(!search ? {
                 take: pageSize + 1,
                 ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {})
@@ -203,6 +218,18 @@ export async function getExploreProducts(request, response) {
             distinct: ["category"]
         });
         const availableCategories = availableCategoryRows.map(({ category }) => category);
+        const hotFind = await prisma.listing.findFirst({
+            where: { isHotFind: true, status: "ACTIVE", quantityAvailable: { gt: 0 } },
+            select: {
+                id: true,
+                sellerId: true,
+                title: true,
+                price: true,
+                photoUrl: true,
+                product: { select: { category: true } },
+                seller: { select: { fullName: true } }
+            }
+        });
 
         const hasMore = !search && listings.length > pageSize;
         const pageListings = hasMore ? listings.slice(0, pageSize) : listings;
@@ -246,6 +273,15 @@ export async function getExploreProducts(request, response) {
         return response.json({
             success: true,
             listings: results,
+            hotFind: hotFind ? {
+                id: hotFind.id,
+                sellerId: hotFind.sellerId,
+                sellerName: hotFind.seller.fullName || "CampusX Member",
+                title: hotFind.title,
+                category: hotFind.product.category,
+                price: hotFind.price.toFixed(2),
+                photoUrl: hotFind.photoUrl
+            } : null,
             availableCategories,
             suggestions,
             nextCursor: hasMore ? String(pageListings.at(-1)?.id ?? "") || null : null
@@ -255,6 +291,13 @@ export async function getExploreProducts(request, response) {
         console.error("Product feed query failed:", error?.code ?? error?.name ?? "UNKNOWN");
         return response.status(500).json({ success: false, message: "We could not load products right now." });
     }
+}
+
+function parseExplorePrice(value) {
+    if (value === undefined) return null;
+    if (typeof value !== "string" || !/^\d{1,8}(\.\d{1,2})?$/.test(value)) return null;
+    const amount = Number(value);
+    return Number.isFinite(amount) && amount <= 99_999_999.99 ? amount : null;
 }
 
 // Match every typed word to a listing title, retaining the existing close-keyword behavior.

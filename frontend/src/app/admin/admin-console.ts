@@ -30,6 +30,7 @@ interface AdminListing {
   description: string;
   price: string;
   quantityAvailable: number;
+  isHotFind: boolean;
   phoneNumber: string;
   location: string;
   condition: string;
@@ -245,6 +246,13 @@ export class AdminConsole {
       this.loadListings();
       this.loadOverview();
     });
+  }
+
+  protected toggleHotFind(listing: AdminListing): void {
+    const isHotFind = !listing.isHotFind;
+    this.runAction(`/api/admin/listings/${listing.id}/hot-find`, { isHotFind },
+      isHotFind ? 'Hot Find updated on the homepage.' : 'Hot Find cleared.',
+      () => this.loadListings());
   }
 
   private runAction(url: string, body: object, success: string, afterSuccess: () => void): void {
