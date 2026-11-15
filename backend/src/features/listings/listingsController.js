@@ -218,18 +218,24 @@ export async function getExploreProducts(request, response) {
             distinct: ["category"]
         });
         const availableCategories = availableCategoryRows.map(({ category }) => category);
-        const hotFind = await prisma.listing.findFirst({
-            where: { isHotFind: true, status: "ACTIVE", quantityAvailable: { gt: 0 } },
-            select: {
-                id: true,
-                sellerId: true,
-                title: true,
-                price: true,
-                photoUrl: true,
-                product: { select: { category: true } },
-                seller: { select: { fullName: true } }
-            }
-        });
+        // Keep catalog browsing available while a deployment is applying the Hot Find migration.
+        let hotFind = null;
+        try {
+            hotFind = await prisma.listing.findFirst({
+                where: { isHotFind: true, status: "ACTIVE", quantityAvailable: { gt: 0 } },
+                select: {
+                    id: true,
+                    sellerId: true,
+                    title: true,
+                    price: true,
+                    photoUrl: true,
+                    product: { select: { category: true } },
+                    seller: { select: { fullName: true } }
+                }
+            });
+        } catch (error) {
+            console.warn("Hot Find is unavailable until its database migration is applied:", error?.code ?? error?.name ?? "UNKNOWN");
+        }
 
         const hasMore = !search && listings.length > pageSize;
         const pageListings = hasMore ? listings.slice(0, pageSize) : listings;

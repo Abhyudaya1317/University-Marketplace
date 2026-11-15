@@ -17,6 +17,9 @@ const listingSelect = {
     seller: { select: { id: true, fullName: true, email: true, bannedAt: true } },
     _count: { select: { orders: true } }
 };
+const legacyListingSelect = Object.fromEntries(
+    Object.entries(listingSelect).filter(([field]) => field !== "isHotFind")
+);
 
 // Return real account and listing totals for the administrator overview.
 export async function getAdminOverview(_request, response) {
@@ -102,7 +105,7 @@ export async function getAdminListings(request, response) {
     const allowedStatuses = new Set(["ALL", "ACTIVE", "SOLD", "ARCHIVED", "HIDDEN"]);
     if (!allowedStatuses.has(status)) return response.status(400).json({ success: false, message: "Choose a valid listing status." });
     try {
-        const listings = await prisma.listing.findMany({
+        const query = {
             where: {
                 ...(status === "ALL" ? {} : { status }),
                 ...(search ? { OR: [
@@ -115,7 +118,15 @@ export async function getAdminListings(request, response) {
             orderBy: [{ createdAt: "desc" }, { id: "desc" }],
             take: 100,
             select: listingSelect
-        });
+        };
+        let listings;
+        try {
+            listings = await prisma.listing.findMany(query);
+        } catch (error) {
+            // Preserve the admin inventory while an older database is waiting for the additive Hot Find migration.
+            if (error?.code !== "P2022") throw error;
+            listings = await prisma.listing.findMany({ ...query, select: legacyListingSelect });
+        }
         return response.json({ success: true, listings: listings.map(formatListing) });
     } catch (error) {
         logAdminFailure("search listings", error);
@@ -269,7 +280,7 @@ function formatUser(user) {
 
 function formatListing(listing) {
     return { id: listing.id, title: listing.title, description: listing.description, price: listing.price.toFixed(2),
-        quantityAvailable: listing.quantityAvailable, isHotFind: listing.isHotFind, location: listing.location, condition: listing.condition,
+        quantityAvailable: listing.quantityAvailable, isHotFind: listing.isHotFind ?? false, location: listing.location, condition: listing.condition,
         customCondition: listing.customCondition, clothingGender: listing.clothingGender,
         clothingSizes: listing.clothingSizes, color: listing.color,
         proteinRich: listing.proteinRich, posterSize: listing.posterSize, phoneNumber: listing.phoneNumber,
