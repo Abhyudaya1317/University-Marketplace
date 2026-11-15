@@ -11,8 +11,8 @@
 .about-eyebrow { margin: 0 0 10px; color: #000080; font: 8px/1.6 var(--pixel, monospace); }
 .about-intro h1 { margin: 0 0 12px; font: clamp(20px, 4vw, 32px)/1.4 var(--pixel, monospace); }
 .about-intro > p:last-child { max-width: 760px; margin: 0; color: #333; font: 15px/1.7 var(--body, sans-serif); }
-.founder-panel { display: grid; grid-template-columns: minmax(220px, 320px) minmax(0, 1fr); align-items: start; gap: clamp(22px, 4vw, 42px); padding: clamp(18px, 4vw, 34px); border: 3px solid #fff; background: #c0c0c0; box-shadow: 6px 6px 0 #080817; }
-.founder-photo { display: block; width: 100%; aspect-ratio: 4 / 5; border: 3px solid #fff; outline: 1px solid #777; background: #eee; object-fit: cover; object-position: center 25%; box-shadow: 4px 4px 0 #080817; }
+.founder-panel { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: start; gap: clamp(22px, 4vw, 42px); padding: clamp(18px, 4vw, 34px); border: 3px solid #fff; background: #c0c0c0; box-shadow: 6px 6px 0 #080817; }
+.founder-photo { display: block; width: 140px; max-width: 100%; aspect-ratio: 4 / 5; border: 3px solid #fff; outline: 1px solid #777; background: #eee; object-fit: cover; object-position: center 25%; box-shadow: 4px 4px 0 #080817; }
 .founder-copy h2, .about-feedback h2 { margin: 0 0 14px; font: clamp(14px, 2.3vw, 20px)/1.6 var(--pixel, monospace); }
 .founder-copy > p:not(.about-eyebrow), .about-feedback p:not(.about-eyebrow) { margin: 0 0 14px; color: #333; font: 15px/1.75 var(--body, sans-serif); }
 .about-connect a { color: #000080; font-weight: 700; }
@@ -23,8 +23,8 @@
 .about-feedback-link { flex: 0 0 auto; padding: 12px 16px; border: 2px outset #fff; background: #174bff; color: #fff; box-shadow: 3px 3px 0 #080817; font: 8px/1.6 var(--pixel, monospace); text-align: center; text-decoration: none; }
 @media (max-width: 760px) {
   .about-header { align-items: flex-start; flex-direction: column; padding-inline: 14px; }
-  .founder-panel { grid-template-columns: 1fr; }
-  .founder-photo { width: min(280px, 100%); aspect-ratio: 1 / 1; }
+  .founder-panel { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .founder-photo { width: 90px; aspect-ratio: 4 / 5; }
   .about-feedback { align-items: flex-start; flex-direction: column; }
   .about-feedback-link { flex-basis: auto; }
 }
