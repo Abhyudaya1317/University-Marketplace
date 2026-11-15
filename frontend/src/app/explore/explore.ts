@@ -89,6 +89,7 @@ export class Explore {
   private searchDebounce?: ReturnType<typeof setTimeout>;
 
   protected readonly categories = [
+    { value: 'BOOKS_AND_NOTES', label: 'Books & Notes', icon: '📚' },
     { value: 'CLOTHING', label: 'Clothing', icon: '👕' },
     { value: 'ACCESSORIES', label: 'Accessories', icon: '👜' },
     { value: 'SHOES', label: 'Shoes', icon: '👟' },

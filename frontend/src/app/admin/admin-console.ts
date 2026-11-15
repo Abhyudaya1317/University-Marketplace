@@ -113,7 +113,7 @@ export class AdminConsole {
   protected readonly editingListing = signal<AdminListing | null>(null);
   protected readonly removingListing = signal<AdminListing | null>(null);
   protected readonly categories = [
-    'CLOTHING', 'ACCESSORIES', 'JEWELLERY', 'SHOES', 'FOOD', 'ELECTRONICS', 'BEAUTY',
+    'BOOKS_AND_NOTES', 'CLOTHING', 'ACCESSORIES', 'JEWELLERY', 'SHOES', 'FOOD', 'ELECTRONICS', 'BEAUTY',
     'TEMPORARY_TATTOOS', 'ARTWORK', 'PROJECTS', 'SPORTS_EQUIPMENT', 'MUSICAL_INSTRUMENTS',
     'POSTERS', 'KITCHEN_ITEMS', 'DAILY_USE', 'OTHER', 'WAX_CANDLES', 'GIFTS',
   ];
