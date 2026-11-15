@@ -28,7 +28,14 @@ app.set("trust proxy", process.env.VERCEL === "1" ? 1 : false);
 
 // Allow the configured Angular origin and local development while keeping browser credentials enabled.
 const allowedOrigins = new Set();
-for (const value of [process.env.FRONTEND_URL, ...(process.env.NODE_ENV === "production" ? [] : ["http://localhost:4200"])]) {
+const frontendOriginValues = [process.env.FRONTEND_URL];
+if (process.env.NODE_ENV === "production") {
+    // Both canonical UniBee hostnames serve the same Angular app; accept either www preference.
+    frontendOriginValues.push("https://www.unibee.in", "https://unibee.in");
+} else {
+    frontendOriginValues.push("http://localhost:4200");
+}
+for (const value of frontendOriginValues) {
     if (!value) continue;
     try {
         allowedOrigins.add(new URL(value).origin);
