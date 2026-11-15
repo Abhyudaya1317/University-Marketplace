@@ -36,6 +36,8 @@ model User {
   buyerConversations Conversation[]    @relation("ConversationBuyer")
   sellerConversations Conversation[]   @relation("ConversationSeller")
   sentMessages      Message[]
+  feedbackReports   FeedbackReport[] @relation("FeedbackReporter")
+  targetedFeedbackReports FeedbackReport[] @relation("FeedbackTargetUser")
 }
 
 // Store only a keyed hash of a short-lived password-reset code.
@@ -46,6 +48,24 @@ model PasswordResetCode {
   attempts  Int      @default(0)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// Store signed-in community feedback and reports for administrator review.
+model FeedbackReport {
+  id              Int      @id @default(autoincrement())
+  kind            String   @db.VarChar(30)
+  details         String   @db.VarChar(2000)
+  photoKeys       String[]
+  reporterId      Int
+  targetUserId    Int?
+  targetListingId Int?
+  createdAt       DateTime @default(now())
+  reporter        User     @relation("FeedbackReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser      User?    @relation("FeedbackTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  targetListing   Listing? @relation(fields: [targetListingId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
 }
 
 // Store a hash of each browser session token so logout can revoke it server-side.
@@ -149,6 +169,7 @@ model Listing {
   orders         Order[]
   savedBy        ListingFavorite[]
   conversations  Conversation[]
+  feedbackReports FeedbackReport[]
 
   // These indexes support finding product offers sorted by price and seller listings.
   @@index([productId, status, price])

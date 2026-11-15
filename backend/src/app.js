@@ -19,6 +19,7 @@ import sellerRoutes from "./features/sellers/sellerRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import adminRoutes from "./features/admin/adminRoutes.js";
 import notificationsRoutes from "./features/notifications/notificationsRoutes.js";
+import feedbackRoutes from "./features/feedback/feedbackRoutes.js";
 import { createRateLimiter } from "./middleware/requestProtection.js";
 
 const app = express();
@@ -103,6 +104,7 @@ app.use("/api/sellers", sellerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/messages", messagesRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Return a safe JSON failure when an unexpected route or middleware error reaches Express.
 app.use((error, _request, response, next) => {
