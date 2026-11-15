@@ -19,7 +19,7 @@ import sellerRoutes from "./features/sellers/sellerRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import adminRoutes from "./features/admin/adminRoutes.js";
 import notificationsRoutes from "./features/notifications/notificationsRoutes.js";
-import { createRateLimiter, protectUnsafeRequestOrigins } from "./middleware/requestProtection.js";
+import { createRateLimiter } from "./middleware/requestProtection.js";
 
 const app = express();
 
@@ -61,9 +61,6 @@ app.use((_request, response, next) => {
     }
     next();
 });
-
-// CORS controls browser response access; this separately rejects cross-site browser writes.
-app.use(protectUnsafeRequestOrigins(allowedOrigins));
 
 // Modest limits help curb accidental loops and basic request floods across mutating endpoints.
 app.use("/api", createRateLimiter({

@@ -163,6 +163,9 @@ export async function setHotFindListing(request, response) {
         return response.json({ success: true, isHotFind: true, message: "Hot Find updated on the homepage." });
     } catch (error) {
         logAdminFailure("set Hot Find", error);
+        if (error?.code === "P2022") {
+            return response.status(503).json({ success: false, message: "Hot Find is not enabled in the database yet. Apply the pending database migration, then retry." });
+        }
         return response.status(500).json({ success: false, message: "Hot Find could not be updated." });
     }
 }
