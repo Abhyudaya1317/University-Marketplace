@@ -176,11 +176,11 @@
   max-height: min(86dvh, 820px);
   flex-direction: column;
   overflow: hidden;
-  border: 0;
-  border-radius: 28px;
-  background: #202329;
-  color: #f8f8fa;
-  box-shadow: 0 18px 60px rgb(0 0 0 / 45%);
+  border: 3px solid #174bff;
+  border-radius: 8px;
+  background: #f7f9ff;
+  color: #080817;
+  box-shadow: 7px 7px 0 #080817;
 }
 
 .share-sheet-header {
@@ -191,6 +191,7 @@
   grid-template-columns: 48px 1fr 48px;
   align-items: center;
   padding: 0 14px;
+  background: #174bff;
 }
 
 .share-sheet-header h2 {
@@ -203,10 +204,11 @@
 .share-sheet-header > button {
   width: 42px;
   height: 42px;
-  border: 0;
+  border: 2px solid #fff;
   padding: 0;
-  background: transparent;
-  color: #f7f7f9;
+  background: #fff;
+  color: #000080;
+  box-shadow: 2px 2px 0 #080817;
   font: 300 38px/1 Arial, sans-serif;
   cursor: pointer;
 }
@@ -218,10 +220,11 @@
   align-items: center;
   gap: 12px;
   margin: 0 16px 12px;
-  border-radius: 12px;
+  border: 1px solid #b8c8ef;
+  border-radius: 0;
   padding: 0 18px;
-  background: #292d34;
-  color: #aeb3bc;
+  background: #fff;
+  color: #174bff;
 }
 
 .share-sheet-search > span { font: 32px/1 Arial, sans-serif; }
@@ -231,10 +234,10 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: #fff;
+  color: #080817;
   font: 17px/1.3 var(--body, Arial, sans-serif);
 }
-.share-sheet-search input::placeholder { color: #aeb3bc; opacity: 1; }
+.share-sheet-search input::placeholder { color: #737d91; opacity: 1; }
 
 .share-sheet-contacts {
   display: grid;
@@ -255,17 +258,17 @@
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  border: 2px solid transparent;
-  border-radius: 16px;
+  border: 1px solid #c6d3ef;
+  border-radius: 0;
   padding: 8px 5px;
-  background: transparent;
-  color: #fff;
+  background: #fff;
+  color: #080817;
   font: inherit;
   cursor: pointer;
 }
 
-.share-contact:hover { background: #2a2f37; }
-.share-contact-selected { border-color: #4d83ff; background: #2a3548; }
+.share-contact:hover { background: #edf3ff; }
+.share-contact-selected { border-color: #174bff; background: #dce8ff; box-shadow: inset 0 0 0 1px #174bff; }
 .share-contact > img, .share-contact-avatar-fallback {
   display: grid;
   width: 82px;
@@ -274,15 +277,15 @@
   place-items: center;
   overflow: hidden;
   border-radius: 50%;
-  background: #555b68;
-  color: #fff;
+  background: #dce8ff;
+  color: #000080;
   font: 700 30px/1 var(--body, Arial, sans-serif);
   object-fit: cover;
 }
 .share-contact-name {
   max-width: 100%;
   overflow: hidden;
-  color: #fff;
+  color: #080817;
   font: 15px/1.3 var(--body, Arial, sans-serif);
   text-align: center;
   text-overflow: ellipsis;
@@ -290,7 +293,7 @@
 .share-contact-listing {
   max-width: 100%;
   overflow: hidden;
-  color: #aeb3bc;
+  color: #596579;
   font: 12px/1.2 var(--body, Arial, sans-serif);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -301,15 +304,15 @@
   align-self: center;
   justify-self: center;
   margin: 20px 0;
-  color: #d4d7dd;
+  color: #303b52;
   font: 15px/1.5 var(--body, Arial, sans-serif);
   text-align: center;
 }
 
 .share-sheet-footer {
   flex: 0 0 auto;
-  border-top: 1px solid #343840;
-  background: #202329;
+  border-top: 1px solid #b8c8ef;
+  background: #eef3ff;
   padding: 12px 12px 16px;
 }
 
@@ -318,9 +321,9 @@
   width: 100%;
   min-height: 44px;
   margin-bottom: 10px;
-  border: 0;
-  border-radius: 10px;
-  background: #315eea;
+  border: 2px solid #000080;
+  border-radius: 0;
+  background: #174bff;
   color: white;
   font: 700 15px/1.3 var(--body, Arial, sans-serif);
   cursor: pointer;
@@ -345,7 +348,7 @@
   border: 0;
   padding: 4px 2px;
   background: transparent;
-  color: #f1f2f5;
+  color: #080817;
   cursor: pointer;
 }
 .share-sheet-channels > button > span {
@@ -354,14 +357,14 @@
   height: 62px;
   place-items: center;
   border-radius: 50%;
-  background: #292d34;
-  color: #f1f2f5;
+  background: #dce8ff;
+  color: #000080;
   font: 30px/1 Arial, sans-serif;
 }
-.share-sheet-channels > button:hover > span { background: #3a404b; }
+.share-sheet-channels > button:hover > span { background: #bfd2ff; }
 .share-sheet-channels > button > .share-brand-letter { font-weight: 700; }
 .share-sheet-channels small {
-  color: #e5e6e9;
+  color: #303b52;
   font: 13px/1.25 var(--body, Arial, sans-serif);
   white-space: nowrap;
 }
