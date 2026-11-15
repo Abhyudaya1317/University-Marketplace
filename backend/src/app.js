@@ -19,8 +19,12 @@ import sellerRoutes from "./features/sellers/sellerRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import adminRoutes from "./features/admin/adminRoutes.js";
 import notificationsRoutes from "./features/notifications/notificationsRoutes.js";
+import { createRateLimiter, protectUnsafeRequestOrigins } from "./middleware/requestProtection.js";
 
 const app = express();
+
+// Trust Vercel's single proxy hop for per-client limits; local/direct hosts use the socket address.
+app.set("trust proxy", process.env.VERCEL === "1" ? 1 : false);
 
 // Allow the configured Angular origin and local development while keeping browser credentials enabled.
 const allowedOrigins = new Set();
@@ -39,8 +43,31 @@ app.use(cors({
     credentials: true
 }));
 
+// Set baseline response headers for API responses and uploaded media.
+app.use((_request, response, next) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("X-Frame-Options", "DENY");
+    response.setHeader("Referrer-Policy", "no-referrer");
+    response.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    if (process.env.NODE_ENV === "production") {
+        response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    next();
+});
+
+// CORS controls browser response access; this separately rejects cross-site browser writes.
+app.use(protectUnsafeRequestOrigins(allowedOrigins));
+
+// Modest limits help curb accidental loops and basic request floods across mutating endpoints.
+app.use("/api", createRateLimiter({
+    name: "api-write",
+    limit: 120,
+    windowMs: 60 * 1000,
+    methods: new Set(["POST", "PUT", "PATCH", "DELETE"])
+}));
+
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 
 // Expose uploaded media on persistent local hosts; Vercel deployments require external object storage.
 app.use("/api/uploads/listings", express.static(listingUploadDirectory, {
