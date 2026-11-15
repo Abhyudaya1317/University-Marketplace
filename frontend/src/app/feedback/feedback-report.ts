@@ -18,8 +18,8 @@ export class FeedbackReport {
   protected readonly checkingSession = signal(true);
   protected readonly kind = signal<FeedbackKind>('FEEDBACK');
   protected readonly details = signal('');
-  protected readonly targetUserId = signal('');
-  protected readonly targetListingId = signal('');
+  protected readonly targetUserName = signal('');
+  protected readonly targetListingUrl = signal('');
   protected readonly photos = signal<File[]>([]);
   protected readonly submitting = signal(false);
   protected readonly error = signal('');
@@ -27,10 +27,10 @@ export class FeedbackReport {
 
   constructor() {
     const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId') ?? '';
-    const listingId = params.get('listingId') ?? '';
-    if (userId) { this.targetUserId.set(userId); this.kind.set('REPORT_USER'); }
-    if (listingId) { this.targetListingId.set(listingId); this.kind.set('REPORT_LISTING'); }
+    const userName = params.get('userName') ?? '';
+    const listingUrl = params.get('listingUrl') ?? '';
+    if (userName) { this.targetUserName.set(userName); this.kind.set('REPORT_USER'); }
+    if (listingUrl) { this.targetListingUrl.set(listingUrl); this.kind.set('REPORT_LISTING'); }
     this.http.get<{ user?: { id: string } }>('/api/auth/me').subscribe({
       next: (result) => { this.signedIn.set(Boolean(result.user)); this.checkingSession.set(false); },
       error: () => { this.signedIn.set(false); this.checkingSession.set(false); },
@@ -66,14 +66,14 @@ export class FeedbackReport {
     const details = this.details().trim();
     if (details.length < 10 || details.length > 2000) { this.error.set('Describe the issue in 10 to 2,000 characters.'); return; }
     if (this.photos().length < 1 || this.photos().length > 4) { this.error.set('Attach between one and four photos.'); return; }
-    if (this.kind() === 'REPORT_USER' && !/^\d+$/.test(this.targetUserId().trim())) { this.error.set('Enter the user ID you are reporting.'); return; }
-    if (this.kind() === 'REPORT_LISTING' && !/^\d+$/.test(this.targetListingId().trim())) { this.error.set('Enter the listing ID you are reporting.'); return; }
+    if (this.kind() === 'REPORT_USER' && this.targetUserName().trim().length < 2) { this.error.set('Enter the name of the user you are reporting.'); return; }
+    if (this.kind() === 'REPORT_LISTING' && !/^(?:https?:\/\/[^/\s]+)?\/products\/[1-9]\d*\/?(?:[?#][^\s]*)?$/.test(this.targetListingUrl().trim())) { this.error.set('Enter a listing link, such as /products/123.'); return; }
 
     const form = new FormData();
     form.append('kind', this.kind());
     form.append('details', details);
-    if (this.targetUserId().trim()) form.append('targetUserId', this.targetUserId().trim());
-    if (this.targetListingId().trim()) form.append('targetListingId', this.targetListingId().trim());
+    if (this.kind() === 'REPORT_USER') form.append('targetUserName', this.targetUserName().trim());
+    if (this.kind() === 'REPORT_LISTING') form.append('targetListingUrl', this.targetListingUrl().trim());
     for (const photo of this.photos()) form.append('photos', photo);
     this.submitting.set(true);
     this.error.set('');
@@ -81,7 +81,7 @@ export class FeedbackReport {
     this.http.post<{ message?: string }>('/api/feedback', form).subscribe({
       next: (result) => {
         this.success.set(result.message ?? 'Your submission was sent to the CampusX admin team.');
-        this.details.set(''); this.targetUserId.set(''); this.targetListingId.set(''); this.photos.set([]);
+        this.details.set(''); this.targetUserName.set(''); this.targetListingUrl.set(''); this.photos.set([]);
         const input = document.getElementById('feedback-photos') as HTMLInputElement | null;
         if (input) input.value = '';
         this.submitting.set(false);

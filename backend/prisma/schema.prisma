@@ -57,6 +57,8 @@ model FeedbackReport {
   details         String   @db.VarChar(2000)
   photoKeys       String[]
   reporterId      Int
+  targetUserName  String?  @db.VarChar(100)
+  targetListingUrl String? @db.VarChar(500)
   targetUserId    Int?
   targetListingId Int?
   createdAt       DateTime @default(now())

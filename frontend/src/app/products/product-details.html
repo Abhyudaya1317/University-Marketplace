@@ -172,6 +172,7 @@
             </button>
             <button type="button" class="wishlist-button share-product-button" (click)="shareListing()">Share item</button>
             @if (!isOwnListing(item)) {
+              <a class="wishlist-button" routerLink="/feedback-report" [queryParams]="{ listingUrl: '/products/' + item.id }">Report listing</a>
               <button
                 type="button"
                 class="wishlist-button message-seller-action"

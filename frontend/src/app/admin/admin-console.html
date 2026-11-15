@@ -33,6 +33,7 @@
         <nav class="admin-tabs" aria-label="Admin sections">
           <button type="button" [class.active]="tab() === 'users'" (click)="chooseTab('users')">Users</button>
           <button type="button" [class.active]="tab() === 'listings'" (click)="chooseTab('listings')">Listings</button>
+          <button type="button" [class.active]="tab() === 'feedback'" (click)="chooseTab('feedback')">Feedback &amp; Reports</button>
         </nav>
 
         @if (notice()) { <p class="notice" role="status">{{ notice() }}</p> }
@@ -53,7 +54,7 @@
               }
             </div>
           </section>
-        } @else {
+        } @else if (tab() === 'listings') {
           <section class="records-panel">
             <div class="panel-heading"><div><p class="eyebrow">MARKETPLACE INVENTORY</p><h2>Listings</h2></div><form class="search-form listing-search" (ngSubmit)="loadListings()"><label class="visually-hidden" for="listing-search">Search listings</label><input id="listing-search" name="listingSearch" [(ngModel)]="listingSearch" placeholder="Item or seller"><label class="visually-hidden" for="listing-status">Listing status</label><select id="listing-status" name="listingStatus" [(ngModel)]="listingStatus"><option value="ALL">All statuses</option><option value="ACTIVE">Active</option><option value="SOLD">Sold</option><option value="ARCHIVED">Archived</option><option value="HIDDEN">Hidden</option></select><button class="retro-button" type="submit">Search</button></form></div>
             @if (listings().length === 0 && !loading()) { <p class="empty-note">No listings match these filters.</p> }
@@ -66,6 +67,21 @@
                 </article>
               }
             </div>
+          </section>
+        } @else {
+          <section class="records-panel">
+            <div class="panel-heading"><div><p class="eyebrow">COMMUNITY INBOX</p><h2>Feedback &amp; Reports</h2></div><button class="retro-button" type="button" (click)="loadFeedbackReports()">Refresh</button></div>
+            @if (feedbackReports().length === 0) { <p class="empty-note">No feedback or reports have been submitted.</p> }
+            @for (report of feedbackReports(); track report.id) {
+              <article class="feedback-report-row">
+                <div class="feedback-report-heading"><strong>{{ report.kind.replace('_', ' ') }}</strong><time>{{ report.createdAt | date:'medium' }}</time></div>
+                <p class="feedback-report-meta">From {{ report.reporter.fullName || report.reporter.email }} · {{ report.reporter.email }}</p>
+                @if (report.targetUserName) { <p class="feedback-report-meta">Reported user: {{ report.targetUserName }}@if (report.targetUser) { · account {{ report.targetUser.email }} }</p> }
+                @if (report.targetListingUrl) { <p class="feedback-report-meta">Listing link: {{ report.targetListingUrl }}@if (report.targetListing) { · {{ report.targetListing.title }} }</p> }
+                <p class="feedback-report-details">{{ report.details }}</p>
+                <div class="feedback-report-photos">@for (photo of report.photos; track photo) { <a [href]="photo" target="_blank" rel="noopener noreferrer"><img [src]="photo" alt="Photo attached to feedback report" loading="lazy"></a> }</div>
+              </article>
+            }
           </section>
         }
       }

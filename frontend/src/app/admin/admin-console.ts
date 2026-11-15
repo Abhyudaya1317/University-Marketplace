@@ -13,6 +13,19 @@ interface AdminOverview {
   orders: number;
 }
 
+interface AdminFeedbackReport {
+  id: number;
+  kind: string;
+  details: string;
+  createdAt: string;
+  targetUserName: string | null;
+  targetListingUrl: string | null;
+  reporter: { id: number; fullName: string | null; email: string };
+  targetUser: { id: number; fullName: string | null; email: string } | null;
+  targetListing: { id: number; title: string } | null;
+  photos: string[];
+}
+
 interface AdminUser {
   id: number;
   email: string;
@@ -75,7 +88,7 @@ interface ListingDraft {
   photoUrl4: string;
 }
 
-type AdminTab = 'users' | 'listings';
+type AdminTab = 'users' | 'listings' | 'feedback';
 
 // One protected console for the current administrator's user and listing controls.
 @Component({
@@ -92,6 +105,7 @@ export class AdminConsole {
   protected readonly overview = signal<AdminOverview | null>(null);
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly listings = signal<AdminListing[]>([]);
+  protected readonly feedbackReports = signal<AdminFeedbackReport[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal('');
   protected readonly notice = signal('');
@@ -137,6 +151,7 @@ export class AdminConsole {
     this.loadOverview();
     this.loadUsers();
     this.loadListings();
+    this.loadFeedbackReports();
   }
 
   protected chooseTab(tab: AdminTab): void {
@@ -167,6 +182,13 @@ export class AdminConsole {
     this.http.get<{ listings: AdminListing[] }>('/api/admin/listings', { params }).subscribe({
       next: (response) => { this.listings.set(response.listings); this.loading.set(false); },
       error: (error: HttpErrorResponse) => { this.showError(error, 'Listings could not be loaded.'); this.loading.set(false); },
+    });
+  }
+
+  protected loadFeedbackReports(): void {
+    this.http.get<{ reports: AdminFeedbackReport[] }>('/api/admin/feedback').subscribe({
+      next: (response) => this.feedbackReports.set(response.reports),
+      error: (error: HttpErrorResponse) => this.showError(error, 'Feedback and reports could not be loaded.'),
     });
   }
 

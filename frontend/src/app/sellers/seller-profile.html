@@ -61,6 +61,7 @@
           <a class="save-button secondary" routerLink="/dashboard">EDIT YOUR PROFILE</a>
         } @else {
           <div class="profile-actions">
+            <a class="save-button secondary" routerLink="/feedback-report" [queryParams]="{ userName: currentSeller.fullName }">REPORT USER</a>
             <button
               class="save-button secondary"
               type="button"
