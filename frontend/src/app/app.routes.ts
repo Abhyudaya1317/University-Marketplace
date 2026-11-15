@@ -11,6 +11,7 @@ import { Messages } from './messages/messages';
 import { SavedCollections } from './saved/saved-collections';
 import { AdminConsole } from './admin/admin-console';
 import { HowToUse } from './how-to-use/how-to-use';
+import { FeedbackReport } from './feedback/feedback-report';
 
 // Keep page URLs and their feature components together in one route list.
 export const routes: Routes = [
@@ -43,6 +44,10 @@ export const routes: Routes = [
   {
     path: 'how-to-use',
     component: HowToUse,
+  },
+  {
+    path: 'feedback-report',
+    component: FeedbackReport,
   },
   {
     path: 'products/:listingId',

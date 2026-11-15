@@ -1,0 +1,41 @@
+<main class="feedback-page">
+  <header class="feedback-header">
+    <a class="brand" routerLink="/"><span class="brand-mark">✦</span> UNIBEE <sup>’26</sup></a>
+    <app-account-navigation />
+  </header>
+  <section class="feedback-window" aria-labelledby="feedback-title">
+    <div class="feedback-titlebar"><strong>COMMUNITY_SUPPORT.EXE</strong><span>—　□　×</span></div>
+    <div class="feedback-form">
+      <p class="eyebrow">CAMPUSX COMMUNITY</p>
+      <h1 id="feedback-title">Feedback &amp; Report</h1>
+      <p class="intro">Send feedback or report a concern to the CampusX admin team. Your submission and photos are private to administrators.</p>
+      @if (checkingSession()) {
+        <p role="status">Checking your sign-in…</p>
+      } @else if (!signedIn()) {
+        <div class="signin-note"><p>Sign in to submit feedback or a report.</p><a class="submit-button" routerLink="/auth" [queryParams]="{ returnUrl: '/feedback-report' }">Sign in</a></div>
+      } @else {
+        <form class="feedback-fields" (ngSubmit)="submit()">
+          <label for="feedback-kind">What would you like to send?</label>
+          <select id="feedback-kind" name="kind" [ngModel]="kind()" (ngModelChange)="changeKind($event)">
+            <option value="FEEDBACK">Feedback</option><option value="REPORT_USER">Report User</option><option value="REPORT_LISTING">Report Listing</option><option value="OTHER_ISSUE">Other issue</option>
+          </select>
+          @if (kind() === 'REPORT_USER') {
+            <label for="target-user">User ID</label><input id="target-user" name="targetUserId" inputmode="numeric" required [ngModel]="targetUserId()" (ngModelChange)="targetUserId.set($event)" placeholder="Pre-filled from a seller profile when available">
+          }
+          @if (kind() === 'REPORT_LISTING') {
+            <label for="target-listing">Listing ID</label><input id="target-listing" name="targetListingId" inputmode="numeric" required [ngModel]="targetListingId()" (ngModelChange)="targetListingId.set($event)" placeholder="Pre-filled from a listing when available">
+          }
+          <label for="feedback-details">Details</label>
+          <textarea id="feedback-details" name="details" required minlength="10" maxlength="2000" rows="6" [ngModel]="details()" (ngModelChange)="details.set($event)" placeholder="Tell us what happened or share your suggestion."></textarea>
+          <label for="feedback-photos">Photos</label>
+          <input id="feedback-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple required (change)="selectPhotos($event)">
+          <small>Attach 1 to 4 JPG, PNG, or WebP photos · up to 5 MB each</small>
+          @if (photos().length) { <p class="photo-count" role="status">{{ photos().length }} photo{{ photos().length === 1 ? '' : 's' }} selected</p> }
+          @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+          @if (success()) { <p class="form-success" role="status">{{ success() }}</p> }
+          <button class="submit-button" type="submit" [disabled]="submitting()">{{ submitting() ? 'Sending…' : 'Send to CampusX' }}</button>
+        </form>
+      }
+    </div>
+  </section>
+</main>

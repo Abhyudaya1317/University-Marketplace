@@ -36,6 +36,7 @@
             </span>
           }
         </a>
+        <a role="menuitem" routerLink="/feedback-report">Feedback &amp; Report</a>
         <button class="push-notification-toggle" role="menuitem" type="button"
           (click)="togglePushNotifications()"
           [disabled]="pushStatus() === 'enabling' || pushStatus() === 'disabling' || pushStatus() === 'unsupported'">
