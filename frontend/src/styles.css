@@ -320,8 +320,8 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
   color: #fff !important;
   font: 9px var(--pixel) !important;
   text-decoration: none;
-  box-shadow: 3px 3px 0 var(--deep-navy), 0 0 12px rgb(23 75 255 / 55%) !important;
-  animation: explore-link-glow 2.2s ease-in-out infinite alternate;
+  box-shadow: 3px 3px 0 var(--deep-navy) !important;
+  animation: explore-link-float 2.4s ease-in-out infinite;
 }
 .universe-shell .account-navigation > a[href='/explore']:hover { background: var(--navy) !important; }
 .universe-shell .account-navigation > a, .universe-shell .account-navigation > button { min-height: 32px; padding-inline: 7px !important; font-size: 7px !important; }
@@ -339,9 +339,9 @@ body .engagement-section textarea, body .engagement-section select { border: 2px
 .hero h1 .campus-word { color: var(--electric-blue); }
 .hero-description { max-width: 570px; margin: 28px 0 0; color: var(black); font-size: 17px; font-weight: 600; line-height: 1.7; }
 .hero-actions { display: flex; align-items: center; gap: 26px; margin-top: 34px; }
-@keyframes explore-link-glow {
-  from { box-shadow: 3px 3px 0 var(--deep-navy), 0 0 7px rgb(23 75 255 / 38%); }
-  to { box-shadow: 3px 3px 0 var(--deep-navy), 0 0 17px rgb(23 75 255 / 78%); }
+@keyframes explore-link-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 .browse-button { display: inline-flex; min-height: 64px; align-items: center; gap: 25px; padding: 0 22px; border: 2px solid white; background: var(--electric-blue); color: white; box-shadow: 7px 7px 0 var(--deep-navy); font: 9px var(--pixel); text-decoration: none; }
 .browse-button span { font: 21px var(--body); }
