@@ -140,7 +140,7 @@ export async function getExploreProducts(request, response) {
     const sort = typeof request.query.sort === "string" ? request.query.sort : "price_asc";
     const minPrice = parseExplorePrice(request.query.minPrice);
     const maxPrice = parseExplorePrice(request.query.maxPrice);
-    const pageSize = 24;
+    const pageSize = 48;
     const cursorId = typeof request.query.cursor === "string" && /^\d+$/.test(request.query.cursor)
         ? Number(request.query.cursor)
         : null;

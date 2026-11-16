@@ -63,7 +63,7 @@ export class Explore {
   protected readonly selectedCategory = signal('');
   protected readonly selectedGender = signal('');
   protected readonly proteinOnly = signal(false);
-  protected readonly sortOrder = signal<'price_asc' | 'price_desc'>('price_asc');
+  protected readonly sortOrder = signal<'random' | 'price_asc' | 'price_desc'>('random');
   protected readonly minimumPrice = signal('');
   protected readonly maximumPrice = signal('');
   protected readonly priceRangeError = signal('');
@@ -158,7 +158,7 @@ export class Explore {
     this.loadListings();
   }
 
-  protected onSortChange(value: 'price_asc' | 'price_desc'): void {
+  protected onSortChange(value: 'random' | 'price_asc' | 'price_desc'): void {
     this.sortOrder.set(value);
     this.randomizedIds.set([]);
     this.loadListings();
@@ -226,7 +226,13 @@ export class Explore {
   }
 
   protected randomizeResults(): void {
-    const ids = this.listings().map((listing) => listing.id);
+    this.sortOrder.set('random');
+    this.randomizedIds.set([]);
+    this.loadListings();
+  }
+
+  private shuffleListings(listings: ExploreListing[]): void {
+    const ids = listings.map((listing) => listing.id);
     for (let index = ids.length - 1; index > 0; index -= 1) {
       const swapIndex = Math.floor(Math.random() * (index + 1));
       [ids[index], ids[swapIndex]] = [ids[swapIndex], ids[index]];
@@ -335,13 +341,14 @@ export class Explore {
         if (append) {
           const existing = this.listings();
           const seen = new Set(existing.map((listing) => String(listing.id)));
-          this.listings.set([...existing, ...(response.listings ?? []).filter((listing) => !seen.has(String(listing.id)))]);
+          const combined = [...existing, ...(response.listings ?? []).filter((listing) => !seen.has(String(listing.id)))];
+          this.listings.set(combined);
+          if (this.sortOrder() === 'random') this.shuffleListings(combined);
         } else {
           this.applyResponse(response);
           this.writeCache(cacheKey, response);
         }
         this.nextCursor.set(response.nextCursor ?? null);
-        this.randomizedIds.set([]);
         this.hasLoadedData.set(true);
         this.loading.set(false);
         this.refreshing.set(false);
@@ -367,19 +374,19 @@ export class Explore {
   private buildListingParams(): HttpParams {
     let params = new HttpParams();
     const search = this.searchText().trim();
-    params = params.set('sort', this.sortOrder());
+    params = params.set('sort', this.sortOrder() === 'random' ? 'price_asc' : this.sortOrder());
     if (search) params = params.set('search', search);
     if (this.minimumPrice().trim()) params = params.set('minPrice', this.minimumPrice().trim());
     if (this.maximumPrice().trim()) params = params.set('maxPrice', this.maximumPrice().trim());
     if (this.selectedCategory()) params = params.set('category', this.selectedCategory());
     if (this.selectedGender()) params = params.set('gender', this.selectedGender());
     if (this.proteinOnly() && this.selectedCategory() === 'FOOD') params = params.set('proteinOnly', 'true');
-    if (!search) params = params.set('limit', '24');
+    if (!search) params = params.set('limit', '48');
     return params;
   }
 
   private cacheKey(params: HttpParams): string {
-    return `campusx:explore:v3:${params.toString() || 'all'}`;
+    return `campusx:explore:v5:${params.toString() || 'all'}`;
   }
 
   private readCache(key: string): ExploreResponse | null {
@@ -407,6 +414,7 @@ export class Explore {
     this.availableCategories.set(response.availableCategories ?? []);
     this.suggestions.set(response.suggestions ?? []);
     this.nextCursor.set(response.nextCursor ?? null);
-    this.randomizedIds.set([]);
+    if (this.sortOrder() === 'random') this.shuffleListings(this.listings());
+    else this.randomizedIds.set([]);
   }
 }

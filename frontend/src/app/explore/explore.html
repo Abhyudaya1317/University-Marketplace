@@ -66,8 +66,9 @@
         </div>
       </div>
       <label class="detail-filter-field">
-        <span>Sort by price</span>
+        <span>Display order</span>
         <select name="sortOrder" [ngModel]="sortOrder()" (ngModelChange)="onSortChange($event)">
+          <option value="random">Random order</option>
           <option value="price_asc">Cheapest first</option>
           <option value="price_desc">Most expensive first</option>
         </select>
