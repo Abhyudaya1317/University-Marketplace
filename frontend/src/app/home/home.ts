@@ -32,6 +32,7 @@ interface HomeListing {
 interface ListingsResponse {
   success: boolean;
   listings: HomeListing[];
+  activeListingCount?: number;
   hotFind?: Pick<HomeListing, 'id' | 'sellerId' | 'sellerName' | 'title' | 'category' | 'price' | 'photoUrl'> | null;
 }
 
@@ -51,6 +52,7 @@ export class Home {
   // The template uses this state to show checking, online, or offline status.
   protected readonly backendState = signal<'checking' | 'online' | 'offline'>('checking');
   protected readonly listings = signal<HomeListing[]>([]);
+  protected readonly activeListingCount = signal(0);
   protected readonly listingError = signal(false);
   protected readonly clock = signal('');
   protected readonly batteryPercent = signal<number | null>(null);
@@ -86,6 +88,7 @@ export class Home {
     this.http.get<ListingsResponse>('/api/products').subscribe({
       next: (response) => {
         this.listings.set(response.listings ?? []);
+        this.activeListingCount.set(response.activeListingCount ?? response.listings?.length ?? 0);
         this.featuredListing.set(response.hotFind ?? null);
       },
       error: () => this.listingError.set(true),

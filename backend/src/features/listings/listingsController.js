@@ -212,11 +212,15 @@ export async function getExploreProducts(request, response) {
         });
 
         // Return only category availability for the Explore filter, not every listing.
-        const availableCategoryRows = await prisma.product.findMany({
-            where: { listings: { some: { status: "ACTIVE", quantityAvailable: { gt: 0 } } } },
-            select: { category: true },
-            distinct: ["category"]
-        });
+        const [availableCategoryRows, activeListingCount] = await Promise.all([
+            prisma.product.findMany({
+                where: { listings: { some: { status: "ACTIVE", quantityAvailable: { gt: 0 } } } },
+                select: { category: true },
+                distinct: ["category"]
+            }),
+            // Match the Admin Console total: all ACTIVE listings, including sold-out stock.
+            prisma.listing.count({ where: { status: "ACTIVE" } })
+        ]);
         const availableCategories = availableCategoryRows.map(({ category }) => category);
         // Keep catalog browsing available while a deployment is applying the Hot Find migration.
         let hotFind = null;
@@ -279,6 +283,7 @@ export async function getExploreProducts(request, response) {
         return response.json({
             success: true,
             listings: results,
+            activeListingCount,
             hotFind: hotFind ? {
                 id: hotFind.id,
                 sellerId: hotFind.sellerId,
