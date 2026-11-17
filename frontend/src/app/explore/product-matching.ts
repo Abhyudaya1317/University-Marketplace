@@ -16,6 +16,11 @@ export function keywordsMatch(first: string, second: string): boolean {
   return Math.min(first.length, second.length) >= 5 && editDistance(first, second) <= 1;
 }
 
+// Allow useful fragments inside a product word while keeping grouping rules unchanged.
+function searchKeywordsMatch(searchWord: string, productWord: string): boolean {
+  return (searchWord.length >= 2 && productWord.includes(searchWord)) || keywordsMatch(searchWord, productWord);
+}
+
 // Treat titles as the same product when at least one useful keyword matches.
 export function productNamesMatch(firstName: string, secondName: string): boolean {
   const firstWords = productKeywords(firstName);
@@ -27,7 +32,7 @@ export function productNamesMatch(firstName: string, secondName: string): boolea
 export function productMatchesSearch(productName: string, searchText: string): boolean {
   const searchWords = productKeywords(searchText);
   const productWords = productKeywords(productName);
-  return searchWords.every((searchWord) => productWords.some((productWord) => keywordsMatch(searchWord, productWord)));
+  return searchWords.every((searchWord) => productWords.some((productWord) => searchKeywordsMatch(searchWord, productWord)));
 }
 
 // Compare longer product words without adding a package; stop once more than one edit is needed.
