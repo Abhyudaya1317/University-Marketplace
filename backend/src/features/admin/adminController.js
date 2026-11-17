@@ -2,6 +2,7 @@
 import { prisma } from "../../lib/prisma.js";
 import { isAdminEmail } from "../../middleware/adminAccess.js";
 import { COLOR_EXCLUDED_CATEGORIES, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, parseProteinRich, validateListingDetails, validateListingHashtags } from "../listings/listingsValidation.js";
+import { removeListingPhotoByUrl } from "../listings/listingPhotoUpload.js";
 
 const userSelect = {
     id: true, email: true, fullName: true, avatarUrl: true, createdAt: true,
@@ -35,6 +36,42 @@ export async function getAdminOverview(_request, response) {
     } catch (error) {
         logAdminFailure("load overview", error);
         return response.status(500).json({ success: false, message: "The administrator overview could not be loaded." });
+    }
+}
+
+// Give administrators an audit view of buyer requests and completed sales.
+export async function getAdminOrders(request, response) {
+    const search = typeof request.query.q === "string" ? request.query.q.trim().slice(0, 100) : "";
+    const status = typeof request.query.status === "string" ? request.query.status.toUpperCase() : "ALL";
+    const allowed = new Set(["ALL", "PENDING", "ACCEPTED", "SELLER_CONFIRMED", "DECLINED", "CANCELLED", "COMPLETED"]);
+    if (!allowed.has(status)) return response.status(400).json({ success: false, message: "Choose a valid order status." });
+    try {
+        const orders = await prisma.order.findMany({
+            where: {
+                ...(status === "ALL" ? {} : { status }),
+                ...(search ? { OR: [
+                    { listing: { title: { contains: search, mode: "insensitive" } } },
+                    { listing: { product: { name: { contains: search, mode: "insensitive" } } } },
+                    { buyer: { fullName: { contains: search, mode: "insensitive" } } },
+                    { buyer: { email: { contains: search, mode: "insensitive" } } },
+                    { seller: { fullName: { contains: search, mode: "insensitive" } } },
+                    { seller: { email: { contains: search, mode: "insensitive" } } }
+                ] } : {})
+            },
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: 200,
+            select: {
+                id: true, status: true, price: true, quantity: true, createdAt: true, updatedAt: true,
+                buyerMessage: true, meetingAt: true, meetingLocation: true,
+                listing: { select: { id: true, title: true, product: { select: { name: true } } } },
+                buyer: { select: { id: true, fullName: true, email: true } },
+                seller: { select: { id: true, fullName: true, email: true } }
+            }
+        });
+        return response.json({ success: true, orders: orders.map((order) => ({ ...order, price: order.price.toFixed(2) })) });
+    } catch (error) {
+        logAdminFailure("load order tracking", error);
+        return response.status(500).json({ success: false, message: "Order tracking could not be loaded." });
     }
 }
 
@@ -268,6 +305,29 @@ export async function restoreAdminListing(request, response) {
     } catch (error) {
         logAdminFailure("restore listing", error);
         return response.status(500).json({ success: false, message: "This listing could not be restored." });
+    }
+}
+
+// Permanently remove an archived listing only when it has no order history.
+export async function permanentlyDeleteAdminListing(request, response) {
+    const listingId = parseId(request.params.listingId);
+    if (listingId === null) return response.status(400).json({ success: false, message: "Enter a valid listing ID." });
+    try {
+        const listing = await prisma.listing.findFirst({
+            where: { id: listingId, status: "ARCHIVED", orders: { none: {} } },
+            select: { id: true, photoUrl: true, photoUrl2: true, photoUrl3: true, photoUrl4: true }
+        });
+        if (!listing) return response.status(409).json({ success: false, message: "Only archived listings without order history can be permanently deleted." });
+        const deleted = await prisma.listing.deleteMany({ where: { id: listingId, status: "ARCHIVED", orders: { none: {} } } });
+        if (deleted.count !== 1) return response.status(409).json({ success: false, message: "This listing gained order history and must remain archived." });
+        for (const photoUrl of [listing.photoUrl, listing.photoUrl2, listing.photoUrl3, listing.photoUrl4]) {
+            if (photoUrl) await removeListingPhotoByUrl(photoUrl).catch((error) => logAdminFailure("remove deleted listing photo", error));
+        }
+        return response.json({ success: true, deleted: true, message: "Listing permanently deleted." });
+    } catch (error) {
+        logAdminFailure("permanently delete listing", error);
+        if (error?.code === "P2003") return response.status(409).json({ success: false, message: "This listing has related history and must remain archived." });
+        return response.status(500).json({ success: false, message: "This listing could not be permanently deleted." });
     }
 }
 

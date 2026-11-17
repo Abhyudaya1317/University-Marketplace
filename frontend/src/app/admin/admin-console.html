@@ -33,6 +33,7 @@
         <nav class="admin-tabs" aria-label="Admin sections">
           <button type="button" [class.active]="tab() === 'users'" (click)="chooseTab('users')">Users</button>
           <button type="button" [class.active]="tab() === 'listings'" (click)="chooseTab('listings')">Listings</button>
+          <button type="button" [class.active]="tab() === 'orders'" (click)="chooseTab('orders')">Orders</button>
           <button type="button" [class.active]="tab() === 'feedback'" (click)="chooseTab('feedback')">Feedback &amp; Reports</button>
         </nav>
 
@@ -49,7 +50,7 @@
                 <article class="user-row">
                   <div class="avatar">@if (user.avatarUrl) { <img [src]="user.avatarUrl" [alt]="(user.fullName || user.email) + ' profile photo'"> } @else { <span>{{ (user.fullName || user.email).slice(0, 1).toUpperCase() }}</span> }</div>
                   <div class="record-copy"><h3>{{ user.fullName || 'Unnamed user' }}</h3><p>{{ user.email }}</p><small>Joined {{ user.createdAt | date:'mediumDate' }} · {{ user.listingCount }} listings · ID {{ user.id }}</small>@if (user.bannedAt) { <p class="ban-note">Suspended {{ user.bannedAt | date:'mediumDate' }}@if (user.banReason) { · {{ user.banReason }}}</p> }</div>
-                  @if (user.bannedAt) { <button class="retro-button" type="button" (click)="unban(user)">Unban</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToBan(user)">Suspend</button> }
+                  <button class="retro-button" type="button" (click)="messageUser(user)">Message</button>@if (user.bannedAt) { <button class="retro-button" type="button" (click)="unban(user)">Unban</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToBan(user)">Suspend</button> }
                 </article>
               }
             </div>
@@ -63,8 +64,18 @@
                 <article class="listing-row">
                   <a class="listing-photo" [routerLink]="['/products', listing.id]">@if (listing.photoUrl) { <img [src]="listing.photoUrl" [alt]="listing.title"> } @else { <span>No photo</span> }</a>
                   <div class="listing-copy"><span class="category-label">{{ listing.product.category }}</span><h3>{{ listing.title }}</h3><p>{{ listing.seller.fullName || listing.seller.email }} · {{ listing.seller.email }}</p><p class="listing-description">{{ listing.description }}</p><small>₹{{ listing.price }} · {{ listing.quantityAvailable }} available · {{ listing.status }} · {{ listing.orderCount }} orders</small></div>
-                  <div class="listing-actions"><button class="retro-button" type="button" (click)="startEdit(listing)">Edit</button><button class="retro-button" type="button" [disabled]="listing.status !== 'ACTIVE' || listing.quantityAvailable < 1" (click)="toggleHotFind(listing)">{{ listing.isHotFind ? 'Clear Hot Find' : 'Set Hot Find' }}</button>@if (listing.status === 'ARCHIVED' || listing.status === 'HIDDEN') { <button class="retro-button" type="button" (click)="restoreListing(listing)">Restore</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToRemove(listing)">Remove</button> }</div>
+                  <div class="listing-actions"><button class="retro-button" type="button" (click)="startEdit(listing)">Edit</button><button class="retro-button" type="button" [disabled]="listing.status !== 'ACTIVE' || listing.quantityAvailable < 1" (click)="toggleHotFind(listing)">{{ listing.isHotFind ? 'Clear Hot Find' : 'Set Hot Find' }}</button>@if (listing.status === 'ARCHIVED' || listing.status === 'HIDDEN') { <button class="retro-button" type="button" (click)="restoreListing(listing)">Restore</button> } @else { <button class="retro-button danger-button" type="button" (click)="askToRemove(listing)">Remove</button> }@if (listing.status === 'ARCHIVED') { <button class="retro-button danger-button" type="button" (click)="permanentlyDeleteListing(listing)">Delete permanently</button> }</div>
                 </article>
+              }
+            </div>
+          </section>
+        } @else if (tab() === 'orders') {
+          <section class="records-panel">
+            <div class="panel-heading"><div><p class="eyebrow">BUYER REQUESTS &amp; SALES</p><h2>Order tracking</h2></div><form class="search-form listing-search" (ngSubmit)="loadOrders()"><label class="visually-hidden" for="order-search">Search orders</label><input id="order-search" name="orderSearch" [(ngModel)]="orderSearch" placeholder="Product, buyer or seller"><label class="visually-hidden" for="order-status">Order status</label><select id="order-status" name="orderStatus" [(ngModel)]="orderStatus"><option value="ALL">All statuses</option><option value="PENDING">Buyer requests</option><option value="ACCEPTED">Accepted</option><option value="COMPLETED">Sold / completed</option><option value="DECLINED">Declined</option><option value="CANCELLED">Cancelled</option></select><button class="retro-button" type="submit">Search</button></form></div>
+            @if (orders().length === 0 && !loading()) { <p class="empty-note">No matching orders or buyer requests.</p> }
+            <div class="record-list">
+              @for (order of orders(); track order.id) {
+                <article class="user-row"><div class="record-copy"><span class="category-label">{{ order.status }} · {{ order.createdAt | date:'medium' }}</span><h3><a [routerLink]="['/products', order.listing.id]">{{ order.listing.title }}</a> · ₹{{ order.price }} × {{ order.quantity }}</h3><p>Buyer: {{ order.buyer.fullName || order.buyer.email }} ({{ order.buyer.email }})</p><p>Seller: {{ order.seller.fullName || order.seller.email }} ({{ order.seller.email }})</p>@if (order.buyerMessage) { <small>Request: {{ order.buyerMessage }}</small> }@if (order.meetingAt || order.meetingLocation) { <small>Meetup: {{ order.meetingAt | date:'medium' }} · {{ order.meetingLocation }}</small> }</div></article>
               }
             </div>
           </section>

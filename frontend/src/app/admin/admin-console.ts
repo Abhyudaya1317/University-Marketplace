@@ -66,6 +66,14 @@ interface AdminListing {
   orderCount: number;
 }
 
+interface AdminOrder {
+  id: number; status: string; price: string; quantity: number; createdAt: string; updatedAt: string;
+  buyerMessage: string | null; meetingAt: string | null; meetingLocation: string | null;
+  listing: { id: number; title: string; product: { name: string } };
+  buyer: { id: number; fullName: string | null; email: string };
+  seller: { id: number; fullName: string | null; email: string };
+}
+
 interface ListingDraft {
   name: string;
   category: string;
@@ -88,7 +96,7 @@ interface ListingDraft {
   photoUrl4: string;
 }
 
-type AdminTab = 'users' | 'listings' | 'feedback';
+type AdminTab = 'users' | 'listings' | 'orders' | 'feedback';
 
 // One protected console for the current administrator's user and listing controls.
 @Component({
@@ -105,6 +113,7 @@ export class AdminConsole {
   protected readonly overview = signal<AdminOverview | null>(null);
   protected readonly users = signal<AdminUser[]>([]);
   protected readonly listings = signal<AdminListing[]>([]);
+  protected readonly orders = signal<AdminOrder[]>([]);
   protected readonly feedbackReports = signal<AdminFeedbackReport[]>([]);
   protected readonly loading = signal(false);
   protected readonly error = signal('');
@@ -123,6 +132,8 @@ export class AdminConsole {
   protected userSearch = '';
   protected listingSearch = '';
   protected listingStatus = 'ALL';
+  protected orderSearch = '';
+  protected orderStatus = 'ALL';
   protected banReason = '';
   protected draft: ListingDraft | null = null;
 
@@ -151,6 +162,7 @@ export class AdminConsole {
     this.loadOverview();
     this.loadUsers();
     this.loadListings();
+    this.loadOrders();
     this.loadFeedbackReports();
   }
 
@@ -182,6 +194,16 @@ export class AdminConsole {
     this.http.get<{ listings: AdminListing[] }>('/api/admin/listings', { params }).subscribe({
       next: (response) => { this.listings.set(response.listings); this.loading.set(false); },
       error: (error: HttpErrorResponse) => { this.showError(error, 'Listings could not be loaded.'); this.loading.set(false); },
+    });
+  }
+
+  protected loadOrders(): void {
+    let params = new HttpParams().set('status', this.orderStatus);
+    if (this.orderSearch.trim()) params = params.set('q', this.orderSearch.trim());
+    this.loading.set(true);
+    this.http.get<{ orders: AdminOrder[] }>('/api/admin/orders', { params }).subscribe({
+      next: (response) => { this.orders.set(response.orders); this.loading.set(false); },
+      error: (error: HttpErrorResponse) => { this.showError(error, 'Order tracking could not be loaded.'); this.loading.set(false); },
     });
   }
 
@@ -267,6 +289,21 @@ export class AdminConsole {
     this.runAction(`/api/admin/listings/${listing.id}/restore`, {}, 'Listing restored to the marketplace.', () => {
       this.loadListings();
       this.loadOverview();
+    });
+  }
+
+  protected messageUser(user: AdminUser): void {
+    window.location.assign(`/messages?sellerId=${encodeURIComponent(String(user.id))}`);
+  }
+
+  protected permanentlyDeleteListing(listing: AdminListing): void {
+    if (listing.status !== 'ARCHIVED') return;
+    if (!window.confirm(`Permanently delete “${listing.title}”? This cannot be undone. Listings with order history cannot be deleted.`)) return;
+    this.error.set('');
+    this.notice.set('');
+    this.http.delete<{ message?: string }>(`/api/admin/listings/${listing.id}`).subscribe({
+      next: (response) => { this.notice.set(response.message ?? 'Listing permanently deleted.'); this.loadListings(); this.loadOverview(); },
+      error: (error: HttpErrorResponse) => this.showError(error, 'This listing could not be permanently deleted.'),
     });
   }
 

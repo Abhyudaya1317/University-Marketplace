@@ -87,12 +87,22 @@ export class Home {
     });
     this.http.get<ListingsResponse>('/api/products').subscribe({
       next: (response) => {
-        this.listings.set(response.listings ?? []);
+        this.listings.set(this.shuffleListings(response.listings ?? []));
         this.activeListingCount.set(response.activeListingCount ?? response.listings?.length ?? 0);
         this.featuredListing.set(response.hotFind ?? null);
       },
       error: () => this.listingError.set(true),
     });
+  }
+
+  // Shuffle the home feed independently on each page load while keeping all loaded records available.
+  private shuffleListings(listings: HomeListing[]): HomeListing[] {
+    const shuffled = [...listings];
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
   }
 
   // Keep the display clock current without presenting a fake online-user count.
