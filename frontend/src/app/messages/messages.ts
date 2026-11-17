@@ -41,6 +41,12 @@ interface ChatMessage {
   createdAt: string;
 }
 
+interface StickerChoice {
+  key: string;
+  label: string;
+  image: string;
+}
+
 interface ConversationThread {
   id: string;
   otherUser: { id: string; fullName: string; avatarUrl: string | null };
@@ -132,6 +138,36 @@ export class Messages {
   protected readonly editDraft = signal('');
   protected readonly attachmentMenuOpen = signal(false);
   protected readonly stickerPickerOpen = signal(false);
+  protected readonly stickers: StickerChoice[] = [
+    { key: 'campus-star', label: 'star', image: '/stickers/campus-star.svg' },
+    { key: 'tiny-heart', label: 'heart', image: '/stickers/tiny-heart.svg' },
+    { key: 'party-ghost', label: 'ghost', image: '/stickers/party-ghost.svg' },
+    { key: 'cool-frog', label: 'frog', image: '/stickers/cool-frog.svg' },
+    { key: 'snack-kid', label: 'snack time', image: '/stickers/snack-kid.png' },
+    { key: 'doraemon-squint', label: 'Doraemon', image: '/stickers/doraemon-squint.jpg' },
+    { key: 'sleepy-dog', label: 'sleepy dog', image: '/stickers/sleepy-dog.jpg' },
+    { key: 'patrick-smile', label: 'Patrick', image: '/stickers/patrick-smile.jpg' },
+    { key: 'surprised-cat', label: 'surprised cat', image: '/stickers/surprised-cat.jpg' },
+    { key: 'surprised-doberman', label: 'surprised dog', image: '/stickers/surprised-doberman.jpg' },
+    { key: 'absolute-cinema', label: 'absolute cinema', image: '/stickers/absolute-cinema.jpg' },
+    { key: 'prayer-dog', label: 'please', image: '/stickers/prayer-dog.png' },
+    { key: 'giggle-baby', label: 'giggle', image: '/stickers/giggle-baby.jpg' },
+    { key: 'superhero-smile', label: 'hero', image: '/stickers/superhero-smile.jpg' },
+    { key: 'hoodie-spongebob', label: 'sneaky SpongeBob', image: '/stickers/hoodie-spongebob.jpg' },
+    { key: 'dog-shush', label: 'shh', image: '/stickers/dog-shush.jpg' },
+    { key: 'screaming-cat', label: 'screaming cat', image: '/stickers/screaming-cat.jpg' },
+    { key: 'shocked-man', label: 'shocked', image: '/stickers/shocked-man.jpg' },
+    { key: 'leon-rose', label: 'a rose', image: '/stickers/leon-rose.jpg' },
+    { key: 'shaquille-no', label: 'no', image: '/stickers/shaquille-no.jpg' },
+    { key: 'awkward-look', label: 'awkward', image: '/stickers/awkward-look.jpg' },
+    { key: 'anime-showdown', label: 'showdown', image: '/stickers/anime-showdown.jpg' },
+    { key: 'anime-comfort', label: 'got you', image: '/stickers/anime-comfort.jpg' },
+    { key: 'gta-stare', label: 'confused', image: '/stickers/gta-stare.jpg' },
+    { key: 'tongue-cat', label: 'bleh', image: '/stickers/tongue-cat.jpg' },
+    { key: 'silver-tongue', label: 'cheeky', image: '/stickers/silver-tongue.jpg' },
+    { key: 'horse-face', label: 'horse', image: '/stickers/horse-face.jpg' },
+    { key: 'reacted', label: 'reacted', image: '/stickers/reacted.jpg' },
+  ];
   protected readonly meetupFormOpen = signal(false);
   protected readonly meetupAt = signal('');
   protected readonly meetupLocation = signal('');
@@ -389,6 +425,10 @@ export class Messages {
       this.stickerPickerOpen.set(false);
       this.attachmentMenuOpen.set(false);
     });
+  }
+
+  protected stickerImage(stickerKey: string | null | undefined): string {
+    return this.stickers.find((sticker) => sticker.key === stickerKey)?.image ?? '';
   }
 
   // Keep the date field from offering past meetup times.

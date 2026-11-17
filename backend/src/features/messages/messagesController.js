@@ -575,6 +575,18 @@ export async function sendStickerMessage(request, response) {
     const stickerNames = new Map([
         ["campus-star", "Campus star"], ["tiny-heart", "Tiny heart"],
         ["party-ghost", "Party ghost"], ["cool-frog", "Cool frog"],
+        ["snack-kid", "Snack time"], ["doraemon-squint", "Doraemon"],
+        ["sleepy-dog", "Sleepy dog"], ["patrick-smile", "Patrick"],
+        ["surprised-cat", "Surprised cat"], ["surprised-doberman", "Surprised dog"],
+        ["absolute-cinema", "Absolute cinema"], ["prayer-dog", "Please"],
+        ["giggle-baby", "Giggle"], ["superhero-smile", "Hero"],
+        ["hoodie-spongebob", "Sneaky SpongeBob"], ["dog-shush", "Shh"],
+        ["screaming-cat", "Screaming cat"], ["shocked-man", "Shocked"],
+        ["leon-rose", "A rose"], ["shaquille-no", "No"],
+        ["awkward-look", "Awkward"], ["anime-showdown", "Showdown"],
+        ["anime-comfort", "Got you"], ["gta-stare", "Confused"],
+        ["tongue-cat", "Bleh"], ["silver-tongue", "Cheeky"],
+        ["horse-face", "Horse"], ["reacted", "Reacted"],
     ]);
     const name = stickerNames.get(stickerKey);
     if (!name) return response.status(400).json({ success: false, message: "Choose a sticker from the CampusX pack." });

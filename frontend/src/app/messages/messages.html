@@ -90,8 +90,8 @@
                   </a>
                   @if (message.body.startsWith('Shared a file:') === false) { <p>{{ message.body }}</p> }
                 } @else if (message.type === 'STICKER') {
-                  <div class="campus-sticker" [class.sticker-star]="message.stickerKey === 'campus-star'" [class.sticker-heart]="message.stickerKey === 'tiny-heart'" [class.sticker-ghost]="message.stickerKey === 'party-ghost'" [class.sticker-frog]="message.stickerKey === 'cool-frog'" role="img" [attr.aria-label]="message.body">
-                    <img [src]="'/stickers/' + message.stickerKey + '.svg'" [alt]="message.body" />
+                  <div class="campus-sticker" role="img" [attr.aria-label]="message.body">
+                    <img [src]="stickerImage(message.stickerKey)" [alt]="message.body" />
                     <small>{{ message.body }}</small>
                   </div>
                 } @else if (message.type === 'MEETUP' && message.meetupAt && message.meetupLocation) {
@@ -179,16 +179,15 @@
               <div class="composer-tools">
                 <button class="composer-plus" type="button" aria-label="Open attachment menu" [attr.aria-expanded]="attachmentMenuOpen()" (click)="attachmentMenuOpen.update(open => !open)">+</button>
                 @if (attachmentMenuOpen()) {
-                  <div class="retro-attachment-menu">
+                  <div class="retro-attachment-menu" [class.sticker-menu-open]="stickerPickerOpen()">
                     <input #fileInput class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,text/plain,text/csv" (change)="sendFile($event)" />
                     <button type="button" (click)="fileInput.click()" [disabled]="sending() || uploadingFile()">{{ uploadingFile() ? 'Preparing and sending…' : '▤ Send file' }}</button>
                     <button type="button" (click)="stickerPickerOpen.update(open => !open)" [disabled]="sending() || uploadingFile()">✦ Send sticker</button>
                     @if (stickerPickerOpen()) {
-                      <div class="sticker-picker" aria-label="CampusX sticker pack">
-                        <button type="button" class="sticker-choice sticker-star" (click)="sendSticker('campus-star')" aria-label="Campus star sticker"><img src="/stickers/campus-star.svg" alt="" /><small>star</small></button>
-                        <button type="button" class="sticker-choice sticker-heart" (click)="sendSticker('tiny-heart')" aria-label="Tiny heart sticker"><img src="/stickers/tiny-heart.svg" alt="" /><small>heart</small></button>
-                        <button type="button" class="sticker-choice sticker-ghost" (click)="sendSticker('party-ghost')" aria-label="Party ghost sticker"><img src="/stickers/party-ghost.svg" alt="" /><small>ghost</small></button>
-                        <button type="button" class="sticker-choice sticker-frog" (click)="sendSticker('cool-frog')" aria-label="Cool frog sticker"><img src="/stickers/cool-frog.svg" alt="" /><small>frog</small></button>
+                      <div class="sticker-picker" aria-label="UniBee sticker pack">
+                        @for (sticker of stickers; track sticker.key) {
+                          <button type="button" class="sticker-choice" (click)="sendSticker(sticker.key)" [attr.aria-label]="'Send ' + sticker.label + ' sticker'"><img [src]="sticker.image" alt="" /><small>{{ sticker.label }}</small></button>
+                        }
                       </div>
                     }
                   </div>
