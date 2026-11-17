@@ -27,6 +27,7 @@
 .search-form input, .search-form select, .edit-form input, .edit-form select, .edit-form textarea, .modal-content textarea { min-width: 160px; min-height: 38px; padding: 8px 10px; border: 2px inset white; background: white; color: var(--ink, #080817); font: 14px var(--body, sans-serif); }
 .user-row, .listing-row { display: grid; align-items: center; gap: 15px; padding: 14px 4px; border-top: 1px dotted #777; }
 .user-row { grid-template-columns: 54px minmax(0, 1fr) auto; }
+.order-row { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; align-items: center; gap: 15px; padding: 14px 4px; border-top: 1px dotted #777; }
 .listing-row { grid-template-columns: 112px minmax(0, 1fr) auto; }
 .avatar, .listing-photo { display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; border: 2px solid white; outline: 1px solid #777; background: #eee; color: var(--navy, #000080); font: 14px var(--pixel, monospace); }
 .avatar img, .listing-photo img { width: 100%; height: 100%; object-fit: cover; }

@@ -293,7 +293,7 @@ export class AdminConsole {
   }
 
   protected messageUser(user: AdminUser): void {
-    window.location.assign(`/messages?sellerId=${encodeURIComponent(String(user.id))}`);
+    window.location.assign(`/messages/new?sellerId=${encodeURIComponent(String(user.id))}`);
   }
 
   protected permanentlyDeleteListing(listing: AdminListing): void {

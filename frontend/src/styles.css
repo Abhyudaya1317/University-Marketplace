@@ -1560,6 +1560,28 @@ body .seller-page .listing-section { display: none; }
   body .universe-shell .main-toolbar > .toolbar-search { grid-area: search; }
 }
 
+/* Keep the profile stats in three separate, readable columns on narrow phones. */
+@media (max-width: 600px) {
+  body .dashboard-page .profile-summary {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    grid-template-areas: 'avatar stats' 'name name' 'action action' !important;
+    gap: 10px !important;
+  }
+  body .dashboard-page .profile-summary-main { display: contents !important; }
+  body .dashboard-page .profile-stats {
+    display: grid !important;
+    min-width: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    gap: 4px;
+  }
+  body .dashboard-page .profile-stats > div { min-width: 0; text-align: center; }
+  body .dashboard-page .profile-stats a { display: grid; min-width: 0; justify-items: center; gap: 4px; }
+  body .dashboard-page .profile-stats strong { font-size: 16px !important; }
+  body .dashboard-page .profile-stats span { font-size: 10px !important; white-space: nowrap; }
+  body .dashboard-page .profile-action { grid-area: action; justify-self: stretch !important; width: 100% !important; max-width: none !important; }
+}
+
 @media (max-width: 380px) {
   body .universe-shell .main-toolbar { column-gap: 5px; padding-inline: 8px; }
   body .universe-shell .main-toolbar .account-navigation > a[href='/explore'] { padding-inline: 5px !important; font-size: 5px !important; }

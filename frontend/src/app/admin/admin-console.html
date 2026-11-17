@@ -75,7 +75,7 @@
             @if (orders().length === 0 && !loading()) { <p class="empty-note">No matching orders or buyer requests.</p> }
             <div class="record-list">
               @for (order of orders(); track order.id) {
-                <article class="user-row"><div class="record-copy"><span class="category-label">{{ order.status }} · {{ order.createdAt | date:'medium' }}</span><h3><a [routerLink]="['/products', order.listing.id]">{{ order.listing.title }}</a> · ₹{{ order.price }} × {{ order.quantity }}</h3><p>Buyer: {{ order.buyer.fullName || order.buyer.email }} ({{ order.buyer.email }})</p><p>Seller: {{ order.seller.fullName || order.seller.email }} ({{ order.seller.email }})</p>@if (order.buyerMessage) { <small>Request: {{ order.buyerMessage }}</small> }@if (order.meetingAt || order.meetingLocation) { <small>Meetup: {{ order.meetingAt | date:'medium' }} · {{ order.meetingLocation }}</small> }</div></article>
+                <article class="order-row"><div class="record-copy"><span class="category-label">{{ order.status }} · {{ order.createdAt | date:'medium' }}</span><h3><a [routerLink]="['/products', order.listing.id]">{{ order.listing.title }}</a> · ₹{{ order.price }} × {{ order.quantity }}</h3><p>Buyer: {{ order.buyer.fullName || order.buyer.email }} ({{ order.buyer.email }})</p><p>Seller: {{ order.seller.fullName || order.seller.email }} ({{ order.seller.email }})</p>@if (order.buyerMessage) { <small>Request: {{ order.buyerMessage }}</small> }@if (order.meetingAt || order.meetingLocation) { <small>Meetup: {{ order.meetingAt | date:'medium' }} · {{ order.meetingLocation }}</small> }</div></article>
               }
             </div>
           </section>
