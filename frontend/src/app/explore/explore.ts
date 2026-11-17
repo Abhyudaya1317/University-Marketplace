@@ -386,7 +386,7 @@ export class Explore {
   }
 
   private cacheKey(params: HttpParams): string {
-    return `campusx:explore:v5:${params.toString() || 'all'}`;
+    return `campusx:explore:v6:${params.toString() || 'all'}`;
   }
 
   private readCache(key: string): ExploreResponse | null {

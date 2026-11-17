@@ -12,6 +12,20 @@ function keywordsMatch(first, second) {
     return Math.min(first.length, second.length) >= 5 && editDistance(first, second) <= 1;
 }
 
+// Search accepts meaningful fragments inside a word without merging separate products.
+function searchKeywordsMatch(searchWord, productWord) {
+    return (searchWord.length >= 2 && productWord.includes(searchWord)) || keywordsMatch(searchWord, productWord);
+}
+
+// Match every search term against some product-name word, including word fragments.
+export function productMatchesSearch(productName, searchText) {
+    const searchWords = productKeywords(searchText);
+    const productWords = productKeywords(productName);
+    return searchWords.every((searchWord) => productWords.some((productWord) =>
+        searchKeywordsMatch(searchWord, productWord)
+    ));
+}
+
 // Compare names using their keywords so variants such as "calc" and "calculator" group together.
 export function productNamesMatch(firstName, secondName) {
     const firstWords = productKeywords(firstName);
@@ -106,8 +120,6 @@ export function buildProductGroups(products) {
 
 // Filter already-grouped products so search and category controls match the visible cards.
 export function filterProductGroups(groups, { search = "", category = "", gender = "", proteinOnly = false } = {}) {
-    const searchWords = productKeywords(search);
-
     return groups.map((product) => {
         // Filter the underlying offers so a mixed-category group shows the right sellers and price.
         const offers = product.offers.filter((offer) => {
@@ -116,10 +128,7 @@ export function filterProductGroups(groups, { search = "", category = "", gender
             if (proteinOnly && (offer.category !== "FOOD" || offer.proteinRich !== true)) return false;
             return true;
         });
-        const productWords = productKeywords(product.name);
-        const matchesSearch = searchWords.length === 0 || searchWords.every((word) =>
-            productWords.some((candidate) => keywordsMatch(word, candidate))
-        );
+        const matchesSearch = productMatchesSearch(product.name, search);
         const categoryCounts = new Map();
         for (const offer of offers) categoryCounts.set(offer.category, (categoryCounts.get(offer.category) ?? 0) + 1);
         const displayCategory = [...categoryCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0];

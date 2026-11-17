@@ -1,7 +1,7 @@
 // Create seller listings and return individual active marketplace offers.
 import { prisma } from "../../lib/prisma.js";
 import { CLOTHING_GENDERS, COLOR_EXCLUDED_CATEGORIES, isValidQuantity, matchesExploreFilters, normalizeCommaSeparatedValues, normalizeListingHashtags, normalizeProductName, parseProteinRich, PRODUCT_CATEGORIES, validateListingDetails, validateListingHashtags } from "./listingsValidation.js";
-import { productNamesMatch } from "./productGrouping.js";
+import { productMatchesSearch, productNamesMatch } from "./productGrouping.js";
 import { listingPhotoUrl, removeListingPhotos } from "./listingPhotoUpload.js";
 
 // Create a seller offer and reuse a shared product record for the same name/category.
@@ -320,8 +320,7 @@ function productSearchMatches(search, title, hashtags = []) {
     return queryTokens.every((token) => {
         // Keep hashtag punctuation intact so #campus-project and #campus_project stay searchable.
         const hashtagKeyword = token.normalize("NFKC").replace(/^#+/u, "").toLocaleLowerCase("en");
-        const titleWords = normalizeProductName(token).split(" ").filter(Boolean);
-        const matchesTitle = titleWords.length > 0 && titleWords.every((word) => productNamesMatch(word, title));
+        const matchesTitle = productMatchesSearch(title, token);
         return matchesTitle || normalizedTags.has(hashtagKeyword);
     });
 }
