@@ -587,6 +587,18 @@ export async function sendStickerMessage(request, response) {
         ["anime-comfort", "Got you"], ["gta-stare", "Confused"],
         ["tongue-cat", "Bleh"], ["silver-tongue", "Cheeky"],
         ["horse-face", "Horse"], ["reacted", "Reacted"],
+        ["chair-move", "Chair move"], ["will-it-work", "Will it work"],
+        ["why-lying", "Why is he lying"], ["skeptical-gamer", "Side eye"],
+        ["dramatic-tears", "Tears"], ["robot-stare", "Robot stare"],
+        ["crying-mood", "So sad"], ["feels-larp", "Feels"],
+        ["cute-shah-rukh", "Cute"], ["lion-selfie", "Self image"],
+        ["btech-boy", "BTech boy"], ["home-call", "Ghar se call"],
+        ["minion-ride", "After saying that"], ["sneaky-cry", "Sneaky cry"],
+        ["sari-man", "Sari look"], ["ronaldo-celebrate", "Celebration"],
+        ["hungry-meme", "Hungry"], ["tiny-dance", "Dance"],
+        ["kids-reaction", "Reaction"], ["monkey-smile", "Monkey smile"],
+        ["mustache-shush", "Shush"], ["big-dog", "Surprised dog"],
+        ["tiny-man", "Tiny man"], ["sparkle-pigeon", "Love"],
     ]);
     const name = stickerNames.get(stickerKey);
     if (!name) return response.status(400).json({ success: false, message: "Choose a sticker from the CampusX pack." });
