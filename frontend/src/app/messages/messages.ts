@@ -139,10 +139,6 @@ export class Messages {
   protected readonly attachmentMenuOpen = signal(false);
   protected readonly stickerPickerOpen = signal(false);
   protected readonly stickers: StickerChoice[] = [
-    { key: 'campus-star', label: 'star', image: '/stickers/campus-star.svg' },
-    { key: 'tiny-heart', label: 'heart', image: '/stickers/tiny-heart.svg' },
-    { key: 'party-ghost', label: 'ghost', image: '/stickers/party-ghost.svg' },
-    { key: 'cool-frog', label: 'frog', image: '/stickers/cool-frog.svg' },
     { key: 'snack-kid', label: 'snack time', image: '/stickers/snack-kid.png' },
     { key: 'doraemon-squint', label: 'Doraemon', image: '/stickers/doraemon-squint.jpg' },
     { key: 'sleepy-dog', label: 'sleepy dog', image: '/stickers/sleepy-dog.jpg' },
@@ -428,7 +424,13 @@ export class Messages {
   }
 
   protected stickerImage(stickerKey: string | null | undefined): string {
-    return this.stickers.find((sticker) => sticker.key === stickerKey)?.image ?? '';
+    const legacyImages: Record<string, string> = {
+      'campus-star': '/stickers/campus-star.svg',
+      'tiny-heart': '/stickers/tiny-heart.svg',
+      'party-ghost': '/stickers/party-ghost.svg',
+      'cool-frog': '/stickers/cool-frog.svg',
+    };
+    return this.stickers.find((sticker) => sticker.key === stickerKey)?.image ?? legacyImages[stickerKey ?? ''] ?? '';
   }
 
   // Keep the date field from offering past meetup times.

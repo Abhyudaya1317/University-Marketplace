@@ -74,6 +74,7 @@
                   class="message-bubble"
                   [class.own-message]="isOwnMessage(message.senderId)"
                   [class.other-message]="!isOwnMessage(message.senderId)"
+                  [class.visual-message]="!message.deletedAt && (message.type === 'IMAGE' || message.type === 'STICKER')"
                   (click)="handleMessageSelection(message, $event)"
                 >
                 @if (message.deletedAt) {
@@ -92,7 +93,6 @@
                 } @else if (message.type === 'STICKER') {
                   <div class="campus-sticker" role="img" [attr.aria-label]="message.body">
                     <img [src]="stickerImage(message.stickerKey)" [alt]="message.body" />
-                    <small>{{ message.body }}</small>
                   </div>
                 } @else if (message.type === 'MEETUP' && message.meetupAt && message.meetupLocation) {
                   <div
@@ -186,7 +186,7 @@
                     @if (stickerPickerOpen()) {
                       <div class="sticker-picker" aria-label="UniBee sticker pack">
                         @for (sticker of stickers; track sticker.key) {
-                          <button type="button" class="sticker-choice" (click)="sendSticker(sticker.key)" [attr.aria-label]="'Send ' + sticker.label + ' sticker'"><img [src]="sticker.image" alt="" /><small>{{ sticker.label }}</small></button>
+                          <button type="button" class="sticker-choice" (click)="sendSticker(sticker.key)" [attr.aria-label]="'Send ' + sticker.label + ' sticker'" [title]="sticker.label"><img [src]="sticker.image" alt="" /></button>
                         }
                       </div>
                     }

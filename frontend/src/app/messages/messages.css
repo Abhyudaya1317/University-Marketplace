@@ -298,6 +298,19 @@
 .messages-page .thread-card .message-list .message-bubble.other-message {
   align-self: flex-start;
 }
+.messages-page .thread-card .message-list .message-bubble.visual-message {
+  --chat-bubble-color: transparent;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
+}
+.messages-page .thread-card .message-list .message-bubble.visual-message::before,
+.messages-page .thread-card .message-list .message-bubble.visual-message::after {
+  display: none;
+}
 .messages-page .thread-card .message-list .message-bubble.other-message::before,
 .messages-page .thread-card .message-list .message-bubble.other-message::after,
 .messages-page .thread-card .message-list .message-bubble.own-message::before,
@@ -465,7 +478,7 @@
   background: #c0c0c0;
   box-shadow: 3px 3px 0 #080817;
 }
-.retro-attachment-menu.sticker-menu-open { width: min(260px, calc(100vw - 48px)); }
+.retro-attachment-menu.sticker-menu-open { width: min(360px, calc(100vw - 48px)); }
 .retro-attachment-menu > button {
   min-height: 31px;
   padding: 5px 8px;
@@ -479,14 +492,9 @@
 }
 .retro-attachment-menu > button:hover { background: #dbe5ff; }
 .retro-attachment-menu > button:disabled { cursor: wait; opacity: .55; }
-.sticker-picker { display: grid; max-height: min(260px, 45vh); grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; overflow-y: auto; padding-top: 4px; }
-.sticker-choice { display: grid; min-width: 0; min-height: 56px; place-items: center; gap: 2px; padding: 3px 2px; border: 1px solid #aaa; background: #efeee9; color: #080817; cursor: pointer; }
-.sticker-choice img { width: 38px; height: 38px; object-fit: contain; }
-.sticker-choice small { max-width: 100%; overflow: hidden; font: 8px/1.2 Arial, sans-serif; text-overflow: ellipsis; white-space: nowrap; }
-.sticker-star { background: #fff34d; color: #000080; }
-.sticker-heart { background: #dce7ff; color: #174bff; }
-.sticker-ghost { background: #fff; color: #777; }
-.sticker-frog { background: #d9ece7; color: #146b57; }
+.sticker-picker { display: grid; max-height: min(420px, 60vh); grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; overflow-y: auto; padding-top: 4px; }
+.sticker-choice { display: grid; min-width: 0; min-height: 96px; place-items: center; padding: 5px; border: 1px solid #aaa; background: #efeee9; color: #080817; cursor: pointer; }
+.sticker-choice img { width: min(100%, 84px); height: 84px; object-fit: contain; }
 .composer-meta { padding-left: 40px; color: #777; font-size: 10px; }
 .meetup-form {
   display: grid;
@@ -518,11 +526,6 @@
 .shared-file small { color: #666; font-size: 10px; }
 .campus-sticker { display: grid; width: 124px; height: 124px; place-items: center; gap: 1px; border: 2px solid #080817; border-radius: 14px; background: #efeee9; box-shadow: 2px 2px 0 #080817; }
 .campus-sticker img { width: 108px; height: 108px; border-radius: 8px; object-fit: contain; }
-.campus-sticker small { font: 9px/1 Arial, sans-serif; }
-.campus-sticker.sticker-star { background: #fff34d; color: #000080; }
-.campus-sticker.sticker-heart { background: #dce7ff; color: #174bff; }
-.campus-sticker.sticker-ghost { background: #fff; color: #777; }
-.campus-sticker.sticker-frog { background: #d9ece7; color: #146b57; }
 .meetup-message { display: grid; min-width: 180px; gap: 5px; }
 .meetup-message > small:first-child { color: #000080; font: 9px/1.4 var(--pixel, monospace); }
 .meetup-message > strong { font-size: 12px; }
