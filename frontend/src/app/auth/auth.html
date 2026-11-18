@@ -59,7 +59,7 @@
           <input
             id="password"
             name="password"
-            type="password"
+            [type]="passwordVisible() ? 'text' : 'password'"
             [attr.autocomplete]="mode() === 'signup' ? 'new-password' : 'current-password'"
             required
             minlength="10"
@@ -67,8 +67,29 @@
             [(ngModel)]="password"
             placeholder="At least 10 characters"
           />
+          @if (mode() === 'signup') {
+            <label for="confirm-password">Confirm password</label>
+            <input
+              id="confirm-password"
+              name="confirmPassword"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              autocomplete="new-password"
+              required
+              minlength="10"
+              maxlength="128"
+              [(ngModel)]="confirmPassword"
+              placeholder="Enter the same password again"
+              [attr.aria-invalid]="confirmPassword && password !== confirmPassword ? 'true' : null"
+            />
+            @if (confirmPassword && password !== confirmPassword) {
+              <small class="password-mismatch" role="alert">Passwords do not match.</small>
+            }
+          }
+          <button class="password-visibility-button" type="button" (click)="togglePasswordVisibility()" [attr.aria-pressed]="passwordVisible()">
+            {{ passwordVisible() ? 'Hide password' : 'Show password' }}
+          </button>
 
-          <button class="primary-button" type="submit" [disabled]="busy()">
+          <button class="primary-button" type="submit" [disabled]="busy() || (mode() === 'signup' && password !== confirmPassword)">
             @if (busy()) {
               Please wait…
             } @else if (mode() === 'signup') {

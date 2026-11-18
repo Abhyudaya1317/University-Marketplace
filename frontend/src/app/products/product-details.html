@@ -263,10 +263,10 @@
   @if (imageViewerOpen() && activePhotoUrl(); as photoUrl) {
     <div class="image-viewer-backdrop" role="dialog" aria-modal="true" aria-label="Product photo viewer"
       (click)="closeImageViewer()" (keydown.escape)="closeImageViewer()"
-      (touchstart)="photoTouchStart($event)" (touchend)="photoTouchEnd($event)">
+      (touchstart)="viewerTouchStart($event)" (touchmove)="viewerTouchMove($event)" (touchend)="viewerTouchEnd($event)" (touchcancel)="viewerTouchEnd($event)">
       <button class="image-viewer-close" type="button" aria-label="Close enlarged photo" (click)="closeImageViewer(); $event.stopPropagation()">×</button>
       <div class="image-viewer-scroll" (click)="$event.stopPropagation()">
-        <img class="image-viewer-image" [src]="photoUrl" [alt]="(listing()?.title ?? 'Product') + ' product photo ' + (activePhotoIndex() + 1)" />
+        <img class="image-viewer-image" [src]="photoUrl" [style.transform]="'scale(' + zoomScale() + ')'" [alt]="(listing()?.title ?? 'Product') + ' product photo ' + (activePhotoIndex() + 1)" />
       </div>
       @if (productPhotos().length > 1) {
         <button class="image-viewer-arrow image-viewer-previous" type="button" aria-label="Previous product photo" (click)="stepPhoto(-1); $event.stopPropagation()">‹</button>

@@ -26,6 +26,8 @@ small { color: #89867d; font-size: 10px; line-height: 1.4; }
 .photo-preview-actions { display: flex; flex-wrap: wrap; gap: 5px; }
 .photo-preview-actions button { min-width: 34px; min-height: 34px; padding: 0 8px; border: 2px outset #fff; background: #c0c0c0; color: #000080; cursor: pointer; font: 8px/1.4 var(--pixel); }
 .photo-preview-actions .crop-photo-button { flex: 1 1 auto; }
+.photo-preview-actions .remove-photo-button { display: grid; min-width: 42px; min-height: 42px; place-items: center; padding: 7px; border-color: #b44a3b; background: #f5ded9; color: #8c2413; }
+.remove-photo-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
 .photo-preview-actions button:disabled { cursor: default; opacity: .55; }
 .photo-preview-card > small { color: #555; }
 .crop-modal-backdrop { position: fixed; z-index: 300; inset: 0; display: grid; place-items: center; padding: 16px; background: #080817c9; }
@@ -55,4 +57,4 @@ small { color: #89867d; font-size: 10px; line-height: 1.4; }
 .success { color: #34754b; }
 .failure { color: #ae443b; }
 .privacy-note { margin: 20px 0 0; padding-top: 15px; border-top: 1px solid #eeece6; color: #89867d; font-size: 10px; line-height: 1.6; }
-@media (max-width: 520px) { .sell-page { padding: 0 15px 30px; } .sell-header { height: 70px; } .sell-card { margin-top: 25px; padding: 26px 20px; } h1 { font-size: 26px; } .crop-modal-backdrop { padding: 8px; } .crop-dialog { max-height: calc(100vh - 16px); padding: 10px; } .crop-viewport { width: min(100%, 360px); } }
+@media (max-width: 520px) { .sell-page { padding: 0 15px 30px; } .sell-header { height: 70px; } .sell-card { margin-top: 25px; padding: 26px 20px; } h1 { font-size: 26px; } .photo-preview-row { grid-template-columns: minmax(0, 1fr); } .photo-preview-card { padding: 10px; } .photo-preview { max-height: 280px; } .photo-preview-actions button { min-height: 42px; } .crop-modal-backdrop { padding: 8px; } .crop-dialog { max-height: calc(100vh - 16px); padding: 10px; } .crop-viewport { width: min(100%, 360px); } }

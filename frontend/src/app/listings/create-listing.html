@@ -184,6 +184,10 @@
                         [attr.aria-label]="'Move photo ' + (i + 1) + ' later'">↓</button>
                       <button type="button" class="crop-photo-button" (click)="openPhotoCrop(i)"
                         [disabled]="photoProcessing()">Crop</button>
+                      <button type="button" class="remove-photo-button" (click)="removePhoto(i)"
+                        [disabled]="photoProcessing()" [attr.aria-label]="'Remove photo ' + (i + 1)" title="Remove photo">
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m3 3v7m6-7v7" /></svg>
+                      </button>
                     </div>
                     <small>Drag to rearrange</small>
                   </div>

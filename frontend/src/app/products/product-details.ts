@@ -79,6 +79,9 @@ export class ProductDetails {
   protected readonly requestSubmitted = signal(false);
   protected readonly startingConversation = signal(false);
   private photoTouchStartX: number | null = null;
+  private pinchStartDistance: number | null = null;
+  private pinchStartScale = 1;
+  protected readonly zoomScale = signal(1);
   protected readonly engagementOffers = computed(() => {
     const current = this.listing();
     return current ? [{ id: current.id, sellerId: current.seller.id, price: current.price }] : [];
@@ -309,6 +312,8 @@ export class ProductDetails {
     const count = this.productPhotos().length;
     if (count < 2) return;
     this.activePhotoIndex.update((index) => (index + direction + count) % count);
+    this.zoomScale.set(1);
+    this.pinchStartDistance = null;
   }
 
   protected openImageViewer(): void {
@@ -317,6 +322,30 @@ export class ProductDetails {
 
   protected closeImageViewer(): void {
     this.imageViewerOpen.set(false);
+    this.zoomScale.set(1);
+    this.pinchStartDistance = null;
+  }
+
+  protected viewerTouchStart(event: TouchEvent): void {
+    if (event.touches.length === 2) {
+      this.pinchStartDistance = this.touchDistance(event.touches[0], event.touches[1]);
+      this.pinchStartScale = this.zoomScale();
+    }
+  }
+
+  protected viewerTouchMove(event: TouchEvent): void {
+    if (event.touches.length !== 2 || !this.pinchStartDistance) return;
+    event.preventDefault();
+    const distance = this.touchDistance(event.touches[0], event.touches[1]);
+    this.zoomScale.set(Math.max(1, Math.min(4, this.pinchStartScale * distance / this.pinchStartDistance)));
+  }
+
+  protected viewerTouchEnd(event: TouchEvent): void {
+    if (event.touches.length < 2) this.pinchStartDistance = null;
+  }
+
+  private touchDistance(first: Touch, second: Touch): number {
+    return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
   }
 
   protected photoTouchStart(event: TouchEvent): void {

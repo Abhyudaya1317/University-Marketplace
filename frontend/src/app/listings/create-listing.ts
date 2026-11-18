@@ -332,6 +332,19 @@ export class CreateListing implements OnDestroy {
     this.photoPreviews.set([...urls]);
   }
 
+  // Remove one prepared photo and release its temporary preview URL.
+  protected removePhoto(index: number): void {
+    const photo = this.selectedPhotos[index];
+    const preview = this.previewUrls[index];
+    if (!photo || !preview || this.photoProcessing()) return;
+    URL.revokeObjectURL(preview);
+    this.selectedPhotos = this.selectedPhotos.filter((_, photoIndex) => photoIndex !== index);
+    this.previewUrls = this.previewUrls.filter((_, photoIndex) => photoIndex !== index);
+    this.photoPreviews.set([...this.previewUrls]);
+    this.photoError.set('');
+    if (this.photoInput) this.photoInput.nativeElement.value = '';
+  }
+
   // Support drag-and-drop reordering in addition to the keyboard-friendly move buttons.
   protected startPhotoDrag(index: number, event: DragEvent): void {
     this.draggedPhotoIndex = index;

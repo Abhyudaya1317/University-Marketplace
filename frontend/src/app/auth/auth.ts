@@ -34,10 +34,12 @@ export class Auth {
   protected readonly notice = signal('');
   protected readonly error = signal('');
   protected readonly currentUser = signal<AccountResponse['user'] | null>(null);
+  protected readonly passwordVisible = signal(false);
 
   protected email = '';
   protected fullName = '';
   protected password = '';
+  protected confirmPassword = '';
   protected resetCode = '';
   protected newPassword = '';
 
@@ -68,6 +70,10 @@ export class Auth {
   // Submit the same email/password fields to the selected signup or login endpoint.
   protected submitPasswordForm(): void {
     this.clearMessages();
+    if (this.mode() === 'signup' && this.password !== this.confirmPassword) {
+      this.error.set('The passwords do not match. Please check both fields.');
+      return;
+    }
     this.busy.set(true);
     const path = this.mode() === 'signup' ? 'signup' : 'login';
 
@@ -81,6 +87,7 @@ export class Auth {
         next: (response) => {
           this.currentUser.set(response.user ?? null);
           this.password = '';
+          this.confirmPassword = '';
           this.notice.set(
             path === 'signup' ? 'Your CampusX account is ready.' : 'You are signed in.',
           );
@@ -148,6 +155,13 @@ export class Auth {
     this.resetCodeSent.set(false);
     this.resetCode = '';
     this.newPassword = '';
+    this.password = '';
+    this.confirmPassword = '';
+    this.passwordVisible.set(false);
+  }
+
+  protected togglePasswordVisibility(): void {
+    this.passwordVisible.update((visible) => !visible);
   }
 
   // Show only safe messages returned by the API; do not display server internals.
