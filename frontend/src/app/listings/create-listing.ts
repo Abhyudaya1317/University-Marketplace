@@ -111,6 +111,7 @@ export class CreateListing implements OnDestroy {
   // Use the same controlled category values the backend accepts.
   protected readonly categories = [
     { value: 'BOOKS_AND_NOTES', label: 'Books & Notes' },
+    { value: 'TICKETS', label: 'Tickets' },
     { value: 'CLOTHING', label: 'Clothing' },
     { value: 'ACCESSORIES', label: 'Accessories' },
     { value: 'SHOES', label: 'Shoes' },
