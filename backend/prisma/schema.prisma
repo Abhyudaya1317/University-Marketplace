@@ -308,6 +308,7 @@ model ListingReview {
 // Keep categories as a controlled list so spelling stays consistent in filters.
 enum ProductCategory {
   BOOKS_AND_NOTES
+  TICKETS
   CLOTHING
   ACCESSORIES
   JEWELLERY
